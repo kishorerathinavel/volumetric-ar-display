@@ -34,10 +34,10 @@ void setup() {
   SPI.setClockDivider(SPI_CLOCK_DIV2);
   SPI.setDataMode(SPI_MODE3);   
 
-  LEVELS[0]=0xFFFF * (0.0/256); //LSB
+  LEVELS[0]=0xFFFF * (1.0/256); //LSB
   LEVELS[1]=0xFFFF * (1.0/128);
   LEVELS[2]=0xFFFF * (1.0/64);
-    LEVELS[3]=0xFFFF * (1.0/32);
+  LEVELS[3]=0xFFFF * (1.0/32);
   LEVELS[4]=0xFFFF * (1.0/16);
   LEVELS[5]=0xFFFF * (1.0/8);
   LEVELS[6]=0xFFFF * (1.0/4);
@@ -76,9 +76,6 @@ inline void pulseDac(uint16_t& code, unsigned long& us) {
   while( micros() < end_time) {};
   sendDacCode(0);
 }
-
-
-
 
 void loop() {
   unsigned long pulseLen = 10; //microseconds
