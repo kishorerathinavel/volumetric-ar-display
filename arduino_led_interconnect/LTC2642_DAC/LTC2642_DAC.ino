@@ -1,7 +1,7 @@
 #include <SPI.h>
 
-static const int CS_PIN = 14;
-static const int CLR_PIN = 15;
+static const int CS_PIN = 39;
+static const int CLR_PIN = 20;
 
 static const double VREF = 2.50D;
 static const double DAC_LSB = VREF / (1<<16); //volts (about 38uV)
