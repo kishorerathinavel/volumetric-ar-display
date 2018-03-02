@@ -5,6 +5,6 @@ in float Depth;
 
 void main() {
   vec4 color;
-  color = vec4(Depth);
+  color = vec4(Depth/10.0);
   output = (color);
 }

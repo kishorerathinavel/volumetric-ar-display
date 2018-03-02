@@ -63,19 +63,24 @@
 #include <string>
 #include <vector>
 
-// Information to render each assimp node
-struct MyMesh{
-
-	GLuint vao;
-	GLuint texIndex;
-	GLuint uniformBlockIndex;
-	int numFaces;
-};
-
-std::vector<struct MyMesh> myMeshes1, myMeshes2;
+// Replace the model name by your model's filename
+static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/other-models/";
+static const std::string modelname1 = "bench.obj";
+//static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
+//static const std::string modelname1 = "spider.obj";
+//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
+//static const std::string modelname2 = "spider.obj";
+//static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/textured/";
+//static const std::string modelname1 = "bunny2.obj";
+static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/textured/";
+static const std::string modelname2 = "bunny2.obj";
+//static const std::string basepath1 = "C:/Users/kishore/Downloads/Curiosity Rover 3D Printed Model/Detailed Curiosity Model (Large)/";
+//static const std::string modelname1 = "1-body.stl";
+//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/nasa-models/MSL_dirty/";
+//static const std::string modelname2 = "MSL_dirty_modified.obj";
 
 // This is for a shader uniform block
-struct MyMaterial{
+struct MyMaterial {
 
 	float diffuse[4];
 	float ambient[4];
@@ -92,7 +97,7 @@ float modelMatrix[16];
 std::vector<float *> matrixStack;
 
 // Vertex Attribute Locations
-GLuint vertexLoc=0, normalLoc=1, texCoordLoc=2;
+GLuint vertexLoc = 0, normalLoc = 1, texCoordLoc = 2;
 
 // Uniform Bindings Points
 GLuint matricesUniLoc = 1, materialUniLoc = 2;
@@ -121,38 +126,42 @@ char *fname_vertex_shader = "dirlightdiffambpix.vert";
 char *fname_fragment_shader_rgb = "dirlightdiffambpix.frag";
 char *fname_fragment_shader_depth = "depthmap.frag";
 
-// Create an instance of the Importer class
-Assimp::Importer importer1;
-Assimp::Importer importer2;
+// Information to render each assimp node
+struct MyMesh {
 
-// the global Assimp scene1 object
-const aiScene* scene1 = NULL;
-const aiScene* scene2 = NULL;
+	GLuint vao;
+	GLuint texIndex;
+	GLuint uniformBlockIndex;
+	int numFaces;
+};
 
-// scale factor for the model to fit in the window
-float scaleFactor1 = 1.0, scaleFactor2 = 1.0;
+class Model {
+public:
+	std::vector<struct MyMesh> myMesh;
+	Assimp::Importer importer;
+	const aiScene* scene;
+	std::map<std::string, GLuint> textureIdMap;
+	std::string basepath;
+	std::string modelname;
+	float scaleFactor;
+	float translation[3];
+	float rotation[3];
 
+	Model() {
+		scene = NULL;
+		scaleFactor = 1.0;
+	}
 
-// images / texture
-// map image filenames to textureIds
-// pointer to texture Array
-std::map<std::string, GLuint> textureIdMap1, textureIdMap2;	
-
-// Replace the model name by your model's filename
-static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/other-models/";
-static const std::string modelname1 = "bench.obj";
-//static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
-//static const std::string modelname1 = "spider.obj";
-//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
-//static const std::string modelname2 = "spider.obj";
-//static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/textured/";
-//static const std::string modelname1 = "bunny2.obj";
-static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/textured/";
-static const std::string modelname2 = "bunny2.obj";
-//static const std::string basepath1 = "C:/Users/kishore/Downloads/Curiosity Rover 3D Printed Model/Detailed Curiosity Model (Large)/";
-//static const std::string modelname1 = "1-body.stl";
-//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/nasa-models/MSL_dirty/";
-//static const std::string modelname2 = "MSL_dirty_modified.obj";
+	~Model() {
+		textureIdMap.clear();
+		// clear myMeshes stuff
+		for (unsigned int i = 0; i < myMesh.size(); ++i) {
+			glDeleteVertexArrays(1, &(myMesh[i].vao));
+			glDeleteTextures(1, &(myMesh[i].texIndex));
+			glDeleteBuffers(1, &(myMesh[i].uniformBlockIndex));
+		}
+	}
+}model1, model2;
 
 // Camera Position
 float camX = 0, camY = 0, camZ = 5;
@@ -164,17 +173,19 @@ int startX, startY, tracking = 0;
 float alpha = 0.0f, beta = 0.0f;
 float r = 5.0f;
 
+bool saveFramebufferOnce = false;
+bool saveFramebufferUntilStop = false;
 
 #define M_PI       3.14159265358979323846f
 
-static inline float 
-DegToRad(float degrees) 
-{ 
+static inline float
+DegToRad(float degrees)
+{
 	return (float)(degrees * (M_PI / 180.0f));
 };
 
 // Frame counting and FPS computation
-long time,timebase = 0,frame = 0;
+long time, timebase = 0, frame = 0;
 char s[32];
 
 //-----------------------------------------------------------------
@@ -187,18 +198,18 @@ char s[32];
 
 int printOglError(char *file, int line)
 {
-    
-    GLenum glErr;
-    int    retCode = 0;
 
-    glErr = glGetError();
-    if (glErr != GL_NO_ERROR)
-    {
-        printf("glError in file %s @ line %d: %s\n", 
-			     file, line, gluErrorString(glErr));
-        retCode = 1;
-    }
-    return retCode;
+	GLenum glErr;
+	int    retCode = 0;
+
+	glErr = glGetError();
+	if (glErr != GL_NO_ERROR)
+	{
+		printf("glError in file %s @ line %d: %s\n",
+			file, line, gluErrorString(glErr));
+		retCode = 1;
+	}
+	return retCode;
 }
 
 
@@ -208,18 +219,18 @@ int printOglError(char *file, int line)
 
 
 // res = a cross b;
-void crossProduct( float *a, float *b, float *res) {
+void crossProduct(float *a, float *b, float *res) {
 
-	res[0] = a[1] * b[2]  -  b[1] * a[2];
-	res[1] = a[2] * b[0]  -  b[2] * a[0];
-	res[2] = a[0] * b[1]  -  b[0] * a[1];
+	res[0] = a[1] * b[2] - b[1] * a[2];
+	res[1] = a[2] * b[0] - b[2] * a[0];
+	res[2] = a[0] * b[1] - b[0] * a[1];
 }
 
 
 // Normalize a vec3
 void normalize(float *a) {
 
-	float mag = sqrt(a[0] * a[0]  +  a[1] * a[1]  +  a[2] * a[2]);
+	float mag = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 
 	a[0] /= mag;
 	a[1] /= mag;
@@ -242,7 +253,7 @@ void pushMatrix() {
 
 void popMatrix() {
 
-	float *m = matrixStack[matrixStack.size()-1];
+	float *m = matrixStack[matrixStack.size() - 1];
 	memcpy(modelMatrix, m, sizeof(float) * 16);
 	matrixStack.pop_back();
 	free(m);
@@ -250,11 +261,11 @@ void popMatrix() {
 
 // sets the square matrix mat to the identity matrix,
 // size refers to the number of rows (or columns)
-void setIdentityMatrix( float *mat, int size) {
+void setIdentityMatrix(float *mat, int size) {
 
 	// fill matrix with 0s
 	for (int i = 0; i < size * size; ++i)
-			mat[i] = 0.0f;
+		mat[i] = 0.0f;
 
 	// fill diagonal with 1s
 	for (int i = 0; i < size; ++i)
@@ -271,9 +282,9 @@ void multMatrix(float *a, float *b) {
 
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
-			res[j*4 + i] = 0.0f;
+			res[j * 4 + i] = 0.0f;
 			for (int k = 0; k < 4; ++k) {
-				res[j*4 + i] += a[k*4 + i] * b[j*4 + k]; 
+				res[j * 4 + i] += a[k * 4 + i] * b[j * 4 + k];
 			}
 		}
 	}
@@ -285,7 +296,7 @@ void multMatrix(float *a, float *b) {
 // Defines a transformation matrix mat with a translation
 void setTranslationMatrix(float *mat, float x, float y, float z) {
 
-	setIdentityMatrix(mat,4);
+	setIdentityMatrix(mat, 4);
 	mat[12] = x;
 	mat[13] = y;
 	mat[14] = z;
@@ -294,7 +305,7 @@ void setTranslationMatrix(float *mat, float x, float y, float z) {
 // Defines a transformation matrix mat with a scale
 void setScaleMatrix(float *mat, float sx, float sy, float sz) {
 
-	setIdentityMatrix(mat,4);
+	setIdentityMatrix(mat, 4);
 	mat[0] = sx;
 	mat[5] = sy;
 	mat[10] = sz;
@@ -311,25 +322,25 @@ void setRotationMatrix(float *mat, float angle, float x, float y, float z) {
 	float y2 = y*y;
 	float z2 = z*z;
 
-	mat[0] = x2 + (y2 + z2) * co; 
+	mat[0] = x2 + (y2 + z2) * co;
 	mat[4] = x * y * (1 - co) - z * si;
 	mat[8] = x * z * (1 - co) + y * si;
-	mat[12]= 0.0f;
-	   
+	mat[12] = 0.0f;
+
 	mat[1] = x * y * (1 - co) + z * si;
 	mat[5] = y2 + (x2 + z2) * co;
 	mat[9] = y * z * (1 - co) - x * si;
-	mat[13]= 0.0f;
-	   
+	mat[13] = 0.0f;
+
 	mat[2] = x * z * (1 - co) - y * si;
 	mat[6] = y * z * (1 - co) + x * si;
-	mat[10]= z2 + (x2 + y2) * co;
-	mat[14]= 0.0f;
-	   
+	mat[10] = z2 + (x2 + y2) * co;
+	mat[14] = 0.0f;
+
 	mat[3] = 0.0f;
 	mat[7] = 0.0f;
-	mat[11]= 0.0f;
-	mat[15]= 1.0f;
+	mat[11] = 0.0f;
+	mat[15] = 1.0f;
 
 }
 
@@ -341,10 +352,10 @@ void setRotationMatrix(float *mat, float angle, float x, float y, float z) {
 
 void setModelMatrix() {
 
-	glBindBuffer(GL_UNIFORM_BUFFER,matricesUniBuffer);
-	glBufferSubData(GL_UNIFORM_BUFFER, 
-		               ModelMatrixOffset, MatrixSize, modelMatrix);
-	glBindBuffer(GL_UNIFORM_BUFFER,0);
+	glBindBuffer(GL_UNIFORM_BUFFER, matricesUniBuffer);
+	glBufferSubData(GL_UNIFORM_BUFFER,
+		ModelMatrixOffset, MatrixSize, modelMatrix);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 }
 
@@ -353,8 +364,8 @@ void translate(float x, float y, float z) {
 
 	float aux[16];
 
-	setTranslationMatrix(aux,x,y,z);
-	multMatrix(modelMatrix,aux);
+	setTranslationMatrix(aux, x, y, z);
+	multMatrix(modelMatrix, aux);
 	setModelMatrix();
 }
 
@@ -363,8 +374,8 @@ void rotate(float angle, float x, float y, float z) {
 
 	float aux[16];
 
-	setRotationMatrix(aux,angle,x,y,z);
-	multMatrix(modelMatrix,aux);
+	setRotationMatrix(aux, angle, x, y, z);
+	multMatrix(modelMatrix, aux);
 	setModelMatrix();
 }
 
@@ -373,8 +384,8 @@ void scale(float x, float y, float z) {
 
 	float aux[16];
 
-	setScaleMatrix(aux,x,y,z);
-	multMatrix(modelMatrix,aux);
+	setScaleMatrix(aux, x, y, z);
+	multMatrix(modelMatrix, aux);
 	setModelMatrix();
 }
 
@@ -387,9 +398,9 @@ void buildProjectionMatrix(float fov, float ratio, float nearp, float farp) {
 
 	float projMatrix[16];
 
-	float f = 1.0f / tan (fov * (M_PI / 360.0f));
+	float f = 1.0f / tan(fov * (M_PI / 360.0f));
 
-	setIdentityMatrix(projMatrix,4);
+	setIdentityMatrix(projMatrix, 4);
 
 	projMatrix[0] = f / ratio;
 	projMatrix[1 * 4 + 1] = f;
@@ -398,9 +409,9 @@ void buildProjectionMatrix(float fov, float ratio, float nearp, float farp) {
 	projMatrix[2 * 4 + 3] = -1.0f;
 	projMatrix[3 * 4 + 3] = 0.0f;
 
-	glBindBuffer(GL_UNIFORM_BUFFER,matricesUniBuffer);
+	glBindBuffer(GL_UNIFORM_BUFFER, matricesUniBuffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, ProjMatrixOffset, MatrixSize, projMatrix);
-	glBindBuffer(GL_UNIFORM_BUFFER,0);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 }
 
@@ -414,53 +425,53 @@ void buildProjectionMatrix(float fov, float ratio, float nearp, float farp) {
 // i.e. a vertical up vector along the Y axis (remember gluLookAt?)
 //
 
-void setCamera(float posX, float posY, float posZ, 
-			   float lookAtX, float lookAtY, float lookAtZ) {
+void setCamera(float posX, float posY, float posZ,
+	float lookAtX, float lookAtY, float lookAtZ) {
 
 	float dir[3], right[3], up[3];
 
 	up[0] = 0.0f;	up[1] = 1.0f;	up[2] = 0.0f;
 
-	dir[0] =  (lookAtX - posX);
-	dir[1] =  (lookAtY - posY);
-	dir[2] =  (lookAtZ - posZ);
+	dir[0] = (lookAtX - posX);
+	dir[1] = (lookAtY - posY);
+	dir[2] = (lookAtZ - posZ);
 	normalize(dir);
 
-	crossProduct(dir,up,right);
+	crossProduct(dir, up, right);
 	normalize(right);
 
-	crossProduct(right,dir,up);
+	crossProduct(right, dir, up);
 	normalize(up);
 
-	float viewMatrix[16],aux[16];
+	float viewMatrix[16], aux[16];
 
-	viewMatrix[0]  = right[0];
-	viewMatrix[4]  = right[1];
-	viewMatrix[8]  = right[2];
+	viewMatrix[0] = right[0];
+	viewMatrix[4] = right[1];
+	viewMatrix[8] = right[2];
 	viewMatrix[12] = 0.0f;
 
-	viewMatrix[1]  = up[0];
-	viewMatrix[5]  = up[1];
-	viewMatrix[9]  = up[2];
+	viewMatrix[1] = up[0];
+	viewMatrix[5] = up[1];
+	viewMatrix[9] = up[2];
 	viewMatrix[13] = 0.0f;
 
-	viewMatrix[2]  = -dir[0];
-	viewMatrix[6]  = -dir[1];
+	viewMatrix[2] = -dir[0];
+	viewMatrix[6] = -dir[1];
 	viewMatrix[10] = -dir[2];
-	viewMatrix[14] =  0.0f;
+	viewMatrix[14] = 0.0f;
 
-	viewMatrix[3]  = 0.0f;
-	viewMatrix[7]  = 0.0f;
+	viewMatrix[3] = 0.0f;
+	viewMatrix[7] = 0.0f;
 	viewMatrix[11] = 0.0f;
 	viewMatrix[15] = 1.0f;
 
 	setTranslationMatrix(aux, -posX, -posY, -posZ);
 
 	multMatrix(viewMatrix, aux);
-	
+
 	glBindBuffer(GL_UNIFORM_BUFFER, matricesUniBuffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, ViewMatrixOffset, MatrixSize, viewMatrix);
-	glBindBuffer(GL_UNIFORM_BUFFER,0);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 }
 
 
@@ -471,10 +482,10 @@ void setCamera(float posX, float posY, float posZ,
 #define aisgl_min(x,y) (x<y?x:y)
 #define aisgl_max(x,y) (y>x?y:x)
 
-void get_bounding_box_for_node (const aiNode* nd, 
-	aiVector3D* min, 
+void get_bounding_box_for_node(const aiNode* nd,
+	aiVector3D* min,
 	aiVector3D* max, const aiScene* scene)
-	
+
 {
 	aiMatrix4x4 prev;
 	unsigned int n = 0, t;
@@ -485,48 +496,48 @@ void get_bounding_box_for_node (const aiNode* nd,
 
 			aiVector3D tmp = mesh->mVertices[t];
 
-			min->x = aisgl_min(min->x,tmp.x);
-			min->y = aisgl_min(min->y,tmp.y);
-			min->z = aisgl_min(min->z,tmp.z);
+			min->x = aisgl_min(min->x, tmp.x);
+			min->y = aisgl_min(min->y, tmp.y);
+			min->z = aisgl_min(min->z, tmp.z);
 
-			max->x = aisgl_max(max->x,tmp.x);
-			max->y = aisgl_max(max->y,tmp.y);
-			max->z = aisgl_max(max->z,tmp.z);
+			max->x = aisgl_max(max->x, tmp.x);
+			max->y = aisgl_max(max->y, tmp.y);
+			max->z = aisgl_max(max->z, tmp.z);
 		}
 	}
 
 	for (n = 0; n < nd->mNumChildren; ++n) {
-		get_bounding_box_for_node(nd->mChildren[n],min,max, scene);
+		get_bounding_box_for_node(nd->mChildren[n], min, max, scene);
 	}
 }
 
 
-void get_bounding_box (aiVector3D* min, aiVector3D* max, const aiScene* scene) {
-	min->x = min->y = min->z =  1e10f;
+void get_bounding_box(aiVector3D* min, aiVector3D* max, const aiScene* scene) {
+	min->x = min->y = min->z = 1e10f;
 	max->x = max->y = max->z = -1e10f;
-	get_bounding_box_for_node(scene->mRootNode,min,max, scene);
+	get_bounding_box_for_node(scene->mRootNode, min, max, scene);
 }
 
-bool Import3DFromFile(const std::string& pFile, const aiScene*& scene, Assimp::Importer& importer) {
+bool Import3DFromFile(Model &model) {
 
+	std::string pFile = model.basepath + model.modelname;
 	//check if file exists
 	std::ifstream fin(pFile.c_str());
-	if(!fin.fail()) {
+	if (!fin.fail()) {
 		fin.close();
 	}
-	else{
+	else {
 		printf("Couldn't open file: %s\n", pFile.c_str());
-		printf("%s\n", importer.GetErrorString());
+		printf("%s\n", model.importer.GetErrorString());
 		return false;
 	}
 
 	printf("Reading file... \n");
-	//const aiScene* scene;
-	scene = importer.ReadFile( pFile, aiProcessPreset_TargetRealtime_Quality);
+	model.scene = model.importer.ReadFile(pFile, aiProcessPreset_TargetRealtime_Quality);
 	// If the import failed, report it
-	if(!scene)
+	if (!model.scene)
 	{
-		printf("%s\n", importer.GetErrorString());
+		printf("%s\n", model.importer.GetErrorString());
 		return false;
 	}
 
@@ -534,7 +545,7 @@ bool Import3DFromFile(const std::string& pFile, const aiScene*& scene, Assimp::I
 
 
 	// Now we can access the file's contents.
-	printf("Import of scene %s succeeded. \n",pFile.c_str());
+	printf("Import of scene %s succeeded. \n", pFile.c_str());
 
 	//float tempScaleFactor;
 	//aiVector3D scene_min, scene_max, scene_center;
@@ -550,40 +561,40 @@ bool Import3DFromFile(const std::string& pFile, const aiScene*& scene, Assimp::I
 }
 
 
-int LoadGLTextures(const std::string& basepath, const aiScene* scene,std::map<std::string, GLuint>& textureIdMap) {
+int LoadGLTextures(Model& model) {
 	ILboolean success;
 
 
 	/* scan scene's materials for textures */
-	for (unsigned int m=0; m < scene->mNumMaterials; ++m)
+	for (unsigned int m = 0; m < model.scene->mNumMaterials; ++m)
 	{
 		int texIndex = 0;
 		aiString path;	// filename
 
-		aiReturn texFound = scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
+		aiReturn texFound = model.scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
 		while (texFound == AI_SUCCESS) {
 			//fill map with textures, OpenGL image ids set to 0
-			textureIdMap[path.data] = 0; 
+			model.textureIdMap[path.data] = 0;
 			// more textures?
 			texIndex++;
-			texFound = scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
+			texFound = model.scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
 		}
 	}
 
-	int numTextures = textureIdMap.size();
+	int numTextures = model.textureIdMap.size();
 
 	/* create and fill array with DevIL texture ids */
 	ILuint* imageIds = new ILuint[numTextures];
-	ilGenImages(numTextures, imageIds); 
+	ilGenImages(numTextures, imageIds);
 
 	/* create and fill array with GL texture ids */
 	GLuint* textureIds = new GLuint[numTextures];
 	glGenTextures(numTextures, textureIds); /* Texture name generation */
 
 	/* get iterator */
-	std::map<std::string, GLuint>::iterator itr = textureIdMap.begin();
-	int i=0;
-	for (; itr != textureIdMap.end(); ++i, ++itr)
+	std::map<std::string, GLuint>::iterator itr = model.textureIdMap.begin();
+	int i = 0;
+	for (; itr != model.textureIdMap.end(); ++i, ++itr)
 	{
 		//save IL image ID
 		std::string filename = (*itr).first;  // get filename
@@ -591,31 +602,31 @@ int LoadGLTextures(const std::string& basepath, const aiScene* scene,std::map<st
 
 		ilBindImage(imageIds[i]); /* Binding of DevIL image name */
 		ilEnable(IL_ORIGIN_SET);
-		ilOriginFunc(IL_ORIGIN_LOWER_LEFT); 
-		std::string fileloc = basepath + filename;	/* Loading of image */
+		ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+		std::string fileloc = model.basepath + filename;	/* Loading of image */
 		success = ilLoadImage(fileloc.c_str());
 		if (success) {
 			/* Convert image to RGBA */
-			ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE); 
+			ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
 
 			/* Create and load textures to OpenGL */
-			glBindTexture(GL_TEXTURE_2D, textureIds[i]); 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR); 
+			glBindTexture(GL_TEXTURE_2D, textureIds[i]);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ilGetInteger(IL_IMAGE_WIDTH),
 				ilGetInteger(IL_IMAGE_HEIGHT), 0, GL_RGBA, GL_UNSIGNED_BYTE,
-				ilGetData()); 
+				ilGetData());
 		}
-		else 
+		else
 			printf("Couldn't load Image: %s\n", filename.c_str());
 	}
 	/* Because we have already copied image data into texture data
 	we can release memory used by image. */
-	ilDeleteImages(numTextures, imageIds); 
+	ilDeleteImages(numTextures, imageIds);
 
 	//Cleanup
-	delete [] imageIds;
-	delete [] textureIds;
+	delete[] imageIds;
+	delete[] textureIds;
 
 	//return success;
 	return true;
@@ -645,15 +656,15 @@ void color4_to_float4(const aiColor4D *c, float f[4])
 	f[3] = c->a;
 }
 
-void genVAOsAndUniformBuffer(const aiScene *&sc, std::map<std::string, GLuint> textureIdMap, std::vector<struct MyMesh>& myMeshes) {
+void genVAOsAndUniformBuffer(Model& model) {
 
 	struct MyMesh aMesh;
-	struct MyMaterial aMat; 
+	struct MyMaterial aMat;
 	GLuint buffer;
 
 	// For each mesh
-	for (unsigned int n = 0; n < sc->mNumMeshes; ++n) {
-		const aiMesh* mesh = sc->mMeshes[n];
+	for (unsigned int n = 0; n < model.scene->mNumMeshes; ++n) {
+		const aiMesh* mesh = model.scene->mMeshes[n];
 
 		// create array with faces
 		// have to convert from Assimp format to array
@@ -664,13 +675,13 @@ void genVAOsAndUniformBuffer(const aiScene *&sc, std::map<std::string, GLuint> t
 		for (unsigned int t = 0; t < mesh->mNumFaces; ++t) {
 			const aiFace* face = &mesh->mFaces[t];
 
-			memcpy(&faceArray[faceIndex], face->mIndices,3 * sizeof(unsigned int));
+			memcpy(&faceArray[faceIndex], face->mIndices, 3 * sizeof(unsigned int));
 			faceIndex += 3;
 		}
-		aMesh.numFaces = sc->mMeshes[n]->mNumFaces;
+		aMesh.numFaces = model.scene->mMeshes[n]->mNumFaces;
 
 		// generate Vertex Array for mesh
-		glGenVertexArrays(1,&(aMesh.vao));
+		glGenVertexArrays(1, &(aMesh.vao));
 		glBindVertexArray(aMesh.vao);
 
 		// buffer for faces
@@ -682,7 +693,7 @@ void genVAOsAndUniformBuffer(const aiScene *&sc, std::map<std::string, GLuint> t
 		if (mesh->HasPositions()) {
 			glGenBuffers(1, &buffer);
 			glBindBuffer(GL_ARRAY_BUFFER, buffer);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->mNumVertices, mesh->mVertices, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mVertices, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(vertexLoc);
 			glVertexAttribPointer(vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 		}
@@ -691,67 +702,67 @@ void genVAOsAndUniformBuffer(const aiScene *&sc, std::map<std::string, GLuint> t
 		if (mesh->HasNormals()) {
 			glGenBuffers(1, &buffer);
 			glBindBuffer(GL_ARRAY_BUFFER, buffer);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(float)*3*mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(normalLoc);
 			glVertexAttribPointer(normalLoc, 3, GL_FLOAT, 0, 0, 0);
 		}
 
 		// buffer for vertex texture coordinates
 		if (mesh->HasTextureCoords(0)) {
-			float *texCoords = (float *)malloc(sizeof(float)*2*mesh->mNumVertices);
+			float *texCoords = (float *)malloc(sizeof(float) * 2 * mesh->mNumVertices);
 			for (unsigned int k = 0; k < mesh->mNumVertices; ++k) {
 
-				texCoords[k*2]   = mesh->mTextureCoords[0][k].x;
-				texCoords[k*2+1] = mesh->mTextureCoords[0][k].y; 
-				
+				texCoords[k * 2] = mesh->mTextureCoords[0][k].x;
+				texCoords[k * 2 + 1] = mesh->mTextureCoords[0][k].y;
+
 			}
 			glGenBuffers(1, &buffer);
 			glBindBuffer(GL_ARRAY_BUFFER, buffer);
-			glBufferData(GL_ARRAY_BUFFER, sizeof(float)*2*mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
+			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(texCoordLoc);
 			glVertexAttribPointer(texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
 		}
 
 		// unbind buffers
 		glBindVertexArray(0);
-		glBindBuffer(GL_ARRAY_BUFFER,0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER,0);
-	
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
 		// create material uniform buffer
-		aiMaterial *mtl = sc->mMaterials[mesh->mMaterialIndex];
-			
+		aiMaterial *mtl = model.scene->mMaterials[mesh->mMaterialIndex];
+
 		aiString texPath;	//contains filename of texture
-		if(AI_SUCCESS == mtl->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)){
-				//bind texture
-				unsigned int texId = textureIdMap[texPath.data];
-				aMesh.texIndex = texId;
-				aMat.texCount = 1;
-			}
+		if (AI_SUCCESS == mtl->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
+			//bind texture
+			unsigned int texId = model.textureIdMap[texPath.data];
+			aMesh.texIndex = texId;
+			aMat.texCount = 1;
+		}
 		else
 			aMat.texCount = 0;
 
 		float c[4];
 		set_float4(c, 0.8f, 0.8f, 0.8f, 1.0f);
 		aiColor4D diffuse;
-		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
+		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
 			color4_to_float4(&diffuse, c);
 		memcpy(aMat.diffuse, c, sizeof(c));
 
 		set_float4(c, 0.2f, 0.2f, 0.2f, 1.0f);
 		aiColor4D ambient;
-		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient))
+		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient))
 			color4_to_float4(&ambient, c);
 		memcpy(aMat.ambient, c, sizeof(c));
 
 		set_float4(c, 0.0f, 0.0f, 0.0f, 1.0f);
 		aiColor4D specular;
-		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular))
+		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular))
 			color4_to_float4(&specular, c);
 		memcpy(aMat.specular, c, sizeof(c));
 
 		set_float4(c, 0.0f, 0.0f, 0.0f, 1.0f);
 		aiColor4D emission;
-		if(AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission))
+		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission))
 			color4_to_float4(&emission, c);
 		memcpy(aMat.emissive, c, sizeof(c));
 
@@ -760,11 +771,11 @@ void genVAOsAndUniformBuffer(const aiScene *&sc, std::map<std::string, GLuint> t
 		aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &shininess, &max);
 		aMat.shininess = shininess;
 
-		glGenBuffers(1,&(aMesh.uniformBlockIndex));
-		glBindBuffer(GL_UNIFORM_BUFFER,aMesh.uniformBlockIndex);
+		glGenBuffers(1, &(aMesh.uniformBlockIndex));
+		glBindBuffer(GL_UNIFORM_BUFFER, aMesh.uniformBlockIndex);
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(aMat), (void *)(&aMat), GL_STATIC_DRAW);
 
-		myMeshes.push_back(aMesh);
+		model.myMesh.push_back(aMesh);
 	}
 }
 
@@ -779,11 +790,11 @@ void changeSize(int w, int h) {
 	float ratio;
 	// Prevent a divide by zero, when window is too short
 	// (you cant make a window of zero width).
-	if(h == 0)
+	if (h == 0)
 		h = 1;
 
 	// Set the viewport to be the entire window
-    glViewport(0, 0, w, h);
+	glViewport(0, 0, w, h);
 
 	ratio = (1.0f * w) / h;
 	buildProjectionMatrix(53.13f, ratio, 0.1f, 100000.0f);
@@ -797,7 +808,7 @@ void changeSize(int w, int h) {
 
 // Render Assimp Model
 
-void recursive_render (const aiScene *sc, const aiNode* nd, std::vector<struct MyMesh> myMeshes)
+void recursive_render(Model& model, const aiNode* nd)
 {
 
 	// Get node transformation matrix
@@ -809,98 +820,106 @@ void recursive_render (const aiScene *sc, const aiNode* nd, std::vector<struct M
 	pushMatrix();
 
 	float aux[16];
-	memcpy(aux,&m,sizeof(float) * 16);
+	memcpy(aux, &m, sizeof(float) * 16);
 	multMatrix(modelMatrix, aux);
 	setModelMatrix();
 
 
 	// draw all meshes assigned to this node
-	for (unsigned int n=0; n < nd->mNumMeshes; ++n){
+	for (unsigned int n = 0; n < nd->mNumMeshes; ++n) {
 		// bind material uniform
-		glBindBufferRange(GL_UNIFORM_BUFFER, materialUniLoc, myMeshes[nd->mMeshes[n]].uniformBlockIndex, 0, sizeof(struct MyMaterial));	
+		glBindBufferRange(GL_UNIFORM_BUFFER, materialUniLoc, model.myMesh[nd->mMeshes[n]].uniformBlockIndex, 0, sizeof(struct MyMaterial));
 		// bind texture
-		glBindTexture(GL_TEXTURE_2D, myMeshes[nd->mMeshes[n]].texIndex);
+		glBindTexture(GL_TEXTURE_2D, model.myMesh[nd->mMeshes[n]].texIndex);
 		// bind VAO
-		glBindVertexArray(myMeshes[nd->mMeshes[n]].vao);
+		glBindVertexArray(model.myMesh[nd->mMeshes[n]].vao);
 		// draw
-		glDrawElements(GL_TRIANGLES,myMeshes[nd->mMeshes[n]].numFaces*3,GL_UNSIGNED_INT,0);
+		glDrawElements(GL_TRIANGLES, model.myMesh[nd->mMeshes[n]].numFaces * 3, GL_UNSIGNED_INT, 0);
 
 	}
 
 	// draw all children
-	for (unsigned int n=0; n < nd->mNumChildren; ++n){
-		recursive_render(sc, nd->mChildren[n], myMeshes);
+	for (unsigned int n = 0; n < nd->mNumChildren; ++n) {
+		recursive_render(model, nd->mChildren[n]);
 	}
 	popMatrix();
 }
 
 ILuint imageID;
 void saveScreenShot(char* fname) {
-	ILuint imageID = ilGenImage();
+	imageID = ilGenImage();
 	ilBindImage(imageID);
 	ilutGLScreen();
 	ilEnable(IL_FILE_OVERWRITE);
 	ilSaveImage(fname);
-	ilDeleteImage(imageID);
+	//ilDeleteImage(imageID);
 }
 
 void drawModels() {
-	static float step1 = 0.0f, step2 = 0.0f;
 	// set the model matrix to the identity Matrix
-	setIdentityMatrix(modelMatrix,4);
-	translate(-1.0,0.0,0.0);
-	rotate(step1, 0.0f, 1.0f, 0.0f);		// use our shader
-	scale(scaleFactor1, scaleFactor1, scaleFactor1);
-	recursive_render(scene1, scene1->mRootNode, myMeshes1);
+	setIdentityMatrix(modelMatrix, 4);
+	translate(model1.translation[0], model1.translation[1], model1.translation[2]);
+	rotate(model1.rotation[0], 0.0f, 1.0f, 0.0f);		// use our shader
+	rotate(model1.rotation[1], 0.0f, 1.0f, 0.0f);		// use our shader
+	rotate(model1.rotation[2], 0.0f, 1.0f, 0.0f);		// use our shader
+	scale(model1.scaleFactor, model1.scaleFactor, model1.scaleFactor);
+	recursive_render(model1, model1.scene->mRootNode);
 
 	// set the model matrix to the identity Matrix
-	setIdentityMatrix(modelMatrix,4);
-	translate(1.0,0.0,0.0);
-	rotate(step2, 0.0f, 1.0f, 0.0f);		// use our shader
-	scale(scaleFactor2, scaleFactor2, scaleFactor2);
-	recursive_render(scene2, scene2->mRootNode, myMeshes2);
-	step1++;
-	step2++;
-
+	setIdentityMatrix(modelMatrix, 4);
+	translate(model2.translation[0], model2.translation[1], model2.translation[2]);
+	rotate(model2.rotation[0], 0.0f, 1.0f, 0.0f);		// use our shader
+	rotate(model2.rotation[1], 0.0f, 1.0f, 0.0f);		// use our shader
+	rotate(model2.rotation[2], 0.0f, 1.0f, 0.0f);		// use our shader
+	scale(model2.scaleFactor, model2.scaleFactor, model2.scaleFactor);
+	recursive_render(model2, model2.scene->mRootNode);
 }
 
 bool rgb = true;
 int imgCounter = 0;
 char fname[1024];
 // Rendering Callback Function
-void renderScene(void) {
+void renderScene() {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	setCamera(camX,camY,camZ,0,0,0);
+	setCamera(camX, camY, camZ, 0, 0, 0);
 
-	if(rgb) {
+	if (rgb) {
 		// set camera matrix
 		glUseProgram(program_rgb);
 		// we are only going to use texture unit 0
 		// unfortunately samplers can't reside in uniform blocks
 		// so we have set this uniform separately
-		glUniform1i(texUnit,0);
+		glUniform1i(texUnit, 0);
 
 		drawModels();
 
-		//sprintf(fname, "./outputs/trail_%02d_rgb.png", imgCounter);
-		//saveScreenShot(fname);
+		sprintf(fname, "./outputs/trail_%02d_rgb.png", imgCounter);
 	}
 	else {
 		glUseProgram(program_depth);
 		drawModels();
 
-		//sprintf(fname, "./outputs/trail_%02d_depth.png", imgCounter);
-		//saveScreenShot(fname);
-		//imgCounter++;
+		sprintf(fname, "./outputs/trail_%02d_depth.png", imgCounter);
+		model1.rotation[1]++;
+		model2.rotation[1]++;
 	}
+
+	if (saveFramebufferOnce | saveFramebufferUntilStop) {
+		saveScreenShot(fname);
+		if (!rgb) {
+			imgCounter++;
+			saveFramebufferOnce = false;
+		}
+	}
+	
 	rgb = !rgb;
 
 	// FPS computation and display
 	frame++;
-	time=glutGet(GLUT_ELAPSED_TIME);
+	time = glutGet(GLUT_ELAPSED_TIME);
 	if (time - timebase > 1000) {
-		sprintf(s,"FPS:%4.2f",
-			frame*1000.0/(time-timebase));
+		sprintf(s, "FPS:%4.2f",
+			frame*1000.0 / (time - timebase));
 		timebase = time;
 		frame = 0;
 		glutSetWindowTitle(s);
@@ -917,47 +936,64 @@ void renderScene(void) {
 //
 // Events from the Keyboard
 //
-int currModel = 1;
-void processKeys(unsigned char key, int xx, int yy) 
-{
-	switch(key) {
+Model *currModel = &model1;
+void processKeys(unsigned char key, int xx, int yy) {
+	switch (key) {
 
-		case 27: 
+	case 27:
 
-			glutLeaveMainLoop();
-			break;
-	
-		case 'z': r -= 0.1f; break;
-		case 'x': r += 0.1f; break;	
-		case 'm': glEnable(GL_MULTISAMPLE); break;
-		case 'n': glDisable(GL_MULTISAMPLE); break;
-		case '1': currModel = 1; printf("Current Model is 1 \n"); break;
-		case '2': currModel = 2; printf("Current Model is 2 \n"); break;
-		case 'q': { 
-			switch(currModel) {
-			case 1: scaleFactor1 -= 0.1f; break;
-			case 2: scaleFactor2 -= 0.1f; break;
-			}
+		glutLeaveMainLoop();
+		break;
 
-			if(scaleFactor1 < 0.1) scaleFactor1 = 0.1;
-			if(scaleFactor2 < 0.1) scaleFactor2 = 0.1;
-			break;
-				  }
-		case 'w': { 
-			switch(currModel) {
-			case 1: scaleFactor1 += 0.1f; break;
-			case 2: scaleFactor2 += 0.1f; break;
-			}
-			break;
-					}
-		default: printf("Entered key does nothing \n");
+	case 'z': r -= 0.1f; break;
+	case 'x': r += 0.1f; break;
+	case 'm': glEnable(GL_MULTISAMPLE); break;
+	case 'M': glDisable(GL_MULTISAMPLE); break;
+	case '1': currModel = &model1; printf("Current Model is 1 \n"); break;
+	case '2': currModel = &model2; printf("Current Model is 2 \n"); break;
+	case 's': rgb = true; saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
+	case 'S': {
+		rgb = true; 
+		saveFramebufferUntilStop = !saveFramebufferUntilStop; 
+		if (saveFramebufferUntilStop) {
+			printf("Saving framebuffer until stop. Press S again to stop \n");
+		}
+		else {
+			printf("Stoped saving \n");
+		}
+		break;
+	}
+	case 'q': {
+		currModel->scaleFactor -= 0.1f; 
+		if (currModel->scaleFactor < 0.1)
+			currModel->scaleFactor = 0.1;
+		break;
+	}
+	case 'w': {
+		currModel->scaleFactor += 0.1f; 
+		break;
+	}
+	case 'e': currModel->rotation[0] -= 0.1f; break;
+	case 'r': currModel->rotation[0] += 0.1f; break;
+	case 'd': currModel->rotation[1] -= 0.1f; break;
+	case 'f': currModel->rotation[1] += 0.1f; break;
+	case 'c': currModel->rotation[2] -= 0.1f; break;
+	case 'v': currModel->rotation[2] += 0.1f; break;
+	case 't': currModel->translation[0] -= 0.1f; break;
+	case 'y': currModel->translation[0] += 0.1f; break;
+	case 'g': currModel->translation[1] -= 0.1f; break;
+	case 'h': currModel->translation[1] += 0.1f; break;
+	case 'b': currModel->translation[2] -= 0.1f; break;
+	case 'n': currModel->translation[2] += 0.1f; break;
+
+	default: printf("Entered key does nothing \n");
 	}
 	camX = r * sin(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
 	camZ = r * cos(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
 	camY = r *   						     sin(beta * 3.14f / 180.0f);
 
-//  uncomment this if not using an idle func
-//	glutPostRedisplay();
+	//  uncomment this if not using an idle func
+	//	glutPostRedisplay();
 }
 
 
@@ -966,10 +1002,10 @@ void processKeys(unsigned char key, int xx, int yy)
 // Mouse Events
 //
 
-void processMouseButtons(int button, int state, int xx, int yy) 
+void processMouseButtons(int button, int state, int xx, int yy)
 {
 	// start tracking the mouse
-	if (state == GLUT_DOWN)  {
+	if (state == GLUT_DOWN) {
 		startX = xx;
 		startY = yy;
 		if (button == GLUT_LEFT_BUTTON)
@@ -1000,8 +1036,8 @@ void processMouseMotion(int xx, int yy)
 	float alphaAux, betaAux;
 	float rAux;
 
-	deltaX =  startX - xx;
-	deltaY =  yy - startY;
+	deltaX = startX - xx;
+	deltaY = yy - startY;
 
 	// left mouse button: move camera
 	if (tracking == 1) {
@@ -1034,8 +1070,8 @@ void processMouseMotion(int xx, int yy)
 	}
 
 
-//  uncomment this if not using an idle func
-//	glutPostRedisplay();
+	//  uncomment this if not using an idle func
+	//	glutPostRedisplay();
 }
 
 
@@ -1061,44 +1097,44 @@ void mouseWheel(int wheel, int direction, int x, int y) {
 
 void printShaderInfoLog(GLuint obj)
 {
-    int infologLength = 0;
-    int charsWritten  = 0;
-    char *infoLog;
+	int infologLength = 0;
+	int charsWritten = 0;
+	char *infoLog;
 
-	glGetShaderiv(obj, GL_INFO_LOG_LENGTH,&infologLength);
+	glGetShaderiv(obj, GL_INFO_LOG_LENGTH, &infologLength);
 
-    if (infologLength > 0)
-    {
-        infoLog = (char *)malloc(infologLength);
-        glGetShaderInfoLog(obj, infologLength, &charsWritten, infoLog);
-		printf("%s\n",infoLog);
-        free(infoLog);
-    }
+	if (infologLength > 0)
+	{
+		infoLog = (char *)malloc(infologLength);
+		glGetShaderInfoLog(obj, infologLength, &charsWritten, infoLog);
+		printf("%s\n", infoLog);
+		free(infoLog);
+	}
 }
 
 
 void printProgramInfoLog(GLuint obj)
 {
-    int infologLength = 0;
-    int charsWritten  = 0;
-    char *infoLog;
+	int infologLength = 0;
+	int charsWritten = 0;
+	char *infoLog;
 
-	glGetProgramiv(obj, GL_INFO_LOG_LENGTH,&infologLength);
+	glGetProgramiv(obj, GL_INFO_LOG_LENGTH, &infologLength);
 
-    if (infologLength > 0)
-    {
-        infoLog = (char *)malloc(infologLength);
-        glGetProgramInfoLog(obj, infologLength, &charsWritten, infoLog);
-		printf("%s\n",infoLog);
-        free(infoLog);
-    }
+	if (infologLength > 0)
+	{
+		infoLog = (char *)malloc(infologLength);
+		glGetProgramInfoLog(obj, infologLength, &charsWritten, infoLog);
+		printf("%s\n", infoLog);
+		free(infoLog);
+	}
 }
 
 GLuint setupRGBshader() {
 
-	char *vs = NULL,*fs = NULL,*fs2 = NULL;
+	char *vs = NULL, *fs = NULL, *fs2 = NULL;
 
-	GLuint p,v,f;
+	GLuint p, v, f;
 
 	v = glCreateShader(GL_VERTEX_SHADER);
 	f = glCreateShader(GL_FRAGMENT_SHADER);
@@ -1109,10 +1145,10 @@ GLuint setupRGBshader() {
 	const char * vv = vs;
 	const char * ff = fs;
 
-	glShaderSource(v, 1, &vv,NULL);
-	glShaderSource(f, 1, &ff,NULL);
+	glShaderSource(v, 1, &vv, NULL);
+	glShaderSource(f, 1, &ff, NULL);
 
-	free(vs);free(fs);
+	free(vs); free(fs);
 
 	glCompileShader(v);
 	glCompileShader(f);
@@ -1121,14 +1157,14 @@ GLuint setupRGBshader() {
 	printShaderInfoLog(f);
 
 	p = glCreateProgram();
-	glAttachShader(p,v);
-	glAttachShader(p,f);
+	glAttachShader(p, v);
+	glAttachShader(p, f);
 
 	glBindFragDataLocation(p, 0, "output");
 
-	glBindAttribLocation(p,vertexLoc,"position");
-	glBindAttribLocation(p,normalLoc,"normal");
-	glBindAttribLocation(p,texCoordLoc,"texCoord");
+	glBindAttribLocation(p, vertexLoc, "position");
+	glBindAttribLocation(p, normalLoc, "normal");
+	glBindAttribLocation(p, texCoordLoc, "texCoord");
 
 	glLinkProgram(p);
 	glValidateProgram(p);
@@ -1137,21 +1173,21 @@ GLuint setupRGBshader() {
 	program_rgb = p;
 	vertexShader = v;
 	fragmentShader_rgb = f;
-	
-	GLuint k = glGetUniformBlockIndex(p,"Matrices");
-	glUniformBlockBinding(p, k, matricesUniLoc);
-	glUniformBlockBinding(p, glGetUniformBlockIndex(p,"Material"), materialUniLoc);
 
-	texUnit = glGetUniformLocation(p,"texUnit");
+	GLuint k = glGetUniformBlockIndex(p, "Matrices");
+	glUniformBlockBinding(p, k, matricesUniLoc);
+	glUniformBlockBinding(p, glGetUniformBlockIndex(p, "Material"), materialUniLoc);
+
+	texUnit = glGetUniformLocation(p, "texUnit");
 
 	return(p);
 }
 
 GLuint setupDepthShader() {
 
-	char *vs = NULL,*fs = NULL,*fs2 = NULL;
+	char *vs = NULL, *fs = NULL, *fs2 = NULL;
 
-	GLuint p,v,f;
+	GLuint p, v, f;
 
 	v = glCreateShader(GL_VERTEX_SHADER);
 	f = glCreateShader(GL_FRAGMENT_SHADER);
@@ -1162,10 +1198,10 @@ GLuint setupDepthShader() {
 	const char * vv = vs;
 	const char * ff = fs;
 
-	glShaderSource(v, 1, &vv,NULL);
-	glShaderSource(f, 1, &ff,NULL);
+	glShaderSource(v, 1, &vv, NULL);
+	glShaderSource(f, 1, &ff, NULL);
 
-	free(vs);free(fs);
+	free(vs); free(fs);
 
 	glCompileShader(v);
 	glCompileShader(f);
@@ -1174,13 +1210,13 @@ GLuint setupDepthShader() {
 	printShaderInfoLog(f);
 
 	p = glCreateProgram();
-	glAttachShader(p,v);
-	glAttachShader(p,f);
+	glAttachShader(p, v);
+	glAttachShader(p, f);
 
 	glBindFragDataLocation(p, 0, "output");
-	glBindAttribLocation(p,vertexLoc,"position");
-	glBindAttribLocation(p,normalLoc,"normal");
-	glBindAttribLocation(p,texCoordLoc,"texCoord");
+	glBindAttribLocation(p, vertexLoc, "position");
+	glBindAttribLocation(p, normalLoc, "normal");
+	glBindAttribLocation(p, texCoordLoc, "texCoord");
 
 	glLinkProgram(p);
 	glValidateProgram(p);
@@ -1189,8 +1225,8 @@ GLuint setupDepthShader() {
 	program_depth = p;
 	vertexShader = v;
 	fragmentShader_depth = f;
-	
-	GLuint k = glGetUniformBlockIndex(p,"Matrices");
+
+	GLuint k = glGetUniformBlockIndex(p, "Matrices");
 	glUniformBlockBinding(p, k, matricesUniLoc);
 
 	return(p);
@@ -1203,93 +1239,86 @@ GLuint setupDepthShader() {
 //
 
 
-int init()					 
+int init()
 {
-		/* initialization of DevIL */
-	ilInit(); 
-	
-	if (!Import3DFromFile(basepath2+modelname2, scene2, importer2)) 
+	/* initialization of DevIL */
+	ilInit();
+
+	model1.basepath = basepath1;
+	model1.modelname = modelname1;
+	model2.basepath = basepath2;
+	model2.modelname = modelname2;
+
+	if (!Import3DFromFile(model1))
 		return(0);
-	if(!scene2) {
-		printf("%s\n", importer2.GetErrorString());
-		return false;
-	}
-	LoadGLTextures(basepath2, scene2, textureIdMap2);
+	LoadGLTextures(model1);
 
-	if (!Import3DFromFile(basepath1+modelname1, scene1, importer1)) 
+	if (!Import3DFromFile(model2))
 		return(0);
-	if(!scene1) {
-		printf("%s\n", importer1.GetErrorString());
-		return false;
-	}
-	LoadGLTextures(basepath1, scene1, textureIdMap1);
+	LoadGLTextures(model2);
 
-
-
-	glGetUniformBlockIndex = (PFNGLGETUNIFORMBLOCKINDEXPROC) glutGetProcAddress("glGetUniformBlockIndex");
-	glUniformBlockBinding = (PFNGLUNIFORMBLOCKBINDINGPROC) glutGetProcAddress("glUniformBlockBinding");
-	glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC) glutGetProcAddress("glGenVertexArrays");
+	glGetUniformBlockIndex = (PFNGLGETUNIFORMBLOCKINDEXPROC)glutGetProcAddress("glGetUniformBlockIndex");
+	glUniformBlockBinding = (PFNGLUNIFORMBLOCKBINDINGPROC)glutGetProcAddress("glUniformBlockBinding");
+	glGenVertexArrays = (PFNGLGENVERTEXARRAYSPROC)glutGetProcAddress("glGenVertexArrays");
 	glBindVertexArray = (PFNGLBINDVERTEXARRAYPROC)glutGetProcAddress("glBindVertexArray");
-	glBindBufferRange = (PFNGLBINDBUFFERRANGEPROC) glutGetProcAddress("glBindBufferRange");
-	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC) glutGetProcAddress("glDeleteVertexArrays");
+	glBindBufferRange = (PFNGLBINDBUFFERRANGEPROC)glutGetProcAddress("glBindBufferRange");
+	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)glutGetProcAddress("glDeleteVertexArrays");
 
 	program_depth = setupDepthShader();
 	program_rgb = setupRGBshader();
-	genVAOsAndUniformBuffer(scene1, textureIdMap1, myMeshes1);
-	genVAOsAndUniformBuffer(scene2, textureIdMap2, myMeshes2);
+	genVAOsAndUniformBuffer(model1);
+	genVAOsAndUniformBuffer(model2);
 
-	glEnable(GL_DEPTH_TEST);		
+	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	//
 	// Uniform Block
 	//
-	glGenBuffers(1,&matricesUniBuffer);
+	glGenBuffers(1, &matricesUniBuffer);
 	glBindBuffer(GL_UNIFORM_BUFFER, matricesUniBuffer);
-	glBufferData(GL_UNIFORM_BUFFER, MatricesUniBufferSize,NULL,GL_DYNAMIC_DRAW);
+	glBufferData(GL_UNIFORM_BUFFER, MatricesUniBufferSize, NULL, GL_DYNAMIC_DRAW);
 	glBindBufferRange(GL_UNIFORM_BUFFER, matricesUniLoc, matricesUniBuffer, 0, MatricesUniBufferSize);	//setUniforms();
-	glBindBuffer(GL_UNIFORM_BUFFER,0);
+	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
 	glEnable(GL_MULTISAMPLE);
 
-	return true;					
+	return true;
 }
 
 // ------------------------------------------------------------
 //
 // Main function
 //
-
-
 int main(int argc, char **argv) {
 
-//  GLUT initialization
+	//  GLUT initialization
 	glutInit(&argc, argv);
 
-	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA|GLUT_MULTISAMPLE);
+	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE);
 
-	glutInitContextVersion (3, 3);
-	glutInitContextFlags (GLUT_COMPATIBILITY_PROFILE );
+	glutInitContextVersion(3, 3);
+	glutInitContextFlags(GLUT_COMPATIBILITY_PROFILE);
 
-	glutInitWindowPosition(100,100);
+	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(1024, 768);
 	glutCreateWindow("Lighthouse3D - Assimp Demo");
-		
 
-//  Callback Registration
+
+	//  Callback Registration
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
 	glutIdleFunc(renderScene);
 
-//	Mouse and Keyboard Callbacks
+	//	Mouse and Keyboard Callbacks
 	glutKeyboardFunc(processKeys);
 	glutMouseFunc(processMouseButtons);
 	glutMotionFunc(processMouseMotion);
-	
-	glutMouseWheelFunc ( mouseWheel ) ;
 
-//	Init GLEW
-	//glewExperimental = GL_TRUE;
+	glutMouseWheelFunc(mouseWheel);
+
+	//	Init GLEW
+		//glewExperimental = GL_TRUE;
 	glewInit();
 	if (glewIsSupported("GL_VERSION_3_3"))
 		printf("Ready for OpenGL 3.3\n");
@@ -1298,40 +1327,24 @@ int main(int argc, char **argv) {
 		return(1);
 	}
 
-//  Init the app (load model and textures) and OpenGL
+	//  Init the app (load model and textures) and OpenGL
 	if (!init())
 		printf("Could not Load the Model\n");
 
-   printf ("Vendor: %s\n", glGetString (GL_VENDOR));
-   printf ("Renderer: %s\n", glGetString (GL_RENDERER));
-   printf ("Version: %s\n", glGetString (GL_VERSION));
-   printf ("GLSL: %s\n", glGetString (GL_SHADING_LANGUAGE_VERSION));
+	printf("Vendor: %s\n", glGetString(GL_VENDOR));
+	printf("Renderer: %s\n", glGetString(GL_RENDERER));
+	printf("Version: %s\n", glGetString(GL_VERSION));
+	printf("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
 
-   // return from main loop
+	// return from main loop
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
-//  GLUT main loop
+	//  GLUT main loop
 	glutMainLoop();
 
-	// cleaning up
-	textureIdMap1.clear();  
-	textureIdMap2.clear();  
-
-	// clear myMeshes stuff
-	for (unsigned int i = 0; i < myMeshes1.size(); ++i) {
-		glDeleteVertexArrays(1,&(myMeshes1[i].vao));
-		glDeleteTextures(1,&(myMeshes1[i].texIndex));
-		glDeleteBuffers(1,&(myMeshes1[i].uniformBlockIndex));
-	}
-	for (unsigned int i = 0; i < myMeshes2.size(); ++i) {
-		glDeleteVertexArrays(1,&(myMeshes2[i].vao));
-		glDeleteTextures(1,&(myMeshes2[i].texIndex));
-		glDeleteBuffers(1,&(myMeshes2[i].uniformBlockIndex));
-	}
-
 	// delete buffers
-	glDeleteBuffers(1,&matricesUniBuffer);
+	glDeleteBuffers(1, &matricesUniBuffer);
 
 	return(0);
 }
