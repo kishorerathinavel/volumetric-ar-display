@@ -11,6 +11,9 @@ void setup()   {
 }
 
 void loop() {
+  while(true) {
+    yield();
+  }
 }
 
 int waitTime = 54;
