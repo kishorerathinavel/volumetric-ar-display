@@ -78,6 +78,8 @@ static const std::string modelname2 = "bunny2.obj";
 //static const std::string modelname1 = "1-body.stl";
 //static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/nasa-models/MSL_dirty/";
 //static const std::string modelname2 = "MSL_dirty_modified.obj";
+//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/reconstruction/";
+//static const std::string modelname2 = "bun_zipper.ply";
 
 // This is for a shader uniform block
 struct MyMaterial {
@@ -859,18 +861,18 @@ void drawModels() {
 	// set the model matrix to the identity Matrix
 	setIdentityMatrix(modelMatrix, 4);
 	translate(model1.translation[0], model1.translation[1], model1.translation[2]);
-	rotate(model1.rotation[0], 0.0f, 1.0f, 0.0f);		// use our shader
+	rotate(model1.rotation[0], 1.0f, 0.0f, 0.0f);		// use our shader
 	rotate(model1.rotation[1], 0.0f, 1.0f, 0.0f);		// use our shader
-	rotate(model1.rotation[2], 0.0f, 1.0f, 0.0f);		// use our shader
+	rotate(model1.rotation[2], 0.0f, 0.0f, 1.0f);		// use our shader
 	scale(model1.scaleFactor, model1.scaleFactor, model1.scaleFactor);
 	recursive_render(model1, model1.scene->mRootNode);
 
 	// set the model matrix to the identity Matrix
 	setIdentityMatrix(modelMatrix, 4);
 	translate(model2.translation[0], model2.translation[1], model2.translation[2]);
-	rotate(model2.rotation[0], 0.0f, 1.0f, 0.0f);		// use our shader
+	rotate(model2.rotation[0], 1.0f, 0.0f, 0.0f);		// use our shader
 	rotate(model2.rotation[1], 0.0f, 1.0f, 0.0f);		// use our shader
-	rotate(model2.rotation[2], 0.0f, 1.0f, 0.0f);		// use our shader
+	rotate(model2.rotation[2], 0.0f, 0.0f, 1.0f);		// use our shader
 	scale(model2.scaleFactor, model2.scaleFactor, model2.scaleFactor);
 	recursive_render(model2, model2.scene->mRootNode);
 }
@@ -904,15 +906,17 @@ void renderScene() {
 		model2.rotation[1]++;
 	}
 
+
 	if (saveFramebufferOnce | saveFramebufferUntilStop) {
 		saveScreenShot(fname);
 		if (!rgb) {
 			imgCounter++;
 			saveFramebufferOnce = false;
 		}
+		saveFramebufferOnce = false;
 	}
-	
-	rgb = !rgb;
+
+	//rgb = !rgb;
 
 	// FPS computation and display
 	frame++;
@@ -953,8 +957,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 	case '2': currModel = &model2; printf("Current Model is 2 \n"); break;
 	case 's': rgb = true; saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
 	case 'S': {
-		rgb = true; 
-		saveFramebufferUntilStop = !saveFramebufferUntilStop; 
+		rgb = true;
+		saveFramebufferUntilStop = !saveFramebufferUntilStop;
 		if (saveFramebufferUntilStop) {
 			printf("Saving framebuffer until stop. Press S again to stop \n");
 		}
@@ -964,13 +968,13 @@ void processKeys(unsigned char key, int xx, int yy) {
 		break;
 	}
 	case 'q': {
-		currModel->scaleFactor -= 0.1f; 
+		currModel->scaleFactor -= 0.1f;
 		if (currModel->scaleFactor < 0.1)
 			currModel->scaleFactor = 0.1;
 		break;
 	}
 	case 'w': {
-		currModel->scaleFactor += 0.1f; 
+		currModel->scaleFactor += 0.1f;
 		break;
 	}
 	case 'e': currModel->rotation[0] -= 0.1f; break;
@@ -1238,6 +1242,17 @@ GLuint setupDepthShader() {
 // Model loading and OpenGL setup
 //
 
+const GLfloat light_ambient[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+const GLfloat light_diffuse[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat light_position[] = { 2.0f, 5.0f, 5.0f, 0.0f };
+
+const GLfloat mat_ambient[] = { 0.7f, 0.7f, 0.7f, 1.0f };
+const GLfloat mat_diffuse[] = { 0.8f, 0.8f, 0.8f, 1.0f };
+const GLfloat mat_specular[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+const GLfloat high_shininess[] = { 100.0f };
+
+
 
 int init()
 {
@@ -1270,7 +1285,7 @@ int init()
 	genVAOsAndUniformBuffer(model2);
 
 	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 
 	//
 	// Uniform Block
@@ -1280,6 +1295,22 @@ int init()
 	glBufferData(GL_UNIFORM_BUFFER, MatricesUniBufferSize, NULL, GL_DYNAMIC_DRAW);
 	glBindBufferRange(GL_UNIFORM_BUFFER, matricesUniLoc, matricesUniBuffer, 0, MatricesUniBufferSize);	//setUniforms();
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
+
+
+	//glEnable(GL_LIGHT0);
+	//glEnable(GL_NORMALIZE);
+	//glEnable(GL_COLOR_MATERIAL);
+	//glEnable(GL_LIGHTING);
+
+	//glLightfv(GL_LIGHT0, GL_AMBIENT, light_ambient);
+	//glLightfv(GL_LIGHT0, GL_DIFFUSE, light_diffuse);
+	//glLightfv(GL_LIGHT0, GL_SPECULAR, light_specular);
+	//glLightfv(GL_LIGHT0, GL_POSITION, light_position);
+
+	//glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
+	//glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
+	//glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	//glMaterialfv(GL_FRONT, GL_SHININESS, high_shininess);
 
 	glEnable(GL_MULTISAMPLE);
 
