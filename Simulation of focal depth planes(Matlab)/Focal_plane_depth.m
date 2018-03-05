@@ -7,12 +7,12 @@
 % chaning these parameters may cause problem by violating the virtual image
 % assumption.
 
-o=0.08; % obejct distance from DMD to focus-tunable lens
-l=0.15; % distance between focus-tunable lens and eyepiece
-f=0.60; % focal length of eyepiece
-num=154; % num of sample depths along z direction(depth direction)
-MinOpPower=4; % min optical power of focus tunable lens(in diopters)
-MaxOpPower=20 % max optical power of focus tunable lens(in diopters)
+o=x(3); % obejct distance from DMD to focus-tunable lens
+l=x(2); % distance between focus-tunable lens and eyepiece
+f=x(1); % focal length of eyepiece
+num=280; % num of sample depths along z direction(depth direction)
+MinOpPower=11; % min optical power of focus tunable lens(in diopters)
+MaxOpPower=13; % max optical power of focus tunable lens(in diopters)
 p=1; % num of cycles shown when using periodical driving signal
 t=1:1:num;
 
@@ -32,7 +32,7 @@ Magnitude=MaxOpPower-MinOpPower;
 offset=MinOpPower;
 p1=Magnitude*2*p/num*(1:1:ceil(num/2/p));
 p2=-p1+max(p1);
-p_11=[p1,p2];
+p_11=[p2,p1];
 p_w=repmat(p_11,1,p);
 f_t_inverse=p_w(1:num)+offset;
 
@@ -61,5 +61,8 @@ title('Focal plane depth changes in meter');
 xlabel('time/s');
 ylabel('Focal plane depth/m');
 
+d=1./D;
+%%
 
-
+x0=[3,3,3];
+[x,fval,exitflag]=fsolve(@(x) System(x,1/MinOpPower,1/MaxOpPower,0.2,3.6),x0);
