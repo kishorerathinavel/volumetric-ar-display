@@ -38,6 +38,6 @@ void main()
   }
   // color = vec4(Depth);
   // output = (color);
-  // output = (color * intensity) + amb;
-  output = amb;
+  output = (color * intensity) + amb;
+  // output = amb;
 }
