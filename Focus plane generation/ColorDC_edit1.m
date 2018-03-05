@@ -3,6 +3,9 @@ NumofBP=280;
 colorbit=24;
 NumofCP=NumofBP-colorbit+1;
 DepthList=linspace(0,1,NumofCP);
+%%
+
+[d_sort,order]=sort(d);
 %% Read Image
 RGBImg=imread('TexturedBunny00.png');
 DepthImg=imread('TexturedBunny_depthmap00.png');

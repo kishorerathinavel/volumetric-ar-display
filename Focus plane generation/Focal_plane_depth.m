@@ -10,6 +10,7 @@
 o=x(3); % obejct distance from DMD to focus-tunable lens
 l=x(2); % distance between focus-tunable lens and eyepiece
 f=x(1); % focal length of eyepiece
+%%
 num=280; % num of sample depths along z direction(depth direction)
 MinOpPower=11; % min optical power of focus tunable lens(in diopters)
 MaxOpPower=13; % max optical power of focus tunable lens(in diopters)
@@ -43,7 +44,7 @@ I2=-f*l*o*f_t_inverse+f*o+l*f;
 D=I1./I2; % depth of focal planes in diopter(derivation seen overleaf)
 
 subplot(3,1,1)
-plot(t,f_t_inverse,'r*');
+plot(t,f_t_inverse,'r*'); hold on;
 title('Focus-tunable Lens Driving signal');
 xlabel('time/s');
 ylabel('Optical power/diopter');
@@ -61,8 +62,22 @@ title('Focal plane depth changes in meter');
 xlabel('time/s');
 ylabel('Focal plane depth/m');
 
-d=1./D;
+d=1./D(1:280);
 %%
 
-x0=[3,3,3];
-[x,fval,exitflag]=fsolve(@(x) System(x,1/MinOpPower,1/MaxOpPower,0.2,3.6),x0);
+x0=[0.7,0.5,0.1];
+[x,fval,exitflag]=lsqnonlin(@(x) System(x,1/MinOpPower,1/MaxOpPower,0.2,3.6),x0,[0,0,0],[2,2,2]);
+%%
+t=0:58:1e6/60;
+delt_t=1e6/60/2;
+tan1=(MinOpPower-MaxOpPower)/delt_t;
+y1=tan1*t+MaxOpPower;
+
+tan2=(MaxOpPower-MinOpPower)/delt_t;
+y2=tan2*t+2*MinOpPower-MaxOpPower;
+
+index=max(find(t<=delt_t));
+f_t_inverse=[y1(1:index),y2(index+1:end)];
+
+%%
+save FocusDepth.mat d

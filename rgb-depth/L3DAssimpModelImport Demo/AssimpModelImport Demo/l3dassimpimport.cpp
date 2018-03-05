@@ -64,7 +64,7 @@
 #include <vector>
 
 // Replace the model name by your model's filename
-static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/other-models/";
+static const std::string basepath1 = "C:/Users/whp17/Google Drive/Shared/3d-models (1)/other-models/";
 static const std::string modelname1 = "bench.obj";
 //static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
 //static const std::string modelname1 = "spider.obj";
@@ -72,7 +72,7 @@ static const std::string modelname1 = "bench.obj";
 //static const std::string modelname2 = "spider.obj";
 //static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/textured/";
 //static const std::string modelname1 = "bunny2.obj";
-static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/textured/";
+static const std::string basepath2 = "C:/Users/whp17/Google Drive/Shared/3d-models (1)/stanford-3d-models/bunny/textured/";
 static const std::string modelname2 = "bunny2.obj";
 //static const std::string basepath1 = "C:/Users/kishore/Downloads/Curiosity Rover 3D Printed Model/Detailed Curiosity Model (Large)/";
 //static const std::string modelname1 = "1-body.stl";
@@ -151,7 +151,7 @@ public:
 
 	Model() {
 		scene = NULL;
-		scaleFactor = 1.0;
+		scaleFactor = 0.05;
 	}
 
 	~Model() {
@@ -166,14 +166,14 @@ public:
 }model1, model2;
 
 // Camera Position
-float camX = 0, camY = 0, camZ = 5;
+float camX = 0, camY = 0, camZ = 1.2;
 
 // Mouse Tracking Variables
 int startX, startY, tracking = 0;
 
 // Camera Spherical Coordinates
 float alpha = 0.0f, beta = 0.0f;
-float r = 5.0f;
+float r = 1.2f;
 
 bool saveFramebufferOnce = false;
 bool saveFramebufferUntilStop = false;
@@ -799,7 +799,7 @@ void changeSize(int w, int h) {
 	glViewport(0, 0, w, h);
 
 	ratio = (1.0f * w) / h;
-	buildProjectionMatrix(53.13f, ratio, 0.1f, 100000.0f);
+	buildProjectionMatrix(35.0f, ratio, 0.2f, 1000.0f);
 }
 
 
@@ -877,7 +877,7 @@ void drawModels() {
 	recursive_render(model2, model2.scene->mRootNode);
 }
 
-bool rgb = true;
+bool rgb = false;
 int imgCounter = 0;
 char fname[1024];
 // Rendering Callback Function
@@ -968,13 +968,13 @@ void processKeys(unsigned char key, int xx, int yy) {
 		break;
 	}
 	case 'q': {
-		currModel->scaleFactor -= 0.1f;
-		if (currModel->scaleFactor < 0.1)
-			currModel->scaleFactor = 0.1;
+		currModel->scaleFactor -= 0.01f;
+		if (currModel->scaleFactor < 0.01)
+			currModel->scaleFactor = 0.01;
 		break;
 	}
 	case 'w': {
-		currModel->scaleFactor += 0.1f;
+		currModel->scaleFactor += 0.01f;
 		break;
 	}
 	case 'e': currModel->rotation[0] -= 0.1f; break;
@@ -983,12 +983,12 @@ void processKeys(unsigned char key, int xx, int yy) {
 	case 'f': currModel->rotation[1] += 0.1f; break;
 	case 'c': currModel->rotation[2] -= 0.1f; break;
 	case 'v': currModel->rotation[2] += 0.1f; break;
-	case 't': currModel->translation[0] -= 0.1f; break;
-	case 'y': currModel->translation[0] += 0.1f; break;
-	case 'g': currModel->translation[1] -= 0.1f; break;
-	case 'h': currModel->translation[1] += 0.1f; break;
-	case 'b': currModel->translation[2] -= 0.1f; break;
-	case 'n': currModel->translation[2] += 0.1f; break;
+	case 't': currModel->translation[0] -= 0.01f; break;
+	case 'y': currModel->translation[0] += 0.01f; break;
+	case 'g': currModel->translation[1] -= 0.01f; break;
+	case 'h': currModel->translation[1] += 0.01f; break;
+	case 'b': currModel->translation[2] -= 0.01f; break;
+	case 'n': currModel->translation[2] += 0.01f; break;
 
 	default: printf("Entered key does nothing \n");
 	}
