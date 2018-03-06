@@ -49,8 +49,18 @@ void setup() {
 
   SPI.begin();
   SPI.setBitOrder(MSBFIRST);
-  SPI.setClockDivider(SPI_CLOCK_DIV16);
+  SPI.setClockDivider(SPI_CLOCK_DIV2);
   SPI.setDataMode(SPI_MODE3);   
+
+  SPI1.begin();
+  SPI1.setBitOrder(MSBFIRST);
+  SPI1.setClockDivider(SPI_CLOCK_DIV2);
+  SPI1.setDataMode(SPI_MODE3);   
+
+  SPI2.begin();
+  SPI2.setBitOrder(MSBFIRST);
+  SPI2.setClockDivider(SPI_CLOCK_DIV2);
+  SPI2.setDataMode(SPI_MODE3);   
 
   LEVELS[7]=0x5555;// * (1.0/256); //LSB
   LEVELS[6]=0x1F40;// * (1.0/128);
@@ -90,11 +100,11 @@ inline void sendCommonDacCode(uint16_t code) {
   digitalWriteFast(G_CS_PIN,HIGH);
   
   digitalWriteFast(R_CS_PIN,LOW);
-  SPI.transfer16(code);
+  SPI1.transfer16(code);
   digitalWriteFast(R_CS_PIN,HIGH);
   
   digitalWriteFast(B_CS_PIN,LOW);
-  SPI.transfer16(code);
+  SPI2.transfer16(code);
   digitalWriteFast(B_CS_PIN,HIGH);
 
 
@@ -122,11 +132,11 @@ inline void sendDacCodes(uint16_t g_code, uint16_t r_code, uint16_t b_code) {
   digitalWriteFast(G_CS_PIN,HIGH);
 
   digitalWriteFast(R_CS_PIN,LOW);
-  SPI.transfer16(r_code);
+  SPI1.transfer16(r_code);
   digitalWriteFast(R_CS_PIN,HIGH);
 
   digitalWriteFast(B_CS_PIN,LOW);
-  SPI.transfer16(b_code);
+  SPI2.transfer16(b_code);
   digitalWriteFast(B_CS_PIN,HIGH);
 }
   
@@ -183,15 +193,22 @@ void loop() {
     //digitalWriteFast(B_CLR_PIN, HIGH);
     Serial.println("Doing cal sequence. Press ENTER for next value");
 //
-//   while(true) {
-//    for(uint16_t code = 0; code < 0x1000; code = (code==0) ? 1 : code<<1) {
-//      doClear();
-//         sendCommonDacCode(code);
+   while(true) {
+    for(uint16_t gcode = 1; gcode < 0x5555; gcode = gcode*2) {
+      for(uint16_t rcode = 1; rcode < 0x5555; rcode = rcode*2) {
+        for(uint16_t bcode = 1; bcode < 0x5555; bcode = bcode*2) {
+      
+//        doClear();
+//          sendCommonDacCode(code);
+          sendDacCodes(gcode,rcode,bcode);
+          delayMicroseconds(100000);
 //          Serial.readStringUntil('\n');
 //          Serial.println(code);
-//    }
-//    Serial.println("looped");
-//   }
+        }
+      }
+    }
+    Serial.println("looped");
+   }
 
 
     
@@ -205,14 +222,14 @@ void loop() {
       //b_level = level;
 
       Serial.println("Level for bit " + String(level) + " code=" + String(LEVELS[level],HEX));
-      while(Serial.available()<1) {
+//      while(Serial.available()<1) {
         //pulseDac(LEVELS[level], pulseLen); 
 	      sendCommonDacCode(LEVELS[level]);
         //sendGreenDacCode(LEVELS[level]);
-	      //sendDacCodes(LEVELS[g_level], LEVELS[r_level], LEVELS[b_level]);
-  //        delayMicroseconds(delayLen);
+	      // sendDacCodes(LEVELS[g_level], LEVELS[r_level], LEVELS[b_level]);
+//          delayMicroseconds(delayLen);
 //        Serial.readStringUntil('\n');
-      }
+//      }
       //    for(currentValue=minValue; currentValue<=(maxValue+.01); currentValue += stepSize) {
       //      setDacLevelVolts(currentValue);
       //      Serial.println("Level = " + String(currentValue) + " code = 0x" + String((uint16_t)ceil((currentValue/VREF)*0xFFFF),HEX));

@@ -7,12 +7,13 @@
 % chaning these parameters may cause problem by violating the virtual image
 % assumption.
 
-o=0.08; % obejct distance from DMD to focus-tunable lens
-l=0.15; % distance between focus-tunable lens and eyepiece
-f=0.60; % focal length of eyepiece
-num=154; % num of sample depths along z direction(depth direction)
-MinOpPower=4; % min optical power of focus tunable lens(in diopters)
-MaxOpPower=20 % max optical power of focus tunable lens(in diopters)
+o=x(3); % obejct distance from DMD to focus-tunable lens
+l=x(2); % distance between focus-tunable lens and eyepiece
+f=x(1); % focal length of eyepiece
+%%
+num=280; % num of sample depths along z direction(depth direction)
+MinOpPower=11; % min optical power of focus tunable lens(in diopters)
+MaxOpPower=13; % max optical power of focus tunable lens(in diopters)
 p=1; % num of cycles shown when using periodical driving signal
 t=1:1:num;
 
@@ -32,7 +33,7 @@ Magnitude=MaxOpPower-MinOpPower;
 offset=MinOpPower;
 p1=Magnitude*2*p/num*(1:1:ceil(num/2/p));
 p2=-p1+max(p1);
-p_11=[p1,p2];
+p_11=[p2,p1];
 p_w=repmat(p_11,1,p);
 f_t_inverse=p_w(1:num)+offset;
 
@@ -43,7 +44,7 @@ I2=-f*l*o*f_t_inverse+f*o+l*f;
 D=I1./I2; % depth of focal planes in diopter(derivation seen overleaf)
 
 subplot(3,1,1)
-plot(t,f_t_inverse,'r*');
+plot(t,f_t_inverse,'r*'); hold on;
 title('Focus-tunable Lens Driving signal');
 xlabel('time/s');
 ylabel('Optical power/diopter');
@@ -61,5 +62,22 @@ title('Focal plane depth changes in meter');
 xlabel('time/s');
 ylabel('Focal plane depth/m');
 
+d=1./D(1:280);
+%%
 
+x0=[0.7,0.5,0.1];
+[x,fval,exitflag]=lsqnonlin(@(x) System(x,1/MinOpPower,1/MaxOpPower,0.2,3.6),x0,[0,0,0],[2,2,2]);
+%%
+t=0:58:1e6/60;
+delt_t=1e6/60/2;
+tan1=(MinOpPower-MaxOpPower)/delt_t;
+y1=tan1*t+MaxOpPower;
 
+tan2=(MaxOpPower-MinOpPower)/delt_t;
+y2=tan2*t+2*MinOpPower-MaxOpPower;
+
+index=max(find(t<=delt_t));
+f_t_inverse=[y1(1:index),y2(index+1:end)];
+
+%%
+save FocusDepth.mat d
