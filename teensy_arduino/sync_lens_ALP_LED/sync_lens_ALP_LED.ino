@@ -71,17 +71,17 @@ void setupSPI() {
 
   SPI.begin();
   SPI.setBitOrder(MSBFIRST);
-  SPI.setClockDivider(SPI_CLOCK_DIV2);
+  SPI.setClockDivider(SPI_CLOCK_DIV4);
   SPI.setDataMode(SPI_MODE3);   
 
   SPI1.begin();
   SPI1.setBitOrder(MSBFIRST);
-  SPI1.setClockDivider(SPI_CLOCK_DIV2);
+  SPI1.setClockDivider(SPI_CLOCK_DIV4);
   SPI1.setDataMode(SPI_MODE3);   
 
   SPI2.begin();
   SPI2.setBitOrder(MSBFIRST);
-  SPI2.setClockDivider(SPI_CLOCK_DIV2);
+  SPI2.setClockDivider(SPI_CLOCK_DIV4);
   SPI2.setDataMode(SPI_MODE3);   
 }
 
@@ -107,12 +107,12 @@ float binary_frame_time = lens_frame_time/280.0;
 
 void loop() {
   if(disp_img) {
-    // last_time = micros();
+    last_time = micros();
     for(int i = 0; i < 280; i++) {
-      // while((micros() - last_time) <= (i*binary_frame_time)) {
-      // __asm__ volatile ("nop");
-      // 	// yield();
-      // }
+      while((micros() - last_time) <= (i*binary_frame_time)) {
+      __asm__ volatile ("nop");
+      	// yield();
+      }
       // rcode = codes[i][0];
       // gcode = codes[i][1];
       // bcode = codes[i][2];
@@ -127,7 +127,7 @@ void loop() {
       __asm__ volatile ("nop");
       digitalWrite(ALPpin, LOW);
       sendDacCodes(codes[i][0], codes[i][1], codes[i][2]);
-      delayMicroseconds(waitTime);
+      // delayMicroseconds(waitTime);
       // doClear();
       // last_time = micros();
     }
