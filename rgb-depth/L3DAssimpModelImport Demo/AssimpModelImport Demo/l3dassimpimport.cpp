@@ -62,28 +62,8 @@
 #include <map>
 #include <string>
 #include <vector>
-<<<<<<< HEAD
-#include "filepaths.h"
-=======
 
-// Replace the model name by your model's filename
-static const std::string basepath1 = "C:/Users/whp17/Google Drive/Shared/3d-models (1)/other-models/";
-static const std::string modelname1 = "bench.obj";
-//static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
-//static const std::string modelname1 = "spider.obj";
-//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
-//static const std::string modelname2 = "spider.obj";
-//static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/textured/";
-//static const std::string modelname1 = "bunny2.obj";
-static const std::string basepath2 = "C:/Users/whp17/Google Drive/Shared/3d-models (1)/stanford-3d-models/bunny/textured/";
-static const std::string modelname2 = "bunny2.obj";
-//static const std::string basepath1 = "C:/Users/kishore/Downloads/Curiosity Rover 3D Printed Model/Detailed Curiosity Model (Large)/";
-//static const std::string modelname1 = "1-body.stl";
-//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/nasa-models/MSL_dirty/";
-//static const std::string modelname2 = "MSL_dirty_modified.obj";
-//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/reconstruction/";
-//static const std::string modelname2 = "bun_zipper.ply";
->>>>>>> 399b8e45d4da02446186533e8170a3bac35045ec
+#include "filepaths.h"
 
 // This is for a shader uniform block
 struct MyMaterial {
@@ -983,34 +963,18 @@ void processKeys(unsigned char key, int xx, int yy) {
 		currModel->scaleFactor += 0.01f;
 		break;
 	}
-<<<<<<< HEAD
-	case 'e': currModel->rotation[0] -= 1.0f; break;
-	case 'r': currModel->rotation[0] += 1.0f; break;
-	case 'd': currModel->rotation[1] -= 1.0f; break;
-	case 'f': currModel->rotation[1] += 1.0f; break;
-	case 'c': currModel->rotation[2] -= 1.0f; break;
-	case 'v': currModel->rotation[2] += 1.0f; break;
-	case 't': currModel->translation[0] -= 0.1f; break;
-	case 'y': currModel->translation[0] += 0.1f; break;
-	case 'g': currModel->translation[1] -= 0.1f; break;
-	case 'h': currModel->translation[1] += 0.1f; break;
-	case 'b': currModel->translation[2] -= 0.1f; break;
-	case 'n': currModel->translation[2] += 0.1f; break;
-=======
-	case 'e': currModel->rotation[0] -= 0.1f; break;
-	case 'r': currModel->rotation[0] += 0.1f; break;
-	case 'd': currModel->rotation[1] -= 0.1f; break;
-	case 'f': currModel->rotation[1] += 0.1f; break;
-	case 'c': currModel->rotation[2] -= 0.1f; break;
-	case 'v': currModel->rotation[2] += 0.1f; break;
-	case 't': currModel->translation[0] -= 0.01f; break;
-	case 'y': currModel->translation[0] += 0.01f; break;
-	case 'g': currModel->translation[1] -= 0.01f; break;
-	case 'h': currModel->translation[1] += 0.01f; break;
-	case 'b': currModel->translation[2] -= 0.01f; break;
-	case 'n': currModel->translation[2] += 0.01f; break;
->>>>>>> 399b8e45d4da02446186533e8170a3bac35045ec
-
+	case 'e': currModel->rotation[0] -= stepSize; break;
+	case 'r': currModel->rotation[0] += stepSize; break;
+	case 'd': currModel->rotation[1] -= stepSize; break;
+	case 'f': currModel->rotation[1] += stepSize; break;
+	case 'c': currModel->rotation[2] -= stepSize; break;
+	case 'v': currModel->rotation[2] += stepSize; break;
+	case 't': currModel->translation[0] -= stepSize; break;
+	case 'y': currModel->translation[0] += stepSize; break;
+	case 'g': currModel->translation[1] -= stepSize; break;
+	case 'h': currModel->translation[1] += stepSize; break;
+	case 'b': currModel->translation[2] -= stepSize; break;
+	case 'n': currModel->translation[2] += stepSize; break;
 	default: printf("Entered key does nothing \n");
 	}
 	camX = r * sin(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
