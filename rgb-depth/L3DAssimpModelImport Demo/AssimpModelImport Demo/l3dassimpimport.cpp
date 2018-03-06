@@ -63,23 +63,7 @@
 #include <string>
 #include <vector>
 
-// Replace the model name by your model's filename
-static const std::string basepath1 = "C:/Users/whp17/Google Drive/Shared/3d-models (1)/other-models/";
-static const std::string modelname1 = "bench.obj";
-//static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
-//static const std::string modelname1 = "spider.obj";
-//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/assimp-models/models/OBJ/";
-//static const std::string modelname2 = "spider.obj";
-//static const std::string basepath1 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/textured/";
-//static const std::string modelname1 = "bunny2.obj";
-static const std::string basepath2 = "C:/Users/whp17/Google Drive/Shared/3d-models (1)/stanford-3d-models/bunny/textured/";
-static const std::string modelname2 = "bunny2.obj";
-//static const std::string basepath1 = "C:/Users/kishore/Downloads/Curiosity Rover 3D Printed Model/Detailed Curiosity Model (Large)/";
-//static const std::string modelname1 = "1-body.stl";
-//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/nasa-models/MSL_dirty/";
-//static const std::string modelname2 = "MSL_dirty_modified.obj";
-//static const std::string basepath2 = "H:/My Drive/Research/Projects/NELF_gd/Shared/3d-models/stanford-3d-models/bunny/reconstruction/";
-//static const std::string modelname2 = "bun_zipper.ply";
+#include "filepaths.h"
 
 // This is for a shader uniform block
 struct MyMaterial {
@@ -902,8 +886,8 @@ void renderScene() {
 		drawModels();
 
 		sprintf(fname, "./outputs/trail_%02d_depth.png", imgCounter);
-		model1.rotation[1]++;
-		model2.rotation[1]++;
+		//model1.rotation[1]++;
+		//model2.rotation[1]++;
 	}
 
 
@@ -913,10 +897,9 @@ void renderScene() {
 			imgCounter++;
 			saveFramebufferOnce = false;
 		}
-		saveFramebufferOnce = false;
 	}
 
-	//rgb = !rgb;
+	rgb = !rgb;
 
 	// FPS computation and display
 	frame++;
@@ -941,6 +924,7 @@ void renderScene() {
 // Events from the Keyboard
 //
 Model *currModel = &model1;
+float stepSize = 0.1;
 void processKeys(unsigned char key, int xx, int yy) {
 	switch (key) {
 
@@ -955,6 +939,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 	case 'M': glDisable(GL_MULTISAMPLE); break;
 	case '1': currModel = &model1; printf("Current Model is 1 \n"); break;
 	case '2': currModel = &model2; printf("Current Model is 2 \n"); break;
+	case '3': stepSize = stepSize / 10.0; break;
+	case '4': stepSize = stepSize * 10.0; break;
 	case 's': rgb = true; saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
 	case 'S': {
 		rgb = true;
@@ -977,19 +963,18 @@ void processKeys(unsigned char key, int xx, int yy) {
 		currModel->scaleFactor += 0.01f;
 		break;
 	}
-	case 'e': currModel->rotation[0] -= 0.1f; break;
-	case 'r': currModel->rotation[0] += 0.1f; break;
-	case 'd': currModel->rotation[1] -= 0.1f; break;
-	case 'f': currModel->rotation[1] += 0.1f; break;
-	case 'c': currModel->rotation[2] -= 0.1f; break;
-	case 'v': currModel->rotation[2] += 0.1f; break;
-	case 't': currModel->translation[0] -= 0.01f; break;
-	case 'y': currModel->translation[0] += 0.01f; break;
-	case 'g': currModel->translation[1] -= 0.01f; break;
-	case 'h': currModel->translation[1] += 0.01f; break;
-	case 'b': currModel->translation[2] -= 0.01f; break;
-	case 'n': currModel->translation[2] += 0.01f; break;
-
+	case 'e': currModel->rotation[0] -= stepSize; break;
+	case 'r': currModel->rotation[0] += stepSize; break;
+	case 'd': currModel->rotation[1] -= stepSize; break;
+	case 'f': currModel->rotation[1] += stepSize; break;
+	case 'c': currModel->rotation[2] -= stepSize; break;
+	case 'v': currModel->rotation[2] += stepSize; break;
+	case 't': currModel->translation[0] -= stepSize; break;
+	case 'y': currModel->translation[0] += stepSize; break;
+	case 'g': currModel->translation[1] -= stepSize; break;
+	case 'h': currModel->translation[1] += stepSize; break;
+	case 'b': currModel->translation[2] -= stepSize; break;
+	case 'n': currModel->translation[2] += stepSize; break;
 	default: printf("Entered key does nothing \n");
 	}
 	camX = r * sin(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
