@@ -5,11 +5,11 @@ function Image_sequence=GenerateImgSeq(varargin)
 
 [RGBImg_re,DepthImg_re]=ResizeImg(RGBImg,DepthImg,Isize);
 
-RGB_BR=Color2Binary(RGBImg_re);
+RGB_BR=Color2Binary(RGBImg_re,colorbit);
 DepthImg_norm=DepthMapNormlization(DepthImg_re);
 NumofCP=NumofBP-colorbit+1;
 
-DepthList=GenDepthList(NumofCP);
+DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
 Image_sequence=GenImgSeq(DepthImg_norm,DepthList,NumofBP,NumofCP,colorbit,RGB_BR,Isize);
 
 %--------------------------------------------------------------------------
@@ -20,6 +20,7 @@ parser.addRequired('DepthImg',@CheckDepthImg);
 parser.addParameter('NumofBP',280);
 parser.addParameter('colorbit',24);
 parser.addParameter('Isize',[768,1024],@checkIsize);
+
 
 parser.parse(varargin{:});
 RGBImg=parser.Results.RGBImg;
@@ -67,11 +68,12 @@ if (m~=Isize(1))||(n~=Isize(2))
 end
 
 %--------------------------------------------------------------------------
-function RGB_BR=Color2Binary(RGBImg)
-RB=double(de2bi(RGBImg(:,:,1),8));
-GB=double(de2bi(RGBImg(:,:,2),8));
-BB=double(de2bi(RGBImg(:,:,3),8));
-RGB_BR=[RB,GB,BB];
+function RGB_BR=Color2Binary(RGBImg,colorbit)
+RB=fliplr(double(de2bi(RGBImg(:,:,1),8)));
+GB=fliplr(double(de2bi(RGBImg(:,:,2),8)));
+BB=fliplr(double(de2bi(RGBImg(:,:,3),8)));
+m=colorbit/3;
+RGB_BR=[RB(:,1:m),GB(:,1:m),BB(:,1:m)];
 
 %--------------------------------------------------------------------------
 function DepthImg_norm=DepthMapNormlization(DepthImg)
@@ -79,15 +81,22 @@ function DepthImg_norm=DepthMapNormlization(DepthImg)
 DepthImg_norm=double(DepthImg(:,:,1))/255;
 
 %--------------------------------------------------------------------------
-function DepthList=GenDepthList(NumofCP)
+function DepthList=GenDepthList(NumofBP,NumofCP,colorbit)
 
-DepthList=linspace(0,1,NumofCP);
+DepthPlane=linspace(0,1,NumofBP);
+DepthList=zeros([1,NumofCP]);
+
+for i=1:colorbit
+    DepthList=DepthList+DepthPlane(i:end-colorbit+i);
+end
+DepthList=DepthList/colorbit;
+
 
 %--------------------------------------------------------------------------
 function Image_sequence=GenImgSeq(DepthImg_norm,DepthList,NumofBP,NumofCP,colorbit,RGB_BR,Isize)
 
 ValidIndex=find(DepthImg_norm>0);
-DepthSeparater=[0,DepthList(1:end-1)+DepthList(2:end),1];
+DepthSeparater=[0,(DepthList(1:end-1)+DepthList(2:end))/2,1];
 Image_sequence=zeros([Isize NumofBP]);
 
 for i=1:NumofCP
@@ -96,14 +105,14 @@ for i=1:NumofCP
     
     if~isempty(index)
         
-        for j=1:numel(index)
-            [a,b]=ind2sub(Isize, index(j));
-            s=mod(i,colorbit);
+        s=mod(i,colorbit);
             
             if s==0
                 s=colorbit;
             end
-            
+        
+        for j=1:numel(index)
+            [a,b]=ind2sub(Isize, index(j));
             Image_sequence(a,b,i:(i+colorbit-1))=[RGB_BR(index(j),s:end),RGB_BR(index(j),1:s-1)];
         end
           
