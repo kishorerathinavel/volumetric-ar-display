@@ -106,7 +106,7 @@ GLuint matricesUniBuffer;
 
 
 // Program and Shader Identifiers
-GLuint program_rgb, program_depth, vertexShader, fragmentShader_rgb, fragmentShader_depth;
+GLuint program, vertexShader, fragmentShader;
 
 // Shader Names
 char *fname_vertex_shader = "dirlightdiffambpix.vert";
@@ -148,7 +148,7 @@ public:
 			glDeleteBuffers(1, &(myMesh[i].uniformBlockIndex));
 		}
 	}
-}model1, model2;
+}model[NUM_MODELS];
 
 // Camera Position
 float camX = 0, camY = 0, camZ = 1.2;
@@ -786,7 +786,7 @@ void changeSize(int w, int h) {
 	glViewport(0, 0, w, h);
 
 	ratio = (1.0f * w) / h;
-	buildProjectionMatrix(35.0f, ratio, 0.01f, 4.0f);
+	buildProjectionMatrix(35.0f, ratio, 0.01f, 40.0f);
 }
 
 
@@ -885,22 +885,15 @@ void saveImage(GLuint fbo, const char* outFilename1, const char* outFilename2) {
 
 void drawModels() {
 	// set the model matrix to the identity Matrix
-	setIdentityMatrix(modelMatrix, 4);
-	translate(model1.translation[0], model1.translation[1], model1.translation[2]);
-	rotate(model1.rotation[0], 1.0f, 0.0f, 0.0f);		// use our shader
-	rotate(model1.rotation[1], 0.0f, 1.0f, 0.0f);		// use our shader
-	rotate(model1.rotation[2], 0.0f, 0.0f, 1.0f);		// use our shader
-	scale(model1.scaleFactor, model1.scaleFactor, model1.scaleFactor);
-	recursive_render(model1, model1.scene->mRootNode);
-
-	// set the model matrix to the identity Matrix
-	setIdentityMatrix(modelMatrix, 4);
-	translate(model2.translation[0], model2.translation[1], model2.translation[2]);
-	rotate(model2.rotation[0], 1.0f, 0.0f, 0.0f);		// use our shader
-	rotate(model2.rotation[1], 0.0f, 1.0f, 0.0f);		// use our shader
-	rotate(model2.rotation[2], 0.0f, 0.0f, 1.0f);		// use our shader
-	scale(model2.scaleFactor, model2.scaleFactor, model2.scaleFactor);
-	recursive_render(model2, model2.scene->mRootNode);
+	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
+		setIdentityMatrix(modelMatrix, 4);
+		translate(model[modelIter].translation[0], model[modelIter].translation[1], model[modelIter].translation[2]);
+		rotate(model[modelIter].rotation[0], 1.0f, 0.0f, 0.0f);		// use our shader
+		rotate(model[modelIter].rotation[1], 0.0f, 1.0f, 0.0f);		// use our shader
+		rotate(model[modelIter].rotation[2], 0.0f, 0.0f, 1.0f);		// use our shader
+		scale(model[modelIter].scaleFactor, model[modelIter].scaleFactor, model[modelIter].scaleFactor);
+		recursive_render(model[modelIter], model[modelIter].scene->mRootNode);
+	}
 }
 
 void drawTextureToFramebuffer(int textureID) {
@@ -937,7 +930,7 @@ void renderScene() {
 	// set camera matrix
 	setCamera(camX, camY, camZ, 0, 0, 0);
 
-	glUseProgram(program_rgb);
+	glUseProgram(program);
 	// we are only going to use texture unit 0
 	// unfortunately samplers can't reside in uniform blocks
 	// so we have set this uniform separately
@@ -980,7 +973,7 @@ void renderScene() {
 //
 // Events from the Keyboard
 //
-Model *currModel = &model1;
+Model *currModel = &model[0];
 float stepSize = 0.1;
 void processKeys(unsigned char key, int xx, int yy) {
 	switch (key) {
@@ -994,10 +987,11 @@ void processKeys(unsigned char key, int xx, int yy) {
 	case 'x': r += 0.1f; break;
 	case 'm': glEnable(GL_MULTISAMPLE); break;
 	case 'M': glDisable(GL_MULTISAMPLE); break;
-	case '1': currModel = &model1; printf("Current Model is 1 \n"); break;
-	case '2': currModel = &model2; printf("Current Model is 2 \n"); break;
-	case '3': stepSize = stepSize / 10.0; break;
-	case '4': stepSize = stepSize * 10.0; break;
+	case '1': currModel = &model[0]; printf("Current Model is 1 \n"); break;
+	case '2': currModel = &model[1]; printf("Current Model is 2 \n"); break;
+	case '3': currModel = &model[2]; printf("Current Model is 2 \n"); break;
+	case '9': stepSize = stepSize / 10.0; break;
+	case '0': stepSize = stepSize * 10.0; break;
 	case 's': rgb = true; saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
 	case 'S': {
 		rgb = true;
@@ -1176,7 +1170,7 @@ void printProgramInfoLog(GLuint obj)
 	}
 }
 
-GLuint setupRGBshader() {
+GLuint setupShader() {
 
 	char *vs = NULL, *fs = NULL, *fs2 = NULL;
 
@@ -1216,9 +1210,9 @@ GLuint setupRGBshader() {
 	glValidateProgram(p);
 	printProgramInfoLog(p);
 
-	program_rgb = p;
+	program = p;
 	vertexShader = v;
-	fragmentShader_rgb = f;
+	fragmentShader = f;
 
 	GLuint k = glGetUniformBlockIndex(p, "Matrices");
 	glUniformBlockBinding(p, k, matricesUniLoc);
@@ -1228,56 +1222,6 @@ GLuint setupRGBshader() {
 
 	return(p);
 }
-
-GLuint setupDepthShader() {
-
-	char *vs = NULL, *fs = NULL, *fs2 = NULL;
-
-	GLuint p, v, f;
-
-	v = glCreateShader(GL_VERTEX_SHADER);
-	f = glCreateShader(GL_FRAGMENT_SHADER);
-
-	vs = textFileRead(fname_vertex_shader);
-	fs = textFileRead(fname_fragment_shader_depth);
-
-	const char * vv = vs;
-	const char * ff = fs;
-
-	glShaderSource(v, 1, &vv, NULL);
-	glShaderSource(f, 1, &ff, NULL);
-
-	free(vs); free(fs);
-
-	glCompileShader(v);
-	glCompileShader(f);
-
-	printShaderInfoLog(v);
-	printShaderInfoLog(f);
-
-	p = glCreateProgram();
-	glAttachShader(p, v);
-	glAttachShader(p, f);
-
-	glBindFragDataLocation(p, 0, "output");
-	glBindAttribLocation(p, vertexLoc, "position");
-	glBindAttribLocation(p, normalLoc, "normal");
-	glBindAttribLocation(p, texCoordLoc, "texCoord");
-
-	glLinkProgram(p);
-	glValidateProgram(p);
-	printProgramInfoLog(p);
-
-	program_depth = p;
-	vertexShader = v;
-	fragmentShader_depth = f;
-
-	GLuint k = glGetUniformBlockIndex(p, "Matrices");
-	glUniformBlockBinding(p, k, matricesUniLoc);
-
-	return(p);
-}
-
 
 // ------------------------------------------------------------
 //
@@ -1301,18 +1245,14 @@ int init()
 	/* initialization of DevIL */
 	ilInit();
 
-	model1.basepath = basepath1;
-	model1.modelname = modelname1;
-	model2.basepath = basepath2;
-	model2.modelname = modelname2;
-
-	if (!Import3DFromFile(model1))
-		return(0);
-	LoadGLTextures(model1);
-
-	if (!Import3DFromFile(model2))
-		return(0);
-	LoadGLTextures(model2);
+	for(int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
+	  model[modelIter].basepath = basepath[modelIter];
+	  model[modelIter].modelname = modelname[modelIter];
+	  if (!Import3DFromFile(model[modelIter]))
+	    return(0);
+	  LoadGLTextures(model[modelIter]);
+	  
+	}
 
 	glGetUniformBlockIndex = (PFNGLGETUNIFORMBLOCKINDEXPROC)glutGetProcAddress("glGetUniformBlockIndex");
 	glUniformBlockBinding = (PFNGLUNIFORMBLOCKBINDINGPROC)glutGetProcAddress("glUniformBlockBinding");
@@ -1321,10 +1261,11 @@ int init()
 	glBindBufferRange = (PFNGLBINDBUFFERRANGEPROC)glutGetProcAddress("glBindBufferRange");
 	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)glutGetProcAddress("glDeleteVertexArrays");
 
-	program_depth = setupDepthShader();
-	program_rgb = setupRGBshader();
-	genVAOsAndUniformBuffer(model1);
-	genVAOsAndUniformBuffer(model2);
+	program = setupShader();
+	for(int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
+	  genVAOsAndUniformBuffer(model[modelIter]);
+	  genVAOsAndUniformBuffer(model[modelIter]);
+	}
 
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
