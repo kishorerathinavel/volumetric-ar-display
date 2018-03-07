@@ -47,12 +47,12 @@ NumofP=280;
 v(:,3)=v(:,3)-max(v(:,3))/2;
 v=v(:,[1,3,2]);
 depthRange=[-400,400];
-teapot1=RigidTransform(v*60,[7/6*pi,pi/12,0],[180,50,200],[2,1,3,4]);
+teapot1=RigidTransform(v*50,[7/6*pi,pi/12,0],[120,30,200],[2,1,3,4]);
 f1=f;
 
 
 
-teapot2=RigidTransform(v*60,[7/6*pi,pi/12,0],[-180,50,-200],[2,1,3,4]);
+teapot2=RigidTransform(v*50,[7/6*pi,pi/12,0],[-150,30,-200],[2,1,3,4]);
 f2=f1+size(v,1);
 
 verts=[teapot1;teapot2];
@@ -95,12 +95,25 @@ end
 n=0;
 for i=NumofP:-2:2
     n=n+1;
-    str = sprintf('Model Set/Cube_model1/Triangle_%03d.png', n);
+    str = sprintf('Model Set/Teapot_model1/Triangle_%03d.png', n);
     imwrite(Image_sequence(:,:,i),str);    
 end
 
 for i=1:2:279
     n=n+1;
-    str = sprintf('Model Set/Cube_model1/Triangle_%03d.png', n);
+    str = sprintf('Model Set/Teapot_model1/Triangle_%03d.png', n);
     imwrite(Image_sequence(:,:,i),str);    
+end
+
+
+%% Test Seq
+
+n=0;
+Image_sequence=zeros([768,1024,280]);
+Image_sequence(:,:,1)=1;
+
+for i=1:NumofP
+    n=n+1;
+    str = sprintf('TestSeq/Seq1/TestImg_%03d.png',n);
+    imwrite(Image_sequence(:,:,i),str);  
 end

@@ -1,46 +1,52 @@
 % MSBFirst
-IntensityBin=[1 1 1 1 1 1 1 1;
-              0 1 1 1 1 1 1 1;
-              0 0 1 1 1 1 1 1;
-              0 0 0 1 1 1 1 1;
-              0 0 0 0 1 1 1 1;
-              0 0 0 0 0 1 1 1;
-              0 0 0 0 0 0 1 1;
-              0 0 0 0 0 0 0 1];
-
-Intensityhex=binaryVectorToHex(IntensityBin,'MSBFirst');
-
-NumofBP=280;
+MaxIntensityHex='5555';
 colorbit=24;
-m=floor(NumofBP/colorbit)+1;
+NumofBP=280;
+load('FocusDepth.mat');
+m=colorbit/3;
+n=floor(NumofBP/colorbit)+1;
 
-Intensityhex_all=repmat(Intensityhex,3*m,1);
-Intensityhex_all=Intensityhex_all(1:NumofBP);
-Intensityhex_all=flipud(Intensityhex_all);
+MaxIntensityDec=hex2dec(MaxIntensityHex);
+R_index=zeros([colorbit,1]);
+G_index=zeros([colorbit,1]);
+B_index=zeros([colorbit,1]);
+
+%%
+MaxIntensityDecR=MaxIntensityDec*0.6;
+MaxIntensityDecG=MaxIntensityDec;
+MaxIntensityDecB=MaxIntensityDec*0.5;
+%%
+R_index(1:m)=0.5.^(0:1:m-1);
+G_index(m+1:2*m)=0.5.^(0:1:m-1);
+B_index(2*m+1:3*m)=0.5.^(0:1:m-1);
+
+IntensityR_Dec=floor(R_index*MaxIntensityDecR);
+IntensityG_Dec=floor(G_index*MaxIntensityDecG);
+IntensityB_Dec=floor(B_index*MaxIntensityDecB);
+%%
+IntensityR_Dec_all=repmat(IntensityR_Dec,n,1);
+IntensityG_Dec_all=repmat(IntensityG_Dec,n,1);
+IntensityB_Dec_all=repmat(IntensityB_Dec,n,1);
+
+IntensityR_Dec_all=IntensityR_Dec_all(1:NumofBP);
+IntensityG_Dec_all=IntensityG_Dec_all(1:NumofBP);
+IntensityB_Dec_all=IntensityB_Dec_all(1:NumofBP);
+
+IntensityR_Hex_all=num2cell(dec2hex(IntensityR_Dec_all),2);
+IntensityG_Hex_all=num2cell(dec2hex(IntensityG_Dec_all),2);
+IntensityB_Hex_all=num2cell(dec2hex(IntensityB_Dec_all),2);
 
 
+%%
+IntensityHex=cellfun(@(x,y,z) strcat('{0x',x,',0x',y,',0x',z,'}'),IntensityR_Hex_all, IntensityG_Hex_all,IntensityB_Hex_all,'Uniformoutput',false);
 
-str1='static const char Intensity[]=';
-fileID=fopen('Intensity.h','w');
+IntensityHex_order=IntensityHex(un_order);
+%%
+str1='static uint16_t codes[][3]=';
+fileID=fopen('codes.h','w');
 fprintf(fileID,'%s',str1);
 fprintf(fileID,'{');
-fprintf(fileID,'0X%s,',Intensityhex_all{1:NumofBP});
+fprintf(fileID,'%s,',IntensityHex_order{1:end-1});
+fprintf(fileID,'%s',IntensityHex_order{end});
 fprintf(fileID,'};');
 
-CLP_R=32;
-CLP_G=31;
-CLP_B=30;
-
-% PIN select
-PinSelect_R=repmat(CLP_R,1,8);
-PinSelect_G=repmat(CLP_G,1,8);
-PinSelect_B=repmat(CLP_B,1,8);
-
-PinSelect=repmat([PinSelect_R,PinSelect_G,PinSelect_B],1,m);
-
-str2='static const int PinSelect[]=';
-fileID=fopen('PinSelect.h','w');
-fprintf(fileID,'%s',str2);
-fprintf(fileID,'{');
-fprintf(fileID,'%d,',PinSelect(1:NumofBP));
-fprintf(fileID,'};');
