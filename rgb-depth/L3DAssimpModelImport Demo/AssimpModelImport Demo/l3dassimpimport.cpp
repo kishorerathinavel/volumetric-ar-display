@@ -122,6 +122,7 @@ struct MyMesh {
 	int numFaces;
 };
 
+#define NUM_MODELS 3
 class Model {
 public:
 	std::vector<struct MyMesh> myMesh;
@@ -1245,13 +1246,13 @@ int init()
 	/* initialization of DevIL */
 	ilInit();
 
-	for(int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
-	  model[modelIter].basepath = basepath[modelIter];
-	  model[modelIter].modelname = modelname[modelIter];
-	  if (!Import3DFromFile(model[modelIter]))
-	    return(0);
-	  LoadGLTextures(model[modelIter]);
-	  
+	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
+		model[modelIter].basepath = basepath[modelIter];
+		model[modelIter].modelname = modelname[modelIter];
+		if (!Import3DFromFile(model[modelIter]))
+			return(0);
+		LoadGLTextures(model[modelIter]);
+
 	}
 
 	glGetUniformBlockIndex = (PFNGLGETUNIFORMBLOCKINDEXPROC)glutGetProcAddress("glGetUniformBlockIndex");
@@ -1262,9 +1263,9 @@ int init()
 	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)glutGetProcAddress("glDeleteVertexArrays");
 
 	program = setupShader();
-	for(int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
-	  genVAOsAndUniformBuffer(model[modelIter]);
-	  genVAOsAndUniformBuffer(model[modelIter]);
+	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
+		genVAOsAndUniformBuffer(model[modelIter]);
+		genVAOsAndUniformBuffer(model[modelIter]);
 	}
 
 	glEnable(GL_DEPTH_TEST);

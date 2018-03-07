@@ -1,6 +1,5 @@
 #pragma once
 
-#define NUM_MODELS 3
 
 // Replace the model name by your model's filename
 static const std::string basepath[] = {
