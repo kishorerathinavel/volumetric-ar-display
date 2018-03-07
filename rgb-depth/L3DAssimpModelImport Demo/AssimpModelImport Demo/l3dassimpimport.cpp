@@ -64,6 +64,7 @@
 #include <vector>
 
 #include "filepaths.h"
+#include <FreeImage.h>
 
 // This is for a shader uniform block
 struct MyMaterial {
@@ -161,6 +162,8 @@ float r = 1.2f;
 
 bool saveFramebufferOnce = false;
 bool saveFramebufferUntilStop = false;
+
+GLuint rbo_depth_image, fbo_depth_image, tex_depth_image;
 
 #define M_PI       3.14159265358979323846f
 
@@ -783,7 +786,7 @@ void changeSize(int w, int h) {
 	glViewport(0, 0, w, h);
 
 	ratio = (1.0f * w) / h;
-	buildProjectionMatrix(35.0f, ratio, 0.2f, 1000.0f);
+	buildProjectionMatrix(35.0f, ratio, 0.01f, 4.0f);
 }
 
 
@@ -841,6 +844,45 @@ void saveScreenShot(char* fname) {
 	//ilDeleteImage(imageID);
 }
 
+void saveImage(GLuint fbo, const char* outFilename1, const char* outFilename2) {
+	//allocate FreeImage memory
+	int width = 1024, height = 768;
+	int oldFramebuffer;
+
+	FIBITMAP *depth_img = FreeImage_Allocate(width, height, 32);
+	if (depth_img == NULL) {
+		printf("couldn't allocate depth_img for saving!\n");
+		return;
+	}
+
+	FIBITMAP *color_img = FreeImage_Allocate(width, height, 24);
+	if (color_img == NULL) {
+		printf("couldn't allocate color_img for saving!\n");
+		return;
+	}
+
+	//save existing bound FBO
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &oldFramebuffer);
+
+	//bind desired FBO
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_INT, FreeImage_GetBits(depth_img));
+	glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, FreeImage_GetBits(color_img));
+
+	//restore existing FBO
+	glBindFramebuffer(GL_FRAMEBUFFER, oldFramebuffer);
+
+	//write depth_img
+	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename1), depth_img, outFilename1);
+	//write color_img
+	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename2), color_img, outFilename2);
+
+	//deallocate
+	FreeImage_Unload(depth_img);
+	//deallocate
+	FreeImage_Unload(color_img);
+}
+
 void drawModels() {
 	// set the model matrix to the identity Matrix
 	setIdentityMatrix(modelMatrix, 4);
@@ -861,45 +903,55 @@ void drawModels() {
 	recursive_render(model2, model2.scene->mRootNode);
 }
 
-bool rgb = false;
+void drawTextureToFramebuffer(int textureID) {
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0, 1, 0, 1, -1, 1);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glColor3f(1, 1, 1);
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, textureID);
+	glBegin(GL_QUADS);
+	glTexCoord2f(0, 0); glVertex3f(0, 0, 0);
+	glTexCoord2f(1, 0); glVertex3f(1, 0, 0);
+	glTexCoord2f(1, 1); glVertex3f(1, 1, 0);
+	glTexCoord2f(0, 1); glVertex3f(0, 1, 0);
+	glEnd();
+	glDisable(GL_TEXTURE_2D);
+}
+
+
+bool rgb = true;
 int imgCounter = 0;
-char fname[1024];
+char fname[1024], fname1[1024], fname2[1024];
 // Rendering Callback Function
 void renderScene() {
+
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo_depth_image);
+	glPushAttrib(GL_VIEWPORT_BIT);
+	glViewport(0, 0, 1024, 768);
+
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	// set camera matrix
 	setCamera(camX, camY, camZ, 0, 0, 0);
 
-	if (rgb) {
-		// set camera matrix
-		glUseProgram(program_rgb);
-		// we are only going to use texture unit 0
-		// unfortunately samplers can't reside in uniform blocks
-		// so we have set this uniform separately
-		glUniform1i(texUnit, 0);
+	glUseProgram(program_rgb);
+	// we are only going to use texture unit 0
+	// unfortunately samplers can't reside in uniform blocks
+	// so we have set this uniform separately
+	glUniform1i(texUnit, 0);
 
-		drawModels();
-
-		sprintf(fname, "./outputs/trail_%02d_rgb.png", imgCounter);
-	}
-	else {
-		glUseProgram(program_depth);
-		drawModels();
-
-		sprintf(fname, "./outputs/trail_%02d_depth.png", imgCounter);
-		//model1.rotation[1]++;
-		//model2.rotation[1]++;
-	}
-
+	drawModels();
 
 	if (saveFramebufferOnce | saveFramebufferUntilStop) {
-		saveScreenShot(fname);
-		if (!rgb) {
-			imgCounter++;
-			saveFramebufferOnce = false;
-		}
+		sprintf(fname1, "./outputs/trial_%02d_depth.png", imgCounter);
+		sprintf(fname2, "./outputs/trial_%02d_rgb.png", imgCounter);
+		saveImage(fbo_depth_image, fname1, fname2);
+		imgCounter++;
+		saveFramebufferOnce = false;
 	}
-
-	rgb = !rgb;
 
 	// FPS computation and display
 	frame++;
@@ -912,10 +964,15 @@ void renderScene() {
 		glutSetWindowTitle(s);
 	}
 
+	glPopAttrib();
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glUseProgram(0);
+	glViewport(0, 0, 1024, 768);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	drawTextureToFramebuffer(tex_depth_image);
+
 	// swap buffers
 	glutSwapBuffers();
-
-	// increase the rotation angle
 }
 
 
@@ -1281,6 +1338,31 @@ int init()
 	glBindBufferRange(GL_UNIFORM_BUFFER, matricesUniLoc, matricesUniBuffer, 0, MatricesUniBufferSize);	//setUniforms();
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+	glGenTextures(1, &tex_depth_image);
+	glBindTexture(GL_TEXTURE_2D, tex_depth_image);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 768, 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	printf("Works so far \n");
+	//create fbos/renderbuffers
+	glGenRenderbuffers(1, &rbo_depth_image);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth_image);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 1024, 768);
+
+	glGenFramebuffers(1, &fbo_depth_image);
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo_depth_image);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth_image);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_depth_image, 0);
+
+	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+	if (status != GL_FRAMEBUFFER_COMPLETE) {
+		printf("Error in creating framebuffer \n");
+	}
+
+	glBindRenderbuffer(GL_RENDERBUFFER, 0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 	//glEnable(GL_LIGHT0);
 	//glEnable(GL_NORMALIZE);
@@ -1302,6 +1384,7 @@ int init()
 	return true;
 }
 
+
 // ------------------------------------------------------------
 //
 // Main function
@@ -1313,8 +1396,8 @@ int main(int argc, char **argv) {
 
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE);
 
-	glutInitContextVersion(3, 3);
-	glutInitContextFlags(GLUT_COMPATIBILITY_PROFILE);
+	//glutInitContextVersion(3, 3);
+	//glutInitContextFlags(GLUT_COMPATIBILITY_PROFILE);
 
 	glutInitWindowPosition(100, 100);
 	glutInitWindowSize(1024, 768);
@@ -1361,6 +1444,8 @@ int main(int argc, char **argv) {
 
 	// delete buffers
 	glDeleteBuffers(1, &matricesUniBuffer);
+	glDeleteRenderbuffers(1, &rbo_depth_image);
+	glDeleteFramebuffers(1, &fbo_depth_image);
 
 	return(0);
 }

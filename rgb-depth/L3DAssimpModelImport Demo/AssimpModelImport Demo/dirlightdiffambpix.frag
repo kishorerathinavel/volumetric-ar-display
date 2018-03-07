@@ -39,5 +39,7 @@ void main()
   // color = vec4(Depth);
   // output = (color);
   output = (color * intensity) + amb;
+  // gl_FragDepth = gl_FragCoord.z/gl_FragCoord.w;
+  // gl_FragDepth = (Depth - 20.0)/360.0;
   // output = amb;
 }
