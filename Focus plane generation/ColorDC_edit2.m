@@ -1,6 +1,6 @@
 clear all;
 NumofBP=280;
-colorbit=9;
+colorbit=24;
 RGBImg=imread('Bench00.png');
 DepthImg=imread('Bench_depthmap00.png');
 load('FocusDepth.mat');
@@ -45,9 +45,10 @@ imshow(double(RGBImg-RGBImg_con)/255,[]);
 
 %%
 lookuptable=2.^(7:-1:0);
-ImageSeq_con=zeros([768 1024 3]);
+
 
 for i=1:280
+    ImageSeq_con=zeros([768 1024 3]);
     s=mod(i,colorbit);
     if s==0
         s=colorbit;
@@ -67,8 +68,17 @@ for i=1:280
         s=colorbit/3;
     end
     
-    ImageSeq_con(:,:,c)=ImageSeq_con(:,:,c)+Image_sequence(:,:,i)*lookuptable(s);  
+    if order(i)==104
+    ImageSeq_con(:,:,c)=Image_sequence(:,:,i)*lookuptable(s); 
+    end
+    
+    ImageSeq_con=uint8(ImageSeq_con);
+    str = sprintf('Test/BenchImg_%03d.png',order(i));
+    
+    imwrite(flipud(ImageSeq_con),str);
 end
+
+%%
 
 ImageSeq_con=uint8(ImageSeq_con);
 
@@ -82,6 +92,12 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 n=0;
 for i=1:NumofBP
     n=n+1;
-    str = sprintf('Model/BenchImg_%03d.png',n);
+    
+    str = sprintf('Test/BenchImg_%03d.png',n);
+    
+    if n==104;
     imwrite(ImageSeq_order(:,:,i),str);  
+    else
+    imwrite(zeros([768 1024]),str);  
+    end
 end

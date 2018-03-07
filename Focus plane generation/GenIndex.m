@@ -1,6 +1,6 @@
 % MSBFirst
 MaxIntensityHex='5555';
-colorbit=9;
+colorbit=24;
 NumofBP=280;
 load('FocusDepth.mat');
 m=colorbit/3;
@@ -11,13 +11,18 @@ R_index=zeros([colorbit,1]);
 G_index=zeros([colorbit,1]);
 B_index=zeros([colorbit,1]);
 
+%%
+MaxIntensityDecR=MaxIntensityDec*0.6;
+MaxIntensityDecG=MaxIntensityDec;
+MaxIntensityDecB=MaxIntensityDec*0.5;
+%%
 R_index(1:m)=0.5.^(0:1:m-1);
 G_index(m+1:2*m)=0.5.^(0:1:m-1);
 B_index(2*m+1:3*m)=0.5.^(0:1:m-1);
 
-IntensityR_Dec=floor(R_index*MaxIntensityDec);
-IntensityG_Dec=floor(G_index*MaxIntensityDec);
-IntensityB_Dec=floor(B_index*MaxIntensityDec);
+IntensityR_Dec=floor(R_index*MaxIntensityDecR);
+IntensityG_Dec=floor(G_index*MaxIntensityDecG);
+IntensityB_Dec=floor(B_index*MaxIntensityDecB);
 %%
 IntensityR_Dec_all=repmat(IntensityR_Dec,n,1);
 IntensityG_Dec_all=repmat(IntensityG_Dec,n,1);
