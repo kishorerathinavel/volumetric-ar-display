@@ -1,4 +1,5 @@
 % MSBFirst
+clear all;
 MaxIntensityHex='5555';
 colorbit=24;
 NumofBP=280;

@@ -18,6 +18,9 @@ figure;
 imshow(mean(Image_sequence,3),[]);
 
 %% test results
+
+
+
 RB=fliplr(double(de2bi(RGBImg(:,:,1),8)));
 GB=fliplr(double(de2bi(RGBImg(:,:,2),8)));
 BB=fliplr(double(de2bi(RGBImg(:,:,3),8)));
