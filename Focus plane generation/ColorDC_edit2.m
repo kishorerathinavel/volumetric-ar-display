@@ -1,6 +1,6 @@
 clear all;
-NumofBP=280;
-colorbit=24;
+warning off;
+
 RGBImg=imread('Bench00.png');
 DepthImg=imread('Bench_depthmap00.png');
 load('FocusDepth.mat');
@@ -9,6 +9,10 @@ imshow(RGBImg,[]);
 
 figure;
 imshow(DepthImg,[]);
+%%
+NumofBP=280;
+colorbit=9;
+
 
 %%
 
@@ -20,31 +24,21 @@ imshow(mean(Image_sequence,3),[]);
 %% test results
 
 
+[RGBImg_bit,RGBImg_re]=RGBbitExtract(RGBImg,'colorbit',colorbit);
 
-RB=fliplr(double(de2bi(RGBImg(:,:,1),8)));
-GB=fliplr(double(de2bi(RGBImg(:,:,2),8)));
-BB=fliplr(double(de2bi(RGBImg(:,:,3),8)));
-m=colorbit/3;
-RB_con=zeros(size(RB));
-GB_con=zeros(size(GB));
-BB_con=zeros(size(BB));
-RB_con(:,1:m)=RB(:,1:m);
-GB_con(:,1:m)=GB(:,1:m);
-BB_con(:,1:m)=BB(:,1:m);
+subplot(3,1,1);
+imshow(RGBImg_bit,[]);
+title(['First ',num2str(colorbit/3),' bit RGB Img']);
 
-R_con=bi2de(fliplr(RB_con));
-G_con=bi2de(fliplr(GB_con));
-B_con=bi2de(fliplr(BB_con));
+subplot(3,1,2);
+imshow(RGBImg_re,[]);
+title(['Original RGB Img']);
 
-R=reshape(R_con,size(RGBImg,1),size(RGBImg,2));
-G=reshape(G_con,size(RGBImg,1),size(RGBImg,2));
-B=reshape(B_con,size(RGBImg,1),size(RGBImg,2));
-RGBImg_con=uint8(cat(3,R,G,B));
+subplot(3,1,3);
+imshow(RGBImg_re-RGBImg_bit,[]);
+title(['Difference']);
 
-figure;
-imshow(RGBImg_con,[]);
-figure;
-imshow(double(RGBImg-RGBImg_con)/255,[]);
+
 
 %%
 lookuptable=2.^(7:-1:0);
