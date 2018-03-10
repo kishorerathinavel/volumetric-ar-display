@@ -63,5 +63,7 @@ if (m~=Isize(1))||(n~=Isize(2))
     m_e=m_s+Isize(1)-1;
     n_e=n_s+Isize(2)-1;
     
-    RGBImg_out=RGBImg(m_s:m_e,n_s:n_e,:); 
+    RGBImg_out=RGBImg(m_s:m_e,n_s:n_e,:);
+else
+    RGBImg_out=RGBImg;
 end

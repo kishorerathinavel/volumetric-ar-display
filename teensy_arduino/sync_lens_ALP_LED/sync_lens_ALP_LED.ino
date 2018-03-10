@@ -93,7 +93,7 @@ void setup()   {
   setupSPI();
 
   pinMode(LensPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(LensPin), ALPsteps, RISING);
+  attachInterrupt(digitalPinToInterrupt(LensPin), ALPsteps, FALLING);
   pinMode(ALPpin, OUTPUT);
 }
 

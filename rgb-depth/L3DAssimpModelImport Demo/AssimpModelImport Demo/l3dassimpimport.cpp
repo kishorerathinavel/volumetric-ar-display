@@ -1265,7 +1265,7 @@ int init()
 	program = setupShader();
 	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
 		genVAOsAndUniformBuffer(model[modelIter]);
-		genVAOsAndUniformBuffer(model[modelIter]);
+		//genVAOsAndUniformBuffer(model[modelIter]);
 	}
 
 	glEnable(GL_DEPTH_TEST);

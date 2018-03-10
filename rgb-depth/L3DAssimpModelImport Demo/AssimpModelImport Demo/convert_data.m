@@ -35,3 +35,6 @@ f_a_img_16 = im2double(a_img_16);
 figure; imshow(normalize(f_depth_img));
 figure; imshow(normalize(f_a_img_16));
 
+DepthMap=normalize(f_depth_img);
+%%
+save trial_00_DepthMap.mat DepthMap
