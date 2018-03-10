@@ -81,7 +81,7 @@ void setupSPI() {
   SPI2.setDataMode(SPI_MODE3);   
 }
 
-static uint16_t code = 0x0511;
+static uint16_t code = 0x0050;
 void setup()   {
   Serial.begin(1*1000*1000);
   while(!Serial) {};

@@ -44,3 +44,23 @@ for i=1:Iter
         end
     end
 end
+
+%%
+CalibrationImg=zeros([768,1024]);
+Background=zeros([768,1024]);
+
+CalibrationImg(1:40,1:end)=1;
+CalibrationImg(end-39:end,1:end)=1;
+CalibrationImg(1:end,1:40)=1;
+CalibrationImg(1:end,end-39:end)=1;
+imshow(CalibrationImg,[]);
+%%
+for i=1:NumofBP
+    str=sprintf('Test_new/Test_%03d.png',order(i));
+    
+    if i==1
+        imwrite(CalibrationImg,str);
+    else
+        imwrite(Background,str);
+    end
+end
