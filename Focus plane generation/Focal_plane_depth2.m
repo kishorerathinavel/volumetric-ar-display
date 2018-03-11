@@ -1,11 +1,33 @@
-%%
-% d1+o1=0.09
-o1=0.06;
-f1=0.058;
-d1=0.03;
-d2=0.12; % measure
+clear all;
+close all;
+
+
+%% Hanpeng's amazing guess
+% d1+o1=0.09 % measure
+o1=0.06; % Guess
+%o1=0.1;
+f1=0.058; % From Email
+d1=0.03; % Guess
 f3=0.061;
+
+d2=0.12; % measure
+%f3=0.09; % Guess
 de=0.07; % measure
+
+
+%% Found from measurement and brute search
+% d1+o1=0.09 % measure
+o1=0.07; % Guess
+f1=0.068; % From Email
+d1=0.03; % Guess
+
+
+f3=0.06; % Measured to be 0.053
+d2=0.12; % measure
+de=0.07; % measure
+
+%%
+
 num=280; % num of sample depths along z direction(depth direction)
 MinOpPower=12; % min optical power of focus tunable lens(in diopters)
 MaxOpPower=16; % max optical power of focus tunable lens(in diopters)
@@ -49,33 +71,50 @@ i1=f1*o1/(o1-f1);
 o2=i1-d1;
 
 i2=f2*o2./(o2+f2);
+%i2=f2*o2./(o2-f2);
 o3=d2-i2;
 
 
 i3=f3*o3./(o3-f3);
 ie=-i3+de;
 
+%% Field of View
 
+O_1 = 0.01778; % meters. O_1 = 0.7 inches
+M1 = -i1/01;
+M2 = -i2./o2;
+M3 = -i3./o3;
+I_e = M1 .* M2 .* M3 .* O_1;
+theta = rad2deg(atan(I_e./ie));
+figure; plot(theta);
 
-%%
-subplot(3,1,1)
+figure;
+subplot(2,2,1)
 plot(t,f_t_inverse,'r*'); hold on;
 title('Focus-tunable Lens Driving signal');
 xlabel('time/s');
 ylabel('Optical power/diopter');
 
 
-subplot(3,1,2)
+subplot(2,2,2)
 plot(t,1./ie,'r*');
 title('Focal plane depth changes in diopter');
 xlabel('time/s');
 ylabel('Focal plane depth/diopter');
 
-subplot(3,1,3)
+subplot(2,2,3)
 plot(t,ie,'r*');
 title('Focal plane depth changes in meter');
 xlabel('time/s');
 ylabel('Focal plane depth/m');
+
+subplot(2,2,4)
+plot(t,theta,'r*');
+title('Field of view');
+xlabel('time/s');
+ylabel('Field of view');
+
+
 %%
 d=ie(1:280);
 [d_sort,order]=sort(d);

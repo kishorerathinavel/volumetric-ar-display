@@ -27,7 +27,7 @@ b_img_16 = uint16(b_img);
 
 depth_img = 256*a_img_16 + r_img_16;
 figure; imagesc(depth_img); colorbar;
-figure; imhist(depth_img); colorbar;
+
 
 %%
 f_depth_img = im2double(depth_img);
