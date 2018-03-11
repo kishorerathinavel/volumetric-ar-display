@@ -1017,8 +1017,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 	}
 	case 'e': currModel->rotation[0] -= stepSize; break;
 	case 'r': currModel->rotation[0] += stepSize; break;
-	case 'd': currModel->rotation[1] -= stepSize; break;
-	case 'f': currModel->rotation[1] += stepSize; break;
+	case 'd': currModel->rotation[1] -= 10*stepSize; break;
+	case 'f': currModel->rotation[1] += 10*stepSize; break;
 	case 'c': currModel->rotation[2] -= stepSize; break;
 	case 'v': currModel->rotation[2] += stepSize; break;
 	case 't': currModel->translation[0] -= stepSize; break;

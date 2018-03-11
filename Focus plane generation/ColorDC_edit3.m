@@ -1,9 +1,9 @@
 clear all;
 warning off;
 
-RGBImg=imread('trial_00_rgb.png');
+RGBImg=imread('trial_03_rgb.png');
 load('FocusDepth.mat');
-load('trial_00_DepthMap.mat');
+load('trial_03_DepthMap.mat');
 
 figure;
 imshow(RGBImg,[]);
@@ -79,15 +79,23 @@ ImageSeq_con=uint8(ImageSeq_con);
 figure;
 imshow(ImageSeq_con,[]);
 
+
 %%
 ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 
 %%
-n=0;
+
+order_new=[1:140,140:-1:1];
+
+ImageSeq_order=order_new(:,:,order_new);
+
+n=40;
 for i=1:NumofBP
     n=n+1;
     
-    str = sprintf('Model2/Scene_%03d.png',n);
+    str = sprintf('Model8/Scene_%03d.png',mod(n,280));
     imwrite(ImageSeq_order(:,:,i),str);  
 
 end
+
+

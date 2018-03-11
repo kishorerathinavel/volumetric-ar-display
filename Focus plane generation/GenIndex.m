@@ -1,6 +1,6 @@
 % MSBFirst
 clear all;
-MaxIntensityHex='6555';
+MaxIntensityHex='4555';
 colorbit=24;
 NumofBP=280;
 load('FocusDepth.mat');
@@ -51,7 +51,8 @@ str1='static uint16_t codes[][3]=';
 fileID=fopen('codes.h','w');
 fprintf(fileID,'%s',str1);
 fprintf(fileID,'{');
-fprintf(fileID,'%s,',IntensityHex_order{1:end-1});
-fprintf(fileID,'%s',IntensityHex_order{end});
+fprintf(fileID,'%s,',IntensityHex_order{(280-39):280});
+fprintf(fileID,'%s,',IntensityHex_order{1:280-41});
+fprintf(fileID,'%s',IntensityHex_order{280-40});
 fprintf(fileID,'};');
 

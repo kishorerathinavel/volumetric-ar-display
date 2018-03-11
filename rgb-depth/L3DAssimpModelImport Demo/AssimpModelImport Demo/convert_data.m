@@ -3,7 +3,7 @@ close all;
 
 %%
 
-data = importdata('./outputs/trial_00_depth.png', 'png');
+data = importdata('./outputs/trial_03_depth.png', 'png');
 
 alpha = data.alpha;
 cdata = data.cdata;
@@ -37,4 +37,4 @@ figure; imshow(normalize(f_a_img_16));
 
 DepthMap=normalize(f_depth_img);
 %%
-save trial_00_DepthMap.mat DepthMap
+save trial_03_DepthMap.mat DepthMap

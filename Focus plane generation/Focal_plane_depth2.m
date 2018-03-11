@@ -48,6 +48,7 @@ f2=1./f_t_inverse;
 i1=f1*o1/(o1-f1);
 o2=i1-d1;
 
+
 i2=f2*o2./(o2+f2);
 o3=d2-i2;
 
@@ -58,6 +59,7 @@ ie=-i3+de;
 
 
 %%
+figure;
 subplot(3,1,1)
 plot(t,f_t_inverse,'r*'); hold on;
 title('Focus-tunable Lens Driving signal');
