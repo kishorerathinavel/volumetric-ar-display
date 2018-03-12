@@ -93,12 +93,12 @@ void setup()   {
   setupSPI();
 
   pinMode(LensPin, INPUT);
-  attachInterrupt(digitalPinToInterrupt(LensPin), ALPsteps, FALLING);
+  attachInterrupt(digitalPinToInterrupt(LensPin), ALPsteps, RISING);
   pinMode(ALPpin, OUTPUT);
 }
 
 bool disp_img = false;
-int waitTime = 54;
+int waitTime = 55;
 uint16_t gcode, rcode,  bcode;
 unsigned long last_time, stop_time, current_time, next_time;
 // float lens_frame_time = 16720.0;
@@ -109,34 +109,25 @@ int numImg = 280;
 
 void loop() {
   if(disp_img) {
+    noInterrupts();
     disp_img = false;
     last_time = micros();
     next_time = 0;
     for(int i = 0; i < numImg; i++) {
-      while((micros() - last_time) <= next_time) {
-      __asm__ volatile ("nop");
-//      current_time = micros();
-      	// yield();
-      }
-      // rcode = codes[i][0];
-      // gcode = codes[i][1];
-      // bcode = codes[i][2];
-      // Serial.println("Sending Dac cde...");
-      // Serial.println(rcode);
-      // Serial.println(gcode);
-      // Serial.println(bcode);
-//      sendDacCodes(i*10, i*10, i*10);
-      sendDacCodes(codes[imgCount][0], codes[imgCount][1], codes[imgCount][2]);
+//      while((micros() - last_time) <= next_time) {
+//      __asm__ volatile ("nop");
+////      current_time = micros();
+//      	// yield();
+//      }
+
+      sendDacCodes(codes[i][0], codes[i][1], codes[i][2]);
 //      sendDacCodes(codes[i][0], codes[i][1], codes[i][2]);
       digitalWrite(ALPpin, HIGH);
       __asm__ volatile ("nop");
       __asm__ volatile ("nop");
       digitalWrite(ALPpin, LOW);
 
-      imgCount++;
-      if(imgCount >= numImg)
-        imgCount = 0;
-//      delayMicroseconds(waitTime);
+      delayMicroseconds(waitTime);
       // doClear();
       // last_time = micros();
       next_time = next_time + binary_frame_time;
@@ -149,7 +140,7 @@ void loop() {
     // waitTime = waitTime + (time_error/280);
     // Serial.println(waitTime);
     // doClear();
-   
+   interrupts();
   }
   else {
     yield();
