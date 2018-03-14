@@ -3,9 +3,11 @@ close all;
 
 %% Generating graphs to go into the paper
 
-o1=0.07; % Guess
-f1=0.068; % From Email
-d1=0.03; % Guess
+o1=0.03; % Exhaustive search
+f1=0.0296; % From Email
+% o1=0.03; % Exhaustive search
+% f1=0.0296; % From Email
+d1=0.05; % Exhaustive search
 
 f3=0.06; % Measured to be 0.053
 d2=0.12; % measure
@@ -33,84 +35,100 @@ index=max(find(t<=delt_t));
 f_t_inverse=[y1(1:index),y2(index+1:end)];
 f2=1./f_t_inverse;
 
-figure; plot(t, f2, '+');
-title('f2 vs t');
+debugGraphs = true;
+printGraphs = false;
 
-figure; plot(t, o1, '+');
-title ('o1 vs t');
 
 i1=f1*o1/(o1-f1);
-figure; plot(t, i1, '+');
-title ('i1 vs t');
 m1 = i1/o1;
-figure; plot(t, m1, '+');
-title ('m1 vs t');
-
 o2=i1-d1;
-figure; plot(t, o2, '+');
-title('o2 vs t');
-
 i2=f2*o2./(o2+f2);
-figure; plot(t, i2, '+');
-title('i2 vs t');
 m2 = i2/o2;
-figure; plot(t, m2, '+');
-title ('m2 vs t');
-
-%i2=f2*o2./(o2-f2);
 o3=d2-i2;
-figure; plot(t, o3, '+');
-title('o3 vs t');
-
 i3=f3*o3./(o3-f3);
-figure; plot(t, i3, '+');
-title('i3 vs t');
 m3 = i3./o3;
-figure; plot(t, m3, '+');
-title ('m3 vs t');
+ie=-i3+de;
+ie(ie > 5) = 5;
 
 m = m1*(m2.*m3);
-figure; plot(t, m, '+');
-title ('m vs t');
-
 O_1 = 0.01778; % meters. O_1 = 0.7 inches
 I_e = m*O_1;
+theta = 2*rad2deg(atan((I_e/2)./ie));
 
-ie=-i3+de;
+if(debugGraphs == true)
+    % figure; plot(t, f2, '+');
+    % title('f2 vs t');
+
+    % figure; plot(t, o1, '+');
+    % title ('o1 vs t');
+
+    % figure; plot(t, i1, '+');
+    % title ('i1 vs t');
+    % figure; plot(t, m1, '+');
+    % title ('m1 vs t');
+
+    % figure; plot(t, o2, '+');
+    % title('o2 vs t');
+
+    % figure; plot(t, i2, '+');
+    % title('i2 vs t');
+    % figure; plot(t, m2, '+');
+    % title ('m2 vs t');
+
+    % %i2=f2*o2./(o2-f2);
+    % figure; plot(t, o3, '+');
+    % title('o3 vs t');
+
+    % figure; plot(t, i3, '+');
+    % title('i3 vs t');
+    % figure; plot(t, m3, '+');
+    % title ('m3 vs t');
+
+    % figure; plot(t, m, '+');
+    % title ('m vs t');
+    
+    figure; plot(t, ie, '+');
+    title('ie vs t');
+    
+    figure; plot(t, theta, '+');
+    title ('fov vs t');
+end
 
 linewidth = 3;
 
-return;
+if(printGraphs == true)
+    filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
+    custom_plot_save(t, f_t_inverse, filename);
 
-filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
-custom_plot_save(t, f_t_inverse, filename);
-
-% figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-% plot(t,f_t_inverse, '+', 'LineWidth', linewidth);
-% set(gcf, 'PaperPositionMode', 'auto');
-% set(gca, 'FontSize', 30);
-% print(filename, '-dsvg')
-
-
-% figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-% plot(t,1./ie, '+', 'LineWidth', linewidth);
-% set(gcf, 'PaperPositionMode', 'auto');
-% set(gca, 'FontSize', 30);
-% print(filename, '-dsvg')
-
-filename = sprintf('./graphs/triangular_virtual_image_dioptres_vs_time.svg');
-custom_plot_save(t, 1./ie, filename);
+    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+    % plot(t,f_t_inverse, '+', 'LineWidth', linewidth);
+    % set(gcf, 'PaperPositionMode', 'auto');
+    % set(gca, 'FontSize', 30);
+    % print(filename, '-dsvg')
 
 
-% figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-% plot(t,ie', 'LineWidth', 5);
-% set(gcf, 'PaperPositionMode', 'auto');
-% set(gca, 'FontSize', 30);
-% print(filename, '-dsvg')
+    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+    % plot(t,1./ie, '+', 'LineWidth', linewidth);
+    % set(gcf, 'PaperPositionMode', 'auto');
+    % set(gca, 'FontSize', 30);
+    % print(filename, '-dsvg')
 
-filename = sprintf('./graphs/triangular_virtual_image_distance_vs_time.svg');
-custom_plot_save(t, ie, filename);
+    filename = sprintf('./graphs/triangular_virtual_image_dioptres_vs_time.svg');
+    custom_plot_save(t, 1./ie, filename);
 
+
+    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+    % plot(t,ie', 'LineWidth', 5);
+    % set(gcf, 'PaperPositionMode', 'auto');
+    % set(gca, 'FontSize', 30);
+    % print(filename, '-dsvg')
+
+    filename = sprintf('./graphs/triangular_virtual_image_distance_vs_time.svg');
+    custom_plot_save(t, ie, filename);
+end
+
+
+%% Sinusoidal wave
 
 Magnitude=(MaxOpPower-MinOpPower)/2;
 offset=(MaxOpPower+MinOpPower)/2;
@@ -121,49 +139,93 @@ f2=1./f_t_inverse;
 
 
 i1=f1*o1/(o1-f1);
-
+m1 = i1/o1;
 o2=i1-d1;
-
-
 i2=f2*o2./(o2+f2);
-
 %i2=f2*o2./(o2-f2);
+m2 = i2/o2;
 o3=d2-i2;
-
-
 i3=f3*o3./(o3-f3);
-
+m3 = i3./o3;
 ie=-i3+de;
+ie(ie > 5) = 5;
 
-% figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-% plot(t,f_t_inverse, 'LineWidth', 5);
-% set(gcf, 'PaperPositionMode', 'auto');
-% set(gca, 'FontSize', 30);
-% print(filename, '-dsvg')
+m = m1*(m2.*m3);
+O_1 = 0.01778; % meters. O_1 = 0.7 inches
+I_e = m*O_1;
+theta = 2*rad2deg(atan((I_e/2)./ie));
 
-filename = sprintf('./graphs/sinusoidal_ens_power_vs_time.svg');
-custom_plot_save(t, f_t_inverse, filename);
+if(debugGraphs == true)
+    % figure; plot(t, f2, '+');
+    % title('f2 vs t');
+
+    % figure; plot(t, o1, '+');
+    % title ('o1 vs t');
+
+    % figure; plot(t, i1, '+');
+    % title ('i1 vs t');
+    % figure; plot(t, m1, '+');
+    % title ('m1 vs t');
+
+    % figure; plot(t, o2, '+');
+    % title('o2 vs t');
+
+    % figure; plot(t, i2, '+');
+    % title('i2 vs t');
+    % figure; plot(t, m2, '+');
+    % title ('m2 vs t');
+
+    % %i2=f2*o2./(o2-f2);
+    % figure; plot(t, o3, '+');
+    % title('o3 vs t');
+
+    % figure; plot(t, i3, '+');
+    % title('i3 vs t');
+    % figure; plot(t, m3, '+');
+    % title ('m3 vs t');
+
+    % figure; plot(t, m, '+');
+    % title ('m vs t');
+
+    figure; plot(t, ie, '+');
+    title('ie vs t');
+    
+    
+    figure; plot(t, theta, '+');
+    title ('fov vs t');
+end
+
+if(printGraphs == true)
+    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+    % plot(t,f_t_inverse, 'LineWidth', 5);
+    % set(gcf, 'PaperPositionMode', 'auto');
+    % set(gca, 'FontSize', 30);
+    % print(filename, '-dsvg')
+
+    filename = sprintf('./graphs/sinusoidal_ens_power_vs_time.svg');
+    custom_plot_save(t, f_t_inverse, filename);
 
 
-% figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-% plot(t,1./ie, 'LineWidth', 5);
-% set(gcf, 'PaperPositionMode', 'auto');
-% set(gca, 'FontSize', 30);
-% print(filename, '-dsvg')
+    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+    % plot(t,1./ie, 'LineWidth', 5);
+    % set(gcf, 'PaperPositionMode', 'auto');
+    % set(gca, 'FontSize', 30);
+    % print(filename, '-dsvg')
 
-filename = sprintf('./graphs/sinusoidal_virtual_image_dioptres_vs_time.svg');
-custom_plot_save(t, 1./ie, filename);
+    filename = sprintf('./graphs/sinusoidal_virtual_image_dioptres_vs_time.svg');
+    custom_plot_save(t, 1./ie, filename);
 
 
-% figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-% plot(t,ie', 'LineWidth', 5);
-% set(gcf, 'PaperPositionMode', 'auto');
-% set(gca, 'FontSize', 30);
-% print(filename, '-dsvg')
+    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+    % plot(t,ie', 'LineWidth', 5);
+    % set(gcf, 'PaperPositionMode', 'auto');
+    % set(gca, 'FontSize', 30);
+    % print(filename, '-dsvg')
 
-filename = sprintf('./graphs/sinusoidal_virtual_image_distance_vs_time.svg');
-custom_plot_save(t, ie, filename);
+    filename = sprintf('./graphs/sinusoidal_virtual_image_distance_vs_time.svg');
+    custom_plot_save(t, ie, filename);
 
+end
 
 
 return;
@@ -193,11 +255,10 @@ i2_all = [];
 % f3=0.04; % Guess
 d2=0.12; % measure
 de=0.07; % measure
-f3 = 0.053; %measured
 
 for f3 = 0.055:0.001:0.06
     for o1=0.04:0.01:0.07
-        for f1=(o1 - 0.03):0.001:o1
+        for f1=0.02:0.001:0.04
             
             if(o1 <= f1 || o1 >= 2*f1)
                 continue;
