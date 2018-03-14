@@ -21,6 +21,8 @@ Focus plane generation/Model7/
 Focus plane generation/Model8/
 Focus plane generation/Model9/
 Focus plane generation/Calibration Capture/
+Focus plane generation/graphs/
+Focus plane generation/adaptive_color_decomposition_images*/
 *.mat
 Focus plane generation/*.png
 
