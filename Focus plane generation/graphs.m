@@ -7,7 +7,7 @@ o1=0.03; % Exhaustive search
 f1=0.0296; % From Email
 % o1=0.03; % Exhaustive search
 % f1=0.0296; % From Email
-d1=0.05; % Exhaustive search
+d1=0.03; % Exhaustive search
 
 f3=0.06; % Measured to be 0.053
 d2=0.12; % measure
@@ -35,8 +35,8 @@ index=max(find(t<=delt_t));
 f_t_inverse=[y1(1:index),y2(index+1:end)];
 f2=1./f_t_inverse;
 
-debugGraphs = true;
-printGraphs = false;
+debugGraphs = false;
+printGraphs = true;
 
 
 i1=f1*o1/(o1-f1);
@@ -53,7 +53,7 @@ ie(ie > 5) = 5;
 m = m1*(m2.*m3);
 O_1 = 0.01778; % meters. O_1 = 0.7 inches
 I_e = m*O_1;
-theta = 2*rad2deg(atan((I_e/2)./ie));
+theta = abs(2*rad2deg(atan((I_e/2)./ie)));
 
 if(debugGraphs == true)
     % figure; plot(t, f2, '+');
@@ -125,6 +125,9 @@ if(printGraphs == true)
 
     filename = sprintf('./graphs/triangular_virtual_image_distance_vs_time.svg');
     custom_plot_save(t, ie, filename);
+    
+    filename = sprintf('./graphs/triangular_fov_vs_time.svg');
+    custom_plot_save(t, theta, filename);
 end
 
 
@@ -153,7 +156,7 @@ ie(ie > 5) = 5;
 m = m1*(m2.*m3);
 O_1 = 0.01778; % meters. O_1 = 0.7 inches
 I_e = m*O_1;
-theta = 2*rad2deg(atan((I_e/2)./ie));
+theta = abs(2*rad2deg(atan((I_e/2)./ie)));
 
 if(debugGraphs == true)
     % figure; plot(t, f2, '+');
@@ -225,6 +228,8 @@ if(printGraphs == true)
     filename = sprintf('./graphs/sinusoidal_virtual_image_distance_vs_time.svg');
     custom_plot_save(t, ie, filename);
 
+    filename = sprintf('./graphs/sinusoidal_fov_vs_time.svg');
+    custom_plot_save(t, theta, filename);
 end
 
 
