@@ -1,9 +1,9 @@
 clear all;
 warning off;
-
-RGBImg=imread('trial_03_rgb.png');
+%%
+RGBImg=imread('RGB_Depth/trial_08_rgb.png');
 load('FocusDepth.mat');
-load('trial_03_DepthMap.mat');
+load('RGB_Depth/trial_08_DepthMap.mat');
 
 figure;
 imshow(RGBImg,[]);
@@ -17,10 +17,12 @@ colorbit=24;
 
 %%
 
-Image_sequence=GenerateImgSeq2(RGBImg,DepthMap,'NumofBP',NumofBP,'colorbit',colorbit);
+[Image_sequence,Image_CutVol]=GenerateImgSeq2(RGBImg,DepthMap,'NumofBP',NumofBP,'colorbit',colorbit);
 
 figure;
 imshow(mean(Image_sequence,3),[]);
+
+Image_CutVol=uint8(Image_CutVol);
 
 %% test results
 
@@ -42,11 +44,14 @@ title(['Difference']);
 
 
 %%
-lookuptable=2.^(7:-1:0);
+lookuptable=round(2.^(7:-1:0)/128*(255-100)+100);
 ImageSeq_con=zeros([768 1024 3]);
+ImageSeq_Binary=zeros([768 1024 3 280]);
+%ImageSeq_Perceived=zeros([768 1024 3 280]);
 
 for i=1:280
     
+    ImageSeq_con=zeros([768 1024 3]);
     s=mod(i,colorbit);
     if s==0
         s=colorbit;
@@ -66,14 +71,26 @@ for i=1:280
         s=colorbit/3;
     end
     
+  %  for k=1:3
+  %      ImageSeq_con(:,:,k)=(~Image_sequence(:,:,i)*255);
+  %  end
     
-    ImageSeq_con(:,:,c)=ImageSeq_con(:,:,c)+Image_sequence(:,:,i)*lookuptable(s); 
+    ImageSeq_con(:,:,c)=Image_sequence(:,:,i)*lookuptable(s);
+    ImageSeq_Binary(:,:,:,i)=ImageSeq_con;
     
     
+   
+    
+  %  if i==1
+  %  ImageSeq_Perceived(:,:,:,i)=ImageSeq_con;
+  %  else
+  %  ImageSeq_Perceived(:,:,:,i)=ImageSeq_Perceived(:,:,:,i-1)+ImageSeq_con;
+  %  end
+    
+       
 end
 
 %%
-
 ImageSeq_con=uint8(ImageSeq_con);
 
 figure;
@@ -85,17 +102,18 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 
 %%
 
-order_new=[1:140,140:-1:1];
-
-ImageSeq_order=order_new(:,:,order_new);
-
-n=40;
 for i=1:NumofBP
-    n=n+1;
-    
-    str = sprintf('Model8/Scene_%03d.png',mod(n,280));
+       
+    str = sprintf('Model8/Scene_%03d.png',i);
     imwrite(ImageSeq_order(:,:,i),str);  
 
 end
+
+
+%%
+ImageSeq_Binary=uint8(ImageSeq_Binary);
+
+save ImageSeq_Binary.mat ImageSeq_Binary
+
 
 

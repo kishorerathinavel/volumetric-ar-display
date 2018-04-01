@@ -34,7 +34,7 @@ void main()
   }
   else {
     color = texture(texUnit, TexCoord);
-    amb = color * 0.33;
+    amb = color * 0.23;
   }
   // color = vec4(Depth);
   // output = (color);

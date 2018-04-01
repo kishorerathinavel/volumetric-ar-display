@@ -32,7 +32,7 @@ num=280; % num of sample depths along z direction(depth direction)
 MinOpPower=12; % min optical power of focus tunable lens(in diopters)
 MaxOpPower=16; % max optical power of focus tunable lens(in diopters)
 t=1:num;
-p=1;
+p=2;
 %% linear driving singal
 f_t_inverse=linspace(MinOpPower,MaxOpPower,num); 
 f2=1./f_t_inverse;
@@ -55,16 +55,23 @@ f_t_inverse=p_w(1:num)+offset;
 f2=1./f_t_inverse;
 
 %% finding depthlist using triangular driving signal
-t=0:58:1e6/60;
+t_u=0:58:1e6/60;
 delt_t=1e6/60/2;
 tan1=(MinOpPower-MaxOpPower)/delt_t;
-y1=tan1*t+MaxOpPower;
+y1=tan1*t_u+MaxOpPower;
 
 tan2=(MaxOpPower-MinOpPower)/delt_t;
-y2=tan2*t+2*MinOpPower-MaxOpPower;
+y2=tan2*t_u+2*MinOpPower-MaxOpPower;
 
-index=max(find(t<=delt_t));
+index=max(find(t_u<=delt_t));
 f_t_inverse=[y1(1:index),y2(index+1:end)];
+t=[];
+for i=1:p
+    offset=1e6/60*(i-1);
+    t=[t,t_u+offset];
+end
+
+f_t_inverse=repmat(f_t_inverse,1,p);
 f2=1./f_t_inverse;
 %% considering three lens separately
 i1=f1*o1/(o1-f1);
@@ -91,7 +98,6 @@ figure; plot(theta);
 
 figure;
 subplot(2,2,1)
-
 plot(t,f_t_inverse,'r*'); hold on;
 title('Focus-tunable Lens Driving signal');
 xlabel('time/s');
@@ -117,11 +123,45 @@ xlabel('time/s');
 ylabel('Field of view');
 
 
-%%
-d=ie(1:280);
-[d_sort,order]=sort(d);
-un_order(order)=1:280;
+%% phase correction
 
-[f_sort,forder]=sort(f_t_inverse(1:280));
+phaseNum=107;
+
+t_phase=t(phaseNum:phaseNum+num-1);
+f_t_inverse_phase=f_t_inverse(phaseNum:phaseNum+num-1);
+ie_phase=ie(phaseNum:phaseNum+num-1);
+
+figure;
+subplot(2,2,1)
+plot(t,f_t_inverse,'b-',t_phase,f_t_inverse_phase,'r*'); hold on;
+title('Focus-tunable Lens Driving signal');
+xlabel('time/s');
+ylabel('Optical power/diopter');
+
+
+subplot(2,2,2)
+plot(t,1./ie,'b-',t_phase,1./ie_phase,'r*');
+title('Focal plane depth changes in diopter');
+xlabel('time/s');
+ylabel('Focal plane depth/diopter');
+
+subplot(2,2,3)
+plot(t,ie,'b-',t_phase,ie_phase,'r*');
+title('Focal plane depth changes in meter');
+xlabel('time/s');
+ylabel('Focal plane depth/m');
+
+subplot(2,2,4)
+plot(t,theta,'r*');
+title('Field of view');
+xlabel('time/s');
+ylabel('Field of view');
+
+%%
+d=ie_phase;
+[d_sort,order]=sort(d);
+un_order(order)=1:num;
+
+%[f_sort,forder]=sort(f_t_inverse(1:280));
 %%
 save FocusDepth.mat d d_sort order un_order;

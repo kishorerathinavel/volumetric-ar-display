@@ -22,7 +22,9 @@ Focus plane generation/Model8/
 Focus plane generation/Model9/
 Focus plane generation/Calibration Capture/
 *.mat
-Focus plane generation/*.png
+Focus\ plane\ generation/**/**/*.png
+
+
 
 
 

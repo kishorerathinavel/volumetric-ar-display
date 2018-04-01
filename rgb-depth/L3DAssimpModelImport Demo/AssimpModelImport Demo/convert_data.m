@@ -1,9 +1,10 @@
+
 clear all;
 close all;
 
 %%
 
-data = importdata('./outputs/trial_03_depth.png', 'png');
+data = importdata('./outputs/trial_06_depth.png', 'png');
 
 alpha = data.alpha;
 cdata = data.cdata;
@@ -36,5 +37,6 @@ figure; imshow(normalize(f_depth_img));
 figure; imshow(normalize(f_a_img_16));
 
 DepthMap=normalize(f_depth_img);
+figure;imagesc(DepthMap);colorbar;
 %%
-save trial_03_DepthMap.mat DepthMap
+save trial_06_DepthMap.mat DepthMap

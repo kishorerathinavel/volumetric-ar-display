@@ -1,6 +1,10 @@
 #include <SPI.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include "codes.h"
+
+const int LensPin = 6;
+const int ALPpin =  35;
 
 static const int G_CS_PIN = 24;
 static const int R_CS_PIN = 25;
@@ -81,20 +85,80 @@ void setupSPI() {
   SPI2.setDataMode(SPI_MODE3);   
 }
 
-static uint16_t code = 0x2000;
+
 void setup()   {
   Serial.begin(1*1000*1000);
   while(!Serial) {};
   Serial.println("Begin setup");
   setupSPI();
-  
-  sendDacCodes(code, code, code);
+
+  pinMode(LensPin, INPUT);
+  attachInterrupt(digitalPinToInterrupt(LensPin), ALPsteps, RISING);
+  pinMode(ALPpin, OUTPUT);
 }
 
+bool disp_img = false;
+int waitTime = 53;
 uint16_t gcode, rcode,  bcode;
-
+unsigned long last_time, stop_time, current_time, next_time;
+// float lens_frame_time = 16720.0;
+float lens_frame_time = 16665.0;
+float binary_frame_time = lens_frame_time/281.0;
+int imgCount = 0;
+int numImg = 280;
+float factor = 1.2;
 void loop() {
+  if(disp_img) {
+    noInterrupts();
+    disp_img = false;
+    last_time = micros();
+    next_time = 0;
+    for(int i = 0; i < numImg; i++) {
+      while((micros() - last_time) <= next_time) {
+        //doClear();
+      __asm__ volatile ("nop");
+//      current_time = micros();
+      	// yield();
+      }
+      doClear();
+      // rcode = codes[i][0];
+      // gcode = codes[i][1];
+      // bcode = codes[i][2];
+      // Serial.println("Sending Dac cde...");
+      // Serial.println(rcode);
+      // Serial.println(gcode);
+      // Serial.println(bcode);
+//      sendDacCodes(i*10, i*10, i*10);
+      sendDacCodes(factor*codes[imgCount][0], factor*codes[imgCount][1], factor*codes[imgCount][2]);
+//      sendDacCodes(codes[i][0], codes[i][1], codes[i][2]);
+      digitalWrite(ALPpin, HIGH);
+      __asm__ volatile ("nop");
+      __asm__ volatile ("nop");
+      digitalWrite(ALPpin, LOW);
+
+      imgCount++;
+      if(imgCount >= numImg)
+        imgCount = 0;
+//      delayMicroseconds(waitTime);
+      // doClear();
+      // last_time = micros();
+      next_time = next_time + binary_frame_time;
+    }
+
+//    stop_time = micros();
+//    long time_error =  lens_frame_time - (stop_time - last_time);
+//    Serial.println(imgCount);
+//    Serial.println(time_error);
+    // waitTime = waitTime + (time_error/280);
+    // Serial.println(waitTime);
+    // doClear();
+   interrupts();
+  }
+  else {
     yield();
+  }
 }
 
-
+void ALPsteps() {
+  disp_img = true;
+}
