@@ -59,6 +59,7 @@
 
 #include <math.h>
 #include <fstream>
+#include <iostream>
 #include <map>
 #include <string>
 #include <vector>
@@ -122,7 +123,7 @@ struct MyMesh {
 	int numFaces;
 };
 
-#define NUM_MODELS 3
+#define NUM_MODELS 4
 class Model {
 public:
 	std::vector<struct MyMesh> myMesh;
@@ -732,13 +733,13 @@ void genVAOsAndUniformBuffer(Model& model) {
 			aMat.texCount = 0;
 
 		float c[4];
-		set_float4(c, 0.8f, 0.8f, 0.8f, 1.0f);
+		set_float4(c, 0.5f, 0.5f, 0.5f, 1.0f);
 		aiColor4D diffuse;
 		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
 			color4_to_float4(&diffuse, c);
 		memcpy(aMat.diffuse, c, sizeof(c));
 
-		set_float4(c, 0.2f, 0.2f, 0.2f, 1.0f);
+		set_float4(c, 0.1f, 0.1f, 0.1f, 1.0f);
 		aiColor4D ambient;
 		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient))
 			color4_to_float4(&ambient, c);
@@ -787,7 +788,7 @@ void changeSize(int w, int h) {
 	glViewport(0, 0, w, h);
 
 	ratio = (1.0f * w) / h;
-	buildProjectionMatrix(35.0f, ratio, 0.01f, 40.0f);
+	buildProjectionMatrix(35.0f, ratio, 0.01f, 10.0f);
 }
 
 
@@ -897,6 +898,88 @@ void drawModels() {
 	}
 }
 
+void savePosition() {
+	// save position information for each model
+	std::ofstream Position;
+	Position.open("Position.txt",std::ios::trunc);
+	Position << "N " << NUM_MODELS << std::endl;
+	
+	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
+	
+		Position << "M " << modelIter << std::endl;
+		Position << "T " << model[modelIter].translation[0]<<" "<< model[modelIter].translation[1]<<" "<< model[modelIter].translation[2]<<std::endl;
+		Position << "R " << model[modelIter].rotation[0] << " " << model[modelIter].rotation[1] << " " << model[modelIter].rotation[2] << std::endl;
+		Position << "S " << model[modelIter].scaleFactor << std::endl;
+	}
+
+	Position <<"C " << r <<" "<<alpha <<" "<<beta<< std::endl;
+	Position.close();
+}
+
+
+Model *currModel = &model[0];
+void usePosition() {
+	FILE* fp;
+	float x, y, z;
+	int c1, c2;
+	int mn;
+
+	fp = fopen("Position.txt", "rb");
+
+	if (fp == NULL) {
+		printf("Error loading Position \n");
+		exit(-1);
+	}
+
+	while (!feof(fp)) {
+		c1 = fgetc(fp);
+		
+
+		while (!(c1 == 'M' || c1 == 'T' || c1 == 'R' || c1 == 'S' || c1 == 'C')) {
+			c1 = fgetc(fp);
+			if (feof(fp))
+				break;
+		}
+
+		c2 = fgetc(fp);
+
+		if ((c1 == 'M') && (c2 == ' ')) {
+			fscanf(fp, "%d", &mn);
+			currModel = &model[mn];
+		}
+
+		if ((c1 == 'T') && (c2 == ' ')) {
+			fscanf(fp,"%f %f %f", &x,&y,&z);
+			currModel->translation[0] = x;
+			currModel->translation[1] = y;
+			currModel->translation[2] = z;
+		}
+
+		if ((c1 == 'R') && (c2 == ' ')) {
+			fscanf(fp, "%f %f %f", &x, &y, &z);
+			currModel->rotation[0] = x;
+			currModel->rotation[1] = y;
+			currModel->rotation[2] = z;
+		}
+
+		if ((c1 == 'S') && (c2 == ' ')) {
+			fscanf(fp, "%f", &x);
+			currModel->scaleFactor = x;
+		}
+
+		if ((c1 == 'C') && (c2 == ' ')) {
+			fscanf(fp, "%f %f %f", &x, &y, &z);
+			r = x;
+			alpha = y;
+			beta = z;
+         }
+
+		
+	}
+	fclose(fp);
+	currModel = &model[0];
+}
+
 void drawTextureToFramebuffer(int textureID) {
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -974,7 +1057,7 @@ void renderScene() {
 //
 // Events from the Keyboard
 //
-Model *currModel = &model[0];
+
 float stepSize = 0.1;
 void processKeys(unsigned char key, int xx, int yy) {
 	switch (key) {
@@ -991,8 +1074,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 	case '1': currModel = &model[0]; printf("Current Model is 1 \n"); break;
 	case '2': currModel = &model[1]; printf("Current Model is 2 \n"); break;
 	case '3': currModel = &model[2]; printf("Current Model is 2 \n"); break;
-	case '9': stepSize = stepSize / 10.0; break;
-	case '0': stepSize = stepSize * 10.0; break;
+	case '9': stepSize = stepSize / 3.0; break;
+	case '0': stepSize = stepSize * 3.0; break;
 	case 's': rgb = true; saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
 	case 'S': {
 		rgb = true;
@@ -1006,19 +1089,19 @@ void processKeys(unsigned char key, int xx, int yy) {
 		break;
 	}
 	case 'q': {
-		currModel->scaleFactor -= 0.01f;
-		if (currModel->scaleFactor < 0.01)
-			currModel->scaleFactor = 0.01;
+		currModel->scaleFactor -= 0.005f*stepSize;
+		if (currModel->scaleFactor < 0.005)
+			currModel->scaleFactor = 0.005;
 		break;
 	}
 	case 'w': {
-		currModel->scaleFactor += 0.01f;
+		currModel->scaleFactor += 0.005f*stepSize;
 		break;
 	}
 	case 'e': currModel->rotation[0] -= stepSize; break;
 	case 'r': currModel->rotation[0] += stepSize; break;
-	case 'd': currModel->rotation[1] -= 10*stepSize; break;
-	case 'f': currModel->rotation[1] += 10*stepSize; break;
+	case 'd': currModel->rotation[1] -= stepSize; break;
+	case 'f': currModel->rotation[1] += stepSize; break;
 	case 'c': currModel->rotation[2] -= stepSize; break;
 	case 'v': currModel->rotation[2] += stepSize; break;
 	case 't': currModel->translation[0] -= stepSize; break;
@@ -1027,8 +1110,11 @@ void processKeys(unsigned char key, int xx, int yy) {
 	case 'h': currModel->translation[1] += stepSize; break;
 	case 'b': currModel->translation[2] -= stepSize; break;
 	case 'n': currModel->translation[2] += stepSize; break;
+	case 'p': savePosition(); printf("Saving Position Information \n"); break;
+	case 'u': usePosition(); break;
 	default: printf("Entered key does nothing \n");
 	}
+
 	camX = r * sin(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
 	camZ = r * cos(alpha * 3.14f / 180.0f) * cos(beta * 3.14f / 180.0f);
 	camY = r *   						     sin(beta * 3.14f / 180.0f);

@@ -24,7 +24,9 @@ Focus plane generation/Calibration Capture/
 Focus plane generation/graphs/
 Focus plane generation/adaptive_color_decomposition_images*/
 *.mat
-Focus plane generation/*.png
+Focus\ plane\ generation/**/**/*.png
+
+
 
 
 

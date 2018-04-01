@@ -109,7 +109,7 @@ int numImg = 280;
 
 void loop() {
   if(disp_img) {
-    noInterrupts();
+   // noInterrupts();
     disp_img = false;
     last_time = micros();
     next_time = 0;
@@ -140,7 +140,7 @@ void loop() {
     // waitTime = waitTime + (time_error/280);
     // Serial.println(waitTime);
     // doClear();
-   interrupts();
+ //  interrupts();
   }
   else {
     yield();

@@ -1,6 +1,6 @@
 % MSBFirst
 clear all;
-MaxIntensityHex='4555';
+MaxIntensityHex='5055';
 colorbit=24;
 NumofBP=280;
 load('FocusDepth.mat');
@@ -13,9 +13,9 @@ G_index=zeros([colorbit,1]);
 B_index=zeros([colorbit,1]);
 
 %%
-MaxIntensityDecR=MaxIntensityDec*0.7;
-MaxIntensityDecG=MaxIntensityDec;
-MaxIntensityDecB=MaxIntensityDec*0.6;
+MaxIntensityDecR=MaxIntensityDec*0.4;
+MaxIntensityDecG=MaxIntensityDec*1.5;
+MaxIntensityDecB=MaxIntensityDec*0.4;
 %% for simple color decomposition
 R_index(1:m)=0.5.^(0:1:m-1);
 G_index(m+1:2*m)=0.5.^(0:1:m-1);
@@ -51,8 +51,7 @@ str1='static uint16_t codes[][3]=';
 fileID=fopen('codes.h','w');
 fprintf(fileID,'%s',str1);
 fprintf(fileID,'{');
-fprintf(fileID,'%s,',IntensityHex_order{(280-39):280});
-fprintf(fileID,'%s,',IntensityHex_order{1:280-41});
-fprintf(fileID,'%s',IntensityHex_order{280-40});
+fprintf(fileID,'%s,',IntensityHex_order{1:end-1});
+fprintf(fileID,'%s',IntensityHex_order{end});
 fprintf(fileID,'};');
 

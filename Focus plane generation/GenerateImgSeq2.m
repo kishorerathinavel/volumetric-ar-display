@@ -1,4 +1,4 @@
-function Image_sequence=GenerateImgSeq2(varargin)
+function [Image_sequence,Image_CutVol]=GenerateImgSeq2(varargin)
 
 [RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG]=parseInputs(varargin{:});
 
@@ -10,7 +10,7 @@ DepthMap_norm=DepthMapNormlization(DepthMap_re);
 NumofCP=NumofBP-colorbit+1;
 
 DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
-Image_sequence=GenImgSeq(DepthMap_norm,DepthList,NumofBP,NumofCP,colorbit,RGB_BR,Isize,DepthBG);
+[Image_sequence,Image_CutVol]=GenImgSeq(RGBImg_re,DepthMap_norm,DepthList,NumofBP,NumofCP,colorbit,RGB_BR,Isize,DepthBG);
 
 %--------------------------------------------------------------------------
 function [RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG]=parseInputs(varargin)
@@ -112,7 +112,7 @@ DepthList=DepthList/colorbit;
 
 
 %--------------------------------------------------------------------------
-function Image_sequence=GenImgSeq(DepthImg_norm,DepthList,NumofBP,NumofCP,colorbit,RGB_BR,Isize,DepthBG)
+function [Image_sequence,Image_CutVol]=GenImgSeq(RGBImg_re,DepthImg_norm,DepthList,NumofBP,NumofCP,colorbit,RGB_BR,Isize,DepthBG)
 
 if strcmp(DepthBG,'white')
 ValidIndex=find(DepthImg_norm<1);
@@ -123,6 +123,7 @@ end
 
 DepthSeparater=[0,(DepthList(1:end-1)+DepthList(2:end))/2,1];
 Image_sequence=zeros([Isize NumofBP]);
+Image_CutVol=zeros([Isize 3 NumofBP]);
 
 for i=1:NumofCP
     index=find(DepthImg_norm>=DepthSeparater(i)&DepthImg_norm<DepthSeparater(i+1));
@@ -139,6 +140,7 @@ for i=1:NumofCP
         for j=1:numel(index)
             [a,b]=ind2sub(Isize, index(j));
             Image_sequence(a,b,i:(i+colorbit-1))=[RGB_BR(index(j),s:end),RGB_BR(index(j),1:s-1)];
+            Image_CutVol(a,b,:,i)=RGBImg_re(a,b,:);
         end
           
     end
