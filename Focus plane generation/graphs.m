@@ -5,231 +5,285 @@ close all;
 
 o1=0.03; % Exhaustive search
 f1=0.0296; % From Email
-% o1=0.03; % Exhaustive search
-% f1=0.0296; % From Email
+           % o1=0.03; % Exhaustive search
+           % f1=0.0296; % From Email
 d1=0.03; % Exhaustive search
 
 f3=0.06; % Measured to be 0.053
 d2=0.12; % measure
-de=0.07; % measure
+de=0.03; % measure
 
 num=280; % num of sample depths along z direction(depth direction)
 MinOpPower=12; % min optical power of focus tunable lens(in diopters)
 MaxOpPower=16; % max optical power of focus tunable lens(in diopters)
-t=1:num;
 p=1;
 
 
 t=0:0.058:1e3/60;
-
-%% Triangular wave
-
 delt_t=1e3/60/2;
-tan1=(MinOpPower-MaxOpPower)/delt_t;
-y1=tan1*t+MaxOpPower;
-
-tan2=(MaxOpPower-MinOpPower)/delt_t;
-y2=tan2*t+2*MinOpPower-MaxOpPower;
-
-index=max(find(t<=delt_t));
-f_t_inverse=[y1(1:index),y2(index+1:end)];
-f2=1./f_t_inverse;
 
 debugGraphs = false;
 printGraphs = true;
+triangular = true;
+sinusoidal = true;
+
+%% Triangular wave
+if(triangular == true)
+    A = MaxOpPower - MinOpPower;
+    D = (MaxOpPower + MinOpPower)/2;
+
+    D_r = repmat(D, size(t));
+    A_r = repmat(A, size(t));
+    a_r = repmat(delt_t, size(t));
+    one_r = repmat(1, size(t));
+
+    DC_component = (D_r);
+    %AC_component = 0.5*A_r - A_r.*abs((a_r - t)./a_r);
+    AC_component = 0.5*A_r - A_r.*abs(2*0.06*t - one_r);
+    signal_inverse = DC_component - AC_component;
+    signal = 1./signal_inverse;
+    %figure; plot(signal); 
+
+    f_t_inverse = signal_inverse;
+    f2 = signal;
 
 
-i1=f1*o1/(o1-f1);
-m1 = i1/o1;
-o2=i1-d1;
-i2=f2*o2./(o2+f2);
-m2 = i2/o2;
-o3=d2-i2;
-i3=f3*o3./(o3-f3);
-m3 = i3./o3;
-ie=-i3+de;
-ie(ie > 5) = 5;
+    i1=f1*o1/(o1-f1);
+    m1 = i1/o1;
+    o2=i1-d1;
+    i2=f2*o2./(o2+f2);
+    m2 = i2/o2;
+    o3=d2-i2;
+    i3=f3*o3./(o3-f3);
+    m3 = i3./o3;
+    ie=-i3+de;
+    ie(ie > 5) = 5;
 
-m = m1*(m2.*m3);
-O_1 = 0.01778; % meters. O_1 = 0.7 inches
-I_e = m*O_1;
-theta = abs(2*rad2deg(atan((I_e/2)./ie)));
+    ie_dioptres = 1./ie;
+    ie_combined = [];
+    changing_quantity = ie;
+    for iter = 1:24
+        ie_dioptres_offset = zeros(size(changing_quantity));
+        offset = iter;
+        ie_dioptres_offset(1,1:end-offset) = changing_quantity(1,offset+1:end);
+        ie_dioptres_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
+        ie_combined = [ie_combined; ie_dioptres_offset]; 
+    end
+    longitudinal_pixel_blur = std(ie_combined);
+    ignore_elements = 24;
 
-if(debugGraphs == true)
-    % figure; plot(t, f2, '+');
-    % title('f2 vs t');
+    m = m1*(m2.*m3);
+    O_1 = 0.01778; % meters. O_1 = 0.7 inches
+    I_e = m*O_1;
+    theta = abs(2*rad2deg(atan((I_e/2)./ie)));
 
-    % figure; plot(t, o1, '+');
-    % title ('o1 vs t');
+    fov_combined = [];
+    for iter = 1:24
+        theta_offset = zeros(size(theta));
+        offset = iter;
+        theta_offset(1,1:end-offset) = theta(1,offset+1:end);
+        theta_offset(1,end-offset+1:end) = theta(1,1:offset);
+        fov_combined = [fov_combined; theta_offset]; 
+    end
+    lateral_pixel_blur = std(fov_combined);
 
-    % figure; plot(t, i1, '+');
-    % title ('i1 vs t');
-    % figure; plot(t, m1, '+');
-    % title ('m1 vs t');
+    if(debugGraphs == true)
+        % figure; plot(t, f2, '+');
+        % title('f2 vs t');
 
-    % figure; plot(t, o2, '+');
-    % title('o2 vs t');
+        % figure; plot(t, o1, '+');
+        % title ('o1 vs t');
 
-    % figure; plot(t, i2, '+');
-    % title('i2 vs t');
-    % figure; plot(t, m2, '+');
-    % title ('m2 vs t');
+        % figure; plot(t, i1, '+');
+        % title ('i1 vs t');
+        % figure; plot(t, m1, '+');
+        % title ('m1 vs t');
 
-    % %i2=f2*o2./(o2-f2);
-    % figure; plot(t, o3, '+');
-    % title('o3 vs t');
+        % figure; plot(t, o2, '+');
+        % title('o2 vs t');
 
-    % figure; plot(t, i3, '+');
-    % title('i3 vs t');
-    % figure; plot(t, m3, '+');
-    % title ('m3 vs t');
+        % figure; plot(t, i2, '+');
+        % title('i2 vs t');
+        % figure; plot(t, m2, '+');
+        % title ('m2 vs t');
 
-    % figure; plot(t, m, '+');
-    % title ('m vs t');
-    
-    figure; plot(t, ie, '+');
-    title('ie vs t');
-    
-    figure; plot(t, theta, '+');
-    title ('fov vs t');
+        % %i2=f2*o2./(o2-f2);
+        % figure; plot(t, o3, '+');
+        % title('o3 vs t');
+
+        % figure; plot(t, i3, '+');
+        % title('i3 vs t');
+        % figure; plot(t, m3, '+');
+        % title ('m3 vs t');
+
+        % figure; plot(t, m, '+');
+        % title ('m vs t');
+        
+        % figure; plot(t, ie, '+');
+        % title('ie vs t');
+        
+        % figure; plot(t, theta, '+');
+        % title ('fov vs t');
+        
+        figure; plot(t, ie_dioptres, '+');
+        title('ie dioptres vs t');
+        
+        figure; plot(t,longitudinal_pixel_blur);
+        title('pixel blur vs t');
+        
+        figure; plot(t,lateral_pixel_blur);
+        title('pixel blur vs t');
+    end
+
+    linewidth = 3; 
+
+    if(printGraphs == true)
+        % filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
+        % custom_plot_save(t, f_t_inverse, filename);
+
+        % filename = sprintf('./graphs/triangular_virtual_image_dioptres_vs_time.svg');
+        % custom_plot_save(t, 1./ie, filename);
+
+        % filename = sprintf('./graphs/triangular_virtual_image_distance_vs_time.svg');
+        % custom_plot_save(t, ie, filename);
+        
+        % filename = sprintf('./graphs/triangular_fov_vs_time.svg');
+        % custom_plot_save(t, theta, filename);
+
+        filename = sprintf('./graphs/triangular_longitudinal_blur_vs_time.svg');
+        custom_plot_save(t(1,1:end-ignore_elements), longitudinal_pixel_blur(1,1:end-ignore_elements), ...
+                         filename, 0, 1.0, 0, 20);
+
+        filename = sprintf('./graphs/triangular_lateral_blur_vs_time.svg');
+        custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
+                         filename, 0, 1.5, 0, 20);
+    end
 end
 
-linewidth = 3;
-
-if(printGraphs == true)
-    filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
-    custom_plot_save(t, f_t_inverse, filename);
-
-    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-    % plot(t,f_t_inverse, '+', 'LineWidth', linewidth);
-    % set(gcf, 'PaperPositionMode', 'auto');
-    % set(gca, 'FontSize', 30);
-    % print(filename, '-dsvg')
-
-
-    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-    % plot(t,1./ie, '+', 'LineWidth', linewidth);
-    % set(gcf, 'PaperPositionMode', 'auto');
-    % set(gca, 'FontSize', 30);
-    % print(filename, '-dsvg')
-
-    filename = sprintf('./graphs/triangular_virtual_image_dioptres_vs_time.svg');
-    custom_plot_save(t, 1./ie, filename);
-
-
-    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-    % plot(t,ie', 'LineWidth', 5);
-    % set(gcf, 'PaperPositionMode', 'auto');
-    % set(gca, 'FontSize', 30);
-    % print(filename, '-dsvg')
-
-    filename = sprintf('./graphs/triangular_virtual_image_distance_vs_time.svg');
-    custom_plot_save(t, ie, filename);
-    
-    filename = sprintf('./graphs/triangular_fov_vs_time.svg');
-    custom_plot_save(t, theta, filename);
-end
 
 
 %% Sinusoidal wave
 
-Magnitude=(MaxOpPower-MinOpPower)/2;
-offset=(MaxOpPower+MinOpPower)/2;
+if(sinusoidal == true)
+    Magnitude=(MaxOpPower-MinOpPower)/2;
+    offset=(MaxOpPower+MinOpPower)/2;
 
-f_t_inverse=Magnitude*sin(t*2*pi/(1e3/60))+offset;
-f2=1./f_t_inverse;
+    f_t_inverse=Magnitude*sin(t*2*pi/(1e3/60) + pi/2)+offset;
+    f2=1./f_t_inverse;
 
 
 
-i1=f1*o1/(o1-f1);
-m1 = i1/o1;
-o2=i1-d1;
-i2=f2*o2./(o2+f2);
-%i2=f2*o2./(o2-f2);
-m2 = i2/o2;
-o3=d2-i2;
-i3=f3*o3./(o3-f3);
-m3 = i3./o3;
-ie=-i3+de;
-ie(ie > 5) = 5;
-
-m = m1*(m2.*m3);
-O_1 = 0.01778; % meters. O_1 = 0.7 inches
-I_e = m*O_1;
-theta = abs(2*rad2deg(atan((I_e/2)./ie)));
-
-if(debugGraphs == true)
-    % figure; plot(t, f2, '+');
-    % title('f2 vs t');
-
-    % figure; plot(t, o1, '+');
-    % title ('o1 vs t');
-
-    % figure; plot(t, i1, '+');
-    % title ('i1 vs t');
-    % figure; plot(t, m1, '+');
-    % title ('m1 vs t');
-
-    % figure; plot(t, o2, '+');
-    % title('o2 vs t');
-
-    % figure; plot(t, i2, '+');
-    % title('i2 vs t');
-    % figure; plot(t, m2, '+');
-    % title ('m2 vs t');
-
-    % %i2=f2*o2./(o2-f2);
-    % figure; plot(t, o3, '+');
-    % title('o3 vs t');
-
-    % figure; plot(t, i3, '+');
-    % title('i3 vs t');
-    % figure; plot(t, m3, '+');
-    % title ('m3 vs t');
-
-    % figure; plot(t, m, '+');
-    % title ('m vs t');
-
-    figure; plot(t, ie, '+');
-    title('ie vs t');
+    i1=f1*o1/(o1-f1);
+    m1 = i1/o1;
+    o2=i1-d1;
+    i2=f2*o2./(o2+f2);
+    %i2=f2*o2./(o2-f2);
+    m2 = i2/o2;
+    o3=d2-i2;
+    i3=f3*o3./(o3-f3);
+    m3 = i3./o3;
+    ie=-i3+de;
+    ie(ie > 5) = 5;
     
-    
-    figure; plot(t, theta, '+');
-    title ('fov vs t');
-end
-
-if(printGraphs == true)
-    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-    % plot(t,f_t_inverse, 'LineWidth', 5);
-    % set(gcf, 'PaperPositionMode', 'auto');
-    % set(gca, 'FontSize', 30);
-    % print(filename, '-dsvg')
-
-    filename = sprintf('./graphs/sinusoidal_ens_power_vs_time.svg');
-    custom_plot_save(t, f_t_inverse, filename);
+    ie_dioptres = 1./ie;
+    ie_combined = [];
+    changing_quantity = ie;
+    for iter = 1:24
+        ie_dioptres_offset = zeros(size(changing_quantity));
+        offset = iter;
+        ie_dioptres_offset(1,1:end-offset) = changing_quantity(1,offset+1:end);
+        ie_dioptres_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
+        ie_combined = [ie_combined; ie_dioptres_offset]; 
+    end
+    longitudinal_pixel_blur = std(ie_combined);
 
 
-    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-    % plot(t,1./ie, 'LineWidth', 5);
-    % set(gcf, 'PaperPositionMode', 'auto');
-    % set(gca, 'FontSize', 30);
-    % print(filename, '-dsvg')
+    m = m1*(m2.*m3);
+    O_1 = 0.01778; % meters. O_1 = 0.7 inches
+    I_e = m*O_1;
+    theta = abs(2*rad2deg(atan((I_e/2)./ie)));
 
-    filename = sprintf('./graphs/sinusoidal_virtual_image_dioptres_vs_time.svg');
-    custom_plot_save(t, 1./ie, filename);
+    fov_combined = [];
+    for iter = 1:24
+        theta_offset = zeros(size(theta));
+        offset = iter;
+        theta_offset(1,1:end-offset) = theta(1,offset+1:end);
+        theta_offset(1,end-offset+1:end) = theta(1,1:offset);
+        fov_combined = [fov_combined; theta_offset]; 
+    end
+    lateral_pixel_blur = std(fov_combined);
 
+    if(debugGraphs == true)
+        % figure; plot(t, f2, '+');
+        % title('f2 vs t');
 
-    % figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
-    % plot(t,ie', 'LineWidth', 5);
-    % set(gcf, 'PaperPositionMode', 'auto');
-    % set(gca, 'FontSize', 30);
-    % print(filename, '-dsvg')
+        % figure; plot(t, o1, '+');
+        % title ('o1 vs t');
 
-    filename = sprintf('./graphs/sinusoidal_virtual_image_distance_vs_time.svg');
-    custom_plot_save(t, ie, filename);
+        % figure; plot(t, i1, '+');
+        % title ('i1 vs t');
+        % figure; plot(t, m1, '+');
+        % title ('m1 vs t');
 
-    filename = sprintf('./graphs/sinusoidal_fov_vs_time.svg');
-    custom_plot_save(t, theta, filename);
+        % figure; plot(t, o2, '+');
+        % title('o2 vs t');
+
+        % figure; plot(t, i2, '+');
+        % title('i2 vs t');
+        % figure; plot(t, m2, '+');
+        % title ('m2 vs t');
+
+        % %i2=f2*o2./(o2-f2);
+        % figure; plot(t, o3, '+');
+        % title('o3 vs t');
+
+        % figure; plot(t, i3, '+');
+        % title('i3 vs t');
+        % figure; plot(t, m3, '+');
+        % title ('m3 vs t');
+
+        % figure; plot(t, m, '+');
+        % title ('m vs t');
+
+        % figure; plot(t, ie, '+');
+        % title('ie vs t');
+        
+        
+        % figure; plot(t, theta, '+');
+        % title ('fov vs t');
+        
+        figure; plot(t, ie_dioptres, '+');
+        title('ie dioptres vs t');
+        
+        figure; plot(t,longitudinal_pixel_blur);
+        title('pixel blur vs t');
+
+        figure; plot(t,lateral_pixel_blur);
+        title('pixel blur vs t');
+    end
+
+    if(printGraphs == true)
+        % filename = sprintf('./graphs/sinusoidal_ens_power_vs_time.svg');
+        % custom_plot_save(t, f_t_inverse, filename);
+
+        % filename = sprintf('./graphs/sinusoidal_virtual_image_dioptres_vs_time.svg');
+        % custom_plot_save(t, 1./ie, filename);
+
+        % filename = sprintf('./graphs/sinusoidal_virtual_image_distance_vs_time.svg');
+        % custom_plot_save(t, ie, filename);
+
+        % filename = sprintf('./graphs/sinusoidal_fov_vs_time.svg');
+        % custom_plot_save(t, theta, filename);
+        
+        filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
+        custom_plot_save(t(1,1:end-ignore_elements), longitudinal_pixel_blur(1,1:end-ignore_elements), ...
+                         filename, 0, 1.0, 0, 20);
+
+        filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
+        custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
+                         filename, 0, 1.5, 0, 20);
+        
+    end
 end
 
 
