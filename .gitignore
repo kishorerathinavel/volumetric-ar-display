@@ -3,6 +3,7 @@
 *pyc
 *.lprof
 *.zip
+*.tif
 160929 Optotune Lens Driver 4 software package/
 rgb-depth/VS-projects/
 **/Debug/
@@ -23,6 +24,9 @@ Focus plane generation/Model9/
 Focus plane generation/Calibration Capture/
 Focus plane generation/graphs/
 Focus plane generation/adaptive_color_decomposition_images*/
+Focus plane generation/binary_pulse_modulation_images/
+Focus plane generation/*.avi
+
 *.mat
 Focus\ plane\ generation/**/**/*.png
 
