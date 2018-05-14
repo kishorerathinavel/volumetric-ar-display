@@ -1,65 +1,72 @@
 clear all;
 close all;
 
-RGBImg=im2double(imread('trial_00_rgb.png'));
+% Creating a backup of the files that are used to generate each set of results
+copyfile adaptive_color_decomposition_all_channels_bk.m adaptive_color_decomposition_images/adaptive_color_decomposition_all_channels_bk.m
+copyfile custom_imagesc_save.m adaptive_color_decomposition_images/custom_imagesc_save.m
+copyfile DepthMapNormalization.m adaptive_color_decomposition_images/DepthMapNormalization.m
+copyfile GenDepthList.m adaptive_color_decomposition_images/GenDepthList.m
+copyfile returnMeanOfChannels.m adaptive_color_decomposition_images/returnMeanOfChannels.m
+copyfile clampLEDValues.m adaptive_color_decomposition_images/clampLEDValues.m
+copyfile displayedImage.m adaptive_color_decomposition_images/displayedImage.m
 
-load('FocusDepth.mat');
-load('trial_00_DepthMap.mat');
+RGBImg=im2double(imread('trial_01_rgb.png'));
+load('trial_01_DepthMap.mat');
 
 NumofBP=280;
 colorbit=24;
 
-max_D=max(max(DepthMap));
-
-DepthMap_norm=DepthMapNormlization(DepthMap);
+DepthMap_norm=DepthMapNormalization(DepthMap);
 NumofCP=NumofBP-colorbit+1;
-DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
 
-DepthSeparater=[0,(DepthList(1:end-1)+DepthList(2:end))/2,1];
+% DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
+DepthList=linspace(0,1,NumofBP);
+DepthSeparater=DepthList;
 
-windowLength = 4;
-residue_rollover = zeros(size(RGBImg(:,:,1)));
+% DepthSeparater=[0,(DepthList(1:end-1)+DepthList(2:end))/2,1];
+
+residue_rollover = zeros(size(RGBImg(:,:,1)));  % Document
 imcount = 0;
 
 maxLED = 1;
 Energy = [];
 Energy_all = [];
-LED_ALL = [];
+LED_ALL = [];  % Document
 IMG = zeros(size(RGBImg));
 
-for subvolume_append = 1:50 %280-windowLength
+for subvolume_iter = 1:280-1%50 %280-windowLength
     trial = DepthMap_norm;
-    trial(trial < DepthSeparater(subvolume_append)) = 0;
-    trial(trial > DepthSeparater(subvolume_append+1)) = 0;
+    trial(trial < DepthSeparater(subvolume_iter)) = 0;
+    trial(trial > DepthSeparater(subvolume_iter+1)) = 0;
     bw = im2double(im2bw(trial,0));
 
     subvolume = bw.*RGBImg;
-    filename = sprintf('adaptive_color_decomposition_images/subvolume_%02d.png', subvolume_append);
-    custom_imagesc_save(subvolume, filename);
+    % filename = sprintf('adaptive_color_decomposition_images/subvolume_%02d.png', subvolume_iter);
+    % custom_imagesc_save(subvolume, filename);
     
 
     %% Initialization
 
     toOptimize = subvolume;
-    toOptimize = toOptimize + residue_rollover;
-    gray_toOptimize = mean(toOptimize,3);
+    toOptimize = toOptimize + residue_rollover;  % Document
+    gray_toOptimize = mean(toOptimize,3);  % Document
     
-    filename = sprintf('adaptive_color_decomposition_images/toOptimize_%02d.png', subvolume_append);
-    custom_imagesc_save(toOptimize, filename);
+    % filename = sprintf('adaptive_color_decomposition_images/toOptimize_%02d.png', subvolume_iter);
+    % custom_imagesc_save(toOptimize, filename);
 
-    LEDs = returnMeanOfChannels(toOptimize);
-    LEDs = clampLEDValues(LEDs);
+    LEDs = returnMeanOfChannels(toOptimize); % Document
+    LEDs = clampLEDValues(LEDs);   % Document
    
     bin_img = im2double(im2bw(gray_toOptimize, mean(LEDs)));
-    % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_append, imcount);
+    % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_iter, imcount);
     % custom_imagesc_save(bin_img, filename);
 
     img = displayedImage(LEDs, bin_img);
-    % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_append, imcount);
+    % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_iter, imcount);
     % custom_imagesc_save(img, filename);
 
     residue = toOptimize - img;
-    % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_append, imcount);
+    % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_iter, imcount);
     % custom_imagesc_save(residue, filename);
     imcount = imcount + 1;
 
@@ -72,23 +79,23 @@ for subvolume_append = 1:50 %280-windowLength
         bin_img = bin_img + gray_residue/mean(LEDs);
         % bin_img = bin_img + residue(:,:,1)/LEDs(1);
         bin_img = im2double(im2bw(bin_img,0));
-        % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_append, imcount);
+        % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_iter, imcount);
         % custom_imagesc_save(bin_img, filename);
 
         
         img = displayedImage(LEDs, bin_img);
-        % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_append, imcount);
+        % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_iter, imcount);
         % custom_imagesc_save(img, filename);
         
         residue = toOptimize - img;
-        % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_append, imcount);
+        % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_iter, imcount);
         % custom_imagesc_save(residue, filename);
         currEnergy = residue.*residue;
         currEnergy = sum(currEnergy(:));
         Energy_all = [Energy_all currEnergy];
         imcount = imcount + 1;
 
-        lambda = 0.0001;
+        lambda = 0.1;
         denominator = (bin_img.*bin_img + 1e-8);
         
         numerator = (residue(:,:,1).*bin_img);
@@ -108,10 +115,10 @@ for subvolume_append = 1:50 %280-windowLength
         LEDs = clampLEDValues(LEDs);
         
         img = displayedImage(LEDs, bin_img);
-        % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_append, imcount);
+        % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_iter, imcount);
         % custom_imagesc_save(img, filename);
         residue = toOptimize - img;
-        % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_append, imcount);
+        % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_iter, imcount);
         % custom_imagesc_save(residue, filename);
         currEnergy = residue.*residue;
         currEnergy = sum(currEnergy(:));
@@ -121,11 +128,16 @@ for subvolume_append = 1:50 %280-windowLength
     Energy = [Energy, currEnergy];
     LED_ALL = [LED_ALL; LEDs];
     
-    residue_rollover = residue;
-    filename = sprintf('adaptive_color_decomposition_images/residue_rollover_%02d.png', subvolume_append);
-    custom_imagesc_save(residue_rollover, filename);
+    residue_rollover = residue; % using 1.01*residue has the effect of making LSB more
+                                % important. Distorts color
+    if(mod(subvolume_iter, 10) == 0)
+        filename = sprintf('adaptive_color_decomposition_images/residue_rollover_%02d.png', subvolume_iter);
+        custom_imagesc_save(residue_rollover, filename);
+    end
 
     IMG = IMG + img;
-    filename = sprintf('adaptive_color_decomposition_images/IMG_%02d.png', subvolume_append);
-    custom_imagesc_save(IMG, filename);
+    if(mod(subvolume_iter, 10) == 0)
+        filename = sprintf('adaptive_color_decomposition_images/reconstructed_%02d.png', subvolume_iter);
+        custom_imagesc_save(IMG, filename);
+    end
 end

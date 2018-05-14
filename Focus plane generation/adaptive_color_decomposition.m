@@ -12,7 +12,7 @@ colorbit=24;
 
 max_D=max(max(DepthMap));
 
-DepthMap_norm=DepthMapNormlization(DepthMap);
+DepthMap_norm=DepthMapNormalization(DepthMap);
 NumofCP=NumofBP-colorbit+1;
 % DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
 DepthList=linspace(0,1,NumofBP);
