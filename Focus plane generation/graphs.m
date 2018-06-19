@@ -70,6 +70,7 @@ if(triangular == true)
         ie_combined = [ie_combined; ie_dioptres_offset]; 
     end
     longitudinal_pixel_blur = std(ie_combined);
+    dioptric_logitudinal_pixel_blur = longitudinal_pixel_blur;
     ignore_elements = 24;
 
     m = m1*(m2.*m3);
@@ -150,9 +151,26 @@ if(triangular == true)
         % filename = sprintf('./graphs/triangular_fov_vs_time.svg');
         % custom_plot_save(t, theta, filename);
 
+        % custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
+        %                         filename, 0, 1.0, 0, 20);
+        
         filename = sprintf('./graphs/triangular_longitudinal_blur_vs_time.svg');
-        custom_plot_save(t(1,1:end-ignore_elements), longitudinal_pixel_blur(1,1:end-ignore_elements), ...
-                         filename, 0, 1.0, 0, 20);
+        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements));
+        
+        xdata = t(1,1:end-ignore_elements);
+        ydata1 = dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements);
+        ydata2 = repmat(mean_blur, size(ydata1));
+      
+        figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+        plot(xdata, ydata1, '+', 'LineWidth', 2);
+        hold on;
+        plot(xdata, ydata2, 'LineWidth', 2);
+        legend('Blur at each focal plane','Average blur');
+        %ylim([y_min_range y_max_range]);
+        %xlim([x_min_range x_max_range]);
+        set(gcf, 'PaperPositionMode', 'auto');
+        set(gca, 'FontSize', 50);
+        print(filename, '-dsvg');
 
         filename = sprintf('./graphs/triangular_lateral_blur_vs_time.svg');
         custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
@@ -196,6 +214,7 @@ if(sinusoidal == true)
         ie_combined = [ie_combined; ie_dioptres_offset]; 
     end
     longitudinal_pixel_blur = std(ie_combined);
+    dioptric_logitudinal_pixel_blur = longitudinal_pixel_blur;
 
 
     m = m1*(m2.*m3);
@@ -276,7 +295,7 @@ if(sinusoidal == true)
         % custom_plot_save(t, theta, filename);
         
         filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
-        custom_plot_save(t(1,1:end-ignore_elements), longitudinal_pixel_blur(1,1:end-ignore_elements), ...
+        custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
                          filename, 0, 1.0, 0, 20);
 
         filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
