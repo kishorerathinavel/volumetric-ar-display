@@ -58,19 +58,19 @@ if(triangular == true)
     m3 = i3./o3;
     ie=-i3+de;
     ie(ie > 5) = 5;
+    ie_diopters = 1./ie;
     
-    
-    sorted_ie = sort(ie);
+    [sorted_ie sort_index] = sort(ie);
+    sorted_ie_diopters = 1./sorted_ie;
 
-    ie_dioptres = 1./sorted_ie;
     ie_combined = [];
-    changing_quantity = sorted_ie;
+    changing_quantity = sorted_ie_diopters;
     for iter = 1:24
-        ie_dioptres_offset = zeros(size(changing_quantity));
+        ie_diopters_offset = zeros(size(changing_quantity));
         offset = iter;
-        ie_dioptres_offset(1,1:end-offset) = changing_quantity(1,offset+1:end);
-        ie_dioptres_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
-        ie_combined = [ie_combined; ie_dioptres_offset]; 
+        ie_diopters_offset(1,1:end-offset) = changing_quantity(1,offset+1:end);
+        ie_diopters_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
+        ie_combined = [ie_combined; ie_diopters_offset]; 
     end
     longitudinal_pixel_blur = std(ie_combined);
     dioptric_logitudinal_pixel_blur = longitudinal_pixel_blur;
@@ -79,14 +79,16 @@ if(triangular == true)
     m = m1*(m2.*m3);
     O_1 = 0.01778; % meters. O_1 = 0.7 inches
     I_e = m*O_1;
-    theta = abs(2*rad2deg(atan((I_e/2)./sorted_ie)));
+    theta = abs(2*rad2deg(atan((I_e/2)./ie)));
+    sorted_theta = theta(sort_index);
+    changing_quantity = sorted_theta;
 
     fov_combined = [];
     for iter = 1:24
-        theta_offset = zeros(size(theta));
+        theta_offset = zeros(size(changing_quantity));
         offset = iter;
-        theta_offset(1,1:end-offset) = theta(1,offset+1:end);
-        theta_offset(1,end-offset+1:end) = theta(1,1:offset);
+        theta_offset(1,1:end-offset) = changing_quantity(1,offset+1:end);
+        theta_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
         fov_combined = [fov_combined; theta_offset]; 
     end
     lateral_pixel_blur = std(fov_combined);
@@ -129,23 +131,24 @@ if(triangular == true)
         % figure; plot(t, theta, '+');
         % title ('fov vs t');
         
-        figure; plot(t, ie_dioptres, '+');
-        title('ie dioptres vs t');
+        % figure; plot(t, ie_diopters, '+');
+        % title('ie diopters vs t');
         
         figure; plot(t,longitudinal_pixel_blur);
         title('pixel blur vs t');
         
-        figure; plot(t,lateral_pixel_blur);
+        figure; plot(t,dioptric_logitudinal_pixel_blur);
         title('pixel blur vs t');
+         % figure; plot(t,lateral_pixel_blur);
+        % title('pixel blur vs t');
     end
-
     linewidth = 3; 
 
     if(printGraphs == true)
         % filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
         % custom_plot_save(t, f_t_inverse, filename);
 
-        % filename = sprintf('./graphs/triangular_virtual_image_dioptres_vs_time.svg');
+        % filename = sprintf('./graphs/triangular_virtual_image_diopters_vs_time.svg');
         % custom_plot_save(t, 1./ie, filename);
 
         % filename = sprintf('./graphs/triangular_virtual_image_distance_vs_time.svg');
@@ -160,7 +163,8 @@ if(triangular == true)
         filename = sprintf('./graphs/triangular_longitudinal_blur_vs_time.svg');
         mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements));
         
-        xdata = t(1,1:end-ignore_elements);
+        %xdata = t(1,1:end-ignore_elements);
+        xdata = sorted_ie_diopters(1,1:end-ignore_elements);
         ydata1 = dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements);
         ydata2 = repmat(mean_blur, size(ydata1));
       
@@ -169,18 +173,29 @@ if(triangular == true)
         hold on;
         plot(xdata, ydata2, 'LineWidth', 2);
         legend('Blur at each focal plane','Average blur');
-        %ylim([y_min_range y_max_range]);
-        %xlim([x_min_range x_max_range]);
+        ylim([0 0.3]);
+        xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
         set(gca, 'FontSize', 50);
         print(filename, '-dsvg');
 
         filename = sprintf('./graphs/triangular_lateral_blur_vs_time.svg');
-        custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
-                         filename, 0, 1.5, 0, 20);
+        % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
+        %                  filename, 0, 1.5, 0, 20);
+        
+        xdata = sorted_ie_diopters(1,1:end-ignore_elements);
+        ydata1 = lateral_pixel_blur(1,1:end-ignore_elements);
+      
+        figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+        plot(xdata, ydata1, '+', 'LineWidth', 2);
+        ylim([0 1]);
+        xlim([0 7]);
+        set(gcf, 'PaperPositionMode', 'auto');
+        set(gca, 'FontSize', 50);
+        print(filename, '-dsvg');
+ 
     end
 end
-
 
 
 %% Sinusoidal wave
@@ -205,32 +220,38 @@ if(sinusoidal == true)
     m3 = i3./o3;
     ie=-i3+de;
     ie(ie > 5) = 5;
+    ie_diopters = 1./ie;
     
-    ie_dioptres = 1./ie;
+    [sorted_ie sort_index] = sort(ie);
+    sorted_ie_diopters = 1./sorted_ie;
+
     ie_combined = [];
-    changing_quantity = ie;
+    changing_quantity = sorted_ie_diopters;
     for iter = 1:24
-        ie_dioptres_offset = zeros(size(changing_quantity));
+        ie_diopters_offset = zeros(size(changing_quantity));
         offset = iter;
-        ie_dioptres_offset(1,1:end-offset) = changing_quantity(1,offset+1:end);
-        ie_dioptres_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
-        ie_combined = [ie_combined; ie_dioptres_offset]; 
+        ie_diopters_offset(1,1:end-offset) = changing_quantity(1,offset+1:end);
+        ie_diopters_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
+        ie_combined = [ie_combined; ie_diopters_offset]; 
     end
     longitudinal_pixel_blur = std(ie_combined);
     dioptric_logitudinal_pixel_blur = longitudinal_pixel_blur;
+    ignore_elements = 24;
 
 
     m = m1*(m2.*m3);
     O_1 = 0.01778; % meters. O_1 = 0.7 inches
     I_e = m*O_1;
     theta = abs(2*rad2deg(atan((I_e/2)./ie)));
+    sorted_theta = theta(sort_index);
+    changing_quantity = sorted_theta;
 
     fov_combined = [];
     for iter = 1:24
-        theta_offset = zeros(size(theta));
+        theta_offset = zeros(size(changing_quantity));
         offset = iter;
-        theta_offset(1,1:end-offset) = theta(1,offset+1:end);
-        theta_offset(1,end-offset+1:end) = theta(1,1:offset);
+        theta_offset(1,1:end-offset) = changing_quantity(1,offset+1:end);
+        theta_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
         fov_combined = [fov_combined; theta_offset]; 
     end
     lateral_pixel_blur = std(fov_combined);
@@ -274,8 +295,8 @@ if(sinusoidal == true)
         % figure; plot(t, theta, '+');
         % title ('fov vs t');
         
-        figure; plot(t, ie_dioptres, '+');
-        title('ie dioptres vs t');
+        figure; plot(t, ie_diopters, '+');
+        title('ie diopters vs t');
         
         figure; plot(t,longitudinal_pixel_blur);
         title('pixel blur vs t');
@@ -288,7 +309,7 @@ if(sinusoidal == true)
         % filename = sprintf('./graphs/sinusoidal_ens_power_vs_time.svg');
         % custom_plot_save(t, f_t_inverse, filename);
 
-        % filename = sprintf('./graphs/sinusoidal_virtual_image_dioptres_vs_time.svg');
+        % filename = sprintf('./graphs/sinusoidal_virtual_image_diopters_vs_time.svg');
         % custom_plot_save(t, 1./ie, filename);
 
         % filename = sprintf('./graphs/sinusoidal_virtual_image_distance_vs_time.svg');
@@ -297,14 +318,48 @@ if(sinusoidal == true)
         % filename = sprintf('./graphs/sinusoidal_fov_vs_time.svg');
         % custom_plot_save(t, theta, filename);
         
+        % filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
+        % custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
+        %                  filename, 0, 1.0, 0, 20);
+
+        % filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
+        % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
+        %                  filename, 0, 1.5, 0, 20);
+        
         filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
-        custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
-                         filename, 0, 1.0, 0, 20);
+        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements));
+        
+        %xdata = t(1,1:end-ignore_elements);
+        xdata = sorted_ie_diopters(1,1:end-ignore_elements);
+        ydata1 = dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements);
+        ydata2 = repmat(mean_blur, size(ydata1));
+      
+        figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+        plot(xdata, ydata1, '+', 'LineWidth', 2);
+        hold on;
+        plot(xdata, ydata2, 'LineWidth', 2);
+        legend('Blur at each focal plane','Average blur');
+        ylim([0 0.3]);
+        xlim([0 7]);
+        set(gcf, 'PaperPositionMode', 'auto');
+        set(gca, 'FontSize', 50);
+        print(filename, '-dsvg');
 
         filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
-        custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
-                         filename, 0, 1.5, 0, 20);
+        % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
+        %                  filename, 0, 1.5, 0, 20);
         
+        xdata = sorted_ie_diopters(1,1:end-ignore_elements);
+        ydata1 = lateral_pixel_blur(1,1:end-ignore_elements);
+      
+        figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+        plot(xdata, ydata1, '+', 'LineWidth', 2);
+        ylim([0 1]);
+        xlim([0 7]);
+        set(gcf, 'PaperPositionMode', 'auto');
+        set(gca, 'FontSize', 50);
+        print(filename, '-dsvg');
+         
     end
 end
 
