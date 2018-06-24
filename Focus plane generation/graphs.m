@@ -58,10 +58,13 @@ if(triangular == true)
     m3 = i3./o3;
     ie=-i3+de;
     ie(ie > 5) = 5;
+    
+    
+    sorted_ie = sort(ie);
 
-    ie_dioptres = 1./ie;
+    ie_dioptres = 1./sorted_ie;
     ie_combined = [];
-    changing_quantity = ie;
+    changing_quantity = sorted_ie;
     for iter = 1:24
         ie_dioptres_offset = zeros(size(changing_quantity));
         offset = iter;
@@ -76,7 +79,7 @@ if(triangular == true)
     m = m1*(m2.*m3);
     O_1 = 0.01778; % meters. O_1 = 0.7 inches
     I_e = m*O_1;
-    theta = abs(2*rad2deg(atan((I_e/2)./ie)));
+    theta = abs(2*rad2deg(atan((I_e/2)./sorted_ie)));
 
     fov_combined = [];
     for iter = 1:24
