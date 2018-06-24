@@ -172,7 +172,7 @@ if(triangular == true)
         plot(xdata, ydata1, '+', 'LineWidth', 2);
         hold on;
         plot(xdata, ydata2, 'LineWidth', 2);
-        legend('Blur at each focal plane','Average blur');
+        legend('Depth blur at each focal plane','Average blur');
         ylim([0 0.3]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
@@ -188,7 +188,7 @@ if(triangular == true)
       
         figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
         plot(xdata, ydata1, '+', 'LineWidth', 2);
-        ylim([0 1]);
+        ylim([0 0.8]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
         set(gca, 'FontSize', 50);
@@ -338,7 +338,7 @@ if(sinusoidal == true)
         plot(xdata, ydata1, '+', 'LineWidth', 2);
         hold on;
         plot(xdata, ydata2, 'LineWidth', 2);
-        legend('Blur at each focal plane','Average blur');
+        legend('Depth blur at each focal plane','Average blur');
         ylim([0 0.3]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
@@ -354,7 +354,7 @@ if(sinusoidal == true)
       
         figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
         plot(xdata, ydata1, '+', 'LineWidth', 2);
-        ylim([0 1]);
+        ylim([0 0.8]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
         set(gca, 'FontSize', 50);
