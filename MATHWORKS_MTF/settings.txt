@@ -1,0 +1,26 @@
+Data for px_size:
+-----------------
+Physical object used: 4kCheckerboard.png as full screen image on desktop monitor
+Monitor used: Dell 2408WFP
+Viewing diagonal length (from specs): 20 inches
+Viewing width (by math and verified): 16.96
+Viewing height (by math and verified): 10.60
+Size of each square of checkerboard in pixels of original image: 350 pixels
+Size of each square of checkerboard on display: (350/2560)*16.96 = 2.318 inches
+Distance between camera and monitor:  35 inches
+
+Camera settings:
+-----------------
+ISO: 800
+F#: 9
+Focal Length: 35 mm
+Aperture: 35/9 = 3.88
+Exposure time: 1/20
+
+
+MTF measurement
+-----------------
+camre to screen distance(far): 129
+camre to screen distance(middle): 19
+
+

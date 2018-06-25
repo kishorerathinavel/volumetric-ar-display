@@ -4,7 +4,7 @@ load('Image_CutVol.mat');
 n=10;
 full=zeros([768+3*n 1024+3*n 3 280]);
 
-labels = false;
+labels = true;
 
 %%
 
@@ -42,14 +42,14 @@ load('ImageSeq_Perceived.mat');
 %%
 if(labels == true)
     for i=1:NumofBP
-        str=['Perceived Volume Slice: ', num2str(i)];
+        str='Time Integrated Perceived Volume';
         ImageSeq_Perceived(:,:,:,i)=insertText(ImageSeq_Perceived(:,:,:,i),[10 10],str,'FontSize',40, 'BoxColor','Yellow','TextColor','Black');
     end
 end
 
 %%
 for i=1:NumofBP
-    full(n+1:n+384,2*n+513:end-n,:,i)=imresize(ImageSeq_Perceived(:,:,:,i),0.5,'nearest');
+    full(2*n+385:end-n,n+1:n+512,:,i)=imresize(ImageSeq_Perceived(:,:,:,i),0.5,'nearest');
 end
 
 
@@ -60,14 +60,14 @@ load('ImageSeq_Binary.mat');
 %%
 if(labels == true)
     for i=1:NumofBP
-        str='Time Integrated Binary Image';
+        str=['Binary Volume Slice: ', num2str(i)];
         ImageSeq_Binary(:,:,:,i)=insertText(ImageSeq_Binary(:,:,:,i),[10 10],str,'FontSize',40, 'BoxColor','Yellow','TextColor','Black');
     end
 end
 
 %%
 for i=1:NumofBP
-    full(2*n+385:end-n,n+1:n+512,:,i)=imresize(ImageSeq_Binary(:,:,:,i),0.5,'nearest');
+    full(n+1:n+384,2*n+513:end-n,:,i)=imresize(ImageSeq_Binary(:,:,:,i),0.5,'nearest');
 end
 
 %%

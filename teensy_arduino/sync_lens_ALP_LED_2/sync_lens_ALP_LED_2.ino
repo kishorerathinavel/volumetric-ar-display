@@ -106,7 +106,7 @@ float lens_frame_time = 16665.0;
 float binary_frame_time = lens_frame_time/281.0;
 int imgCount = 0;
 int numImg = 280;
-float factor = 1.2;
+float factor = 1.1;
 void loop() {
   if(disp_img) {
     noInterrupts();

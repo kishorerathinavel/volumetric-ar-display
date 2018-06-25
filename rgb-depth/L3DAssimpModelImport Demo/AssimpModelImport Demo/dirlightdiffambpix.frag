@@ -24,7 +24,7 @@ void main()
   vec3 lightDir;
   vec3 n;
 	
-  lightDir = normalize(vec3(1.0,1.0,1.0));
+  lightDir = normalize(vec3(1.0,1.5,1.5));
   n = normalize(Normal);	
   intensity = max(dot(lightDir,n),0.0);
 	

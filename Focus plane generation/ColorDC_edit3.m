@@ -44,7 +44,8 @@ title(['Difference']);
 
 
 %%
-lookuptable=round(2.^(7:-1:0)/128*(255-100)+100);
+lookuptable=round(2.^(7:-1:0)/128*(255-32)+32);
+lookuptable=255:-32:30;
 ImageSeq_con=zeros([768 1024 3]);
 ImageSeq_Binary=zeros([768 1024 3 280]);
 %ImageSeq_Perceived=zeros([768 1024 3 280]);
@@ -81,11 +82,11 @@ for i=1:280
     
    
     
-  %  if i==1
-  %  ImageSeq_Perceived(:,:,:,i)=ImageSeq_con;
-  %  else
-  %  ImageSeq_Perceived(:,:,:,i)=ImageSeq_Perceived(:,:,:,i-1)+ImageSeq_con;
-  %  end
+    if i==1
+    ImageSeq_Perceived(:,:,:,i)=ImageSeq_con;
+    else
+    ImageSeq_Perceived(:,:,:,i)=ImageSeq_Perceived(:,:,:,i-1)+ImageSeq_con;
+    end
     
        
 end
@@ -104,15 +105,15 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 
 for i=1:NumofBP
        
-    str = sprintf('Model8/Scene_%03d.png',i);
+    str = sprintf('Model/Scene_%03d.png',i);
     imwrite(ImageSeq_order(:,:,i),str);  
 
 end
 
-
 %%
 ImageSeq_Binary=uint8(ImageSeq_Binary);
 
+save ImageSeq_Binary.mat ImageSeq_Binary
 save ImageSeq_Binary.mat ImageSeq_Binary
 
 

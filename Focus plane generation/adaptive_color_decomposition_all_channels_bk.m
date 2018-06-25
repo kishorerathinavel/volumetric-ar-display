@@ -2,16 +2,16 @@ clear all;
 close all;
 
 % Creating a backup of the files that are used to generate each set of results
-copyfile adaptive_color_decomposition_all_channels_bk.m adaptive_color_decomposition_images/adaptive_color_decomposition_all_channels_bk.m
-copyfile custom_imagesc_save.m adaptive_color_decomposition_images/custom_imagesc_save.m
-copyfile DepthMapNormalization.m adaptive_color_decomposition_images/DepthMapNormalization.m
-copyfile GenDepthList.m adaptive_color_decomposition_images/GenDepthList.m
-copyfile returnMeanOfChannels.m adaptive_color_decomposition_images/returnMeanOfChannels.m
-copyfile clampLEDValues.m adaptive_color_decomposition_images/clampLEDValues.m
-copyfile displayedImage.m adaptive_color_decomposition_images/displayedImage.m
+% copyfile adaptive_color_decomposition_all_channels_bk.m adaptive_color_decomposition_images/adaptive_color_decomposition_all_channels_bk.m
+% copyfile custom_imagesc_save.m adaptive_color_decomposition_images/custom_imagesc_save.m
+% copyfile DepthMapNormalization.m adaptive_color_decomposition_images/DepthMapNormalization.m
+% copyfile GenDepthList.m adaptive_color_decomposition_images/GenDepthList.m
+% copyfile returnMeanOfChannels.m adaptive_color_decomposition_images/returnMeanOfChannels.m
+% copyfile clampLEDValues.m adaptive_color_decomposition_images/clampLEDValues.m
+% copyfile displayedImage.m adaptive_color_decomposition_images/displayedImage.m
 
-RGBImg=im2double(imread('trial_01_rgb.png'));
-load('trial_01_DepthMap.mat');
+RGBImg=im2double(imread('RGB_Depth\trial_10_rgb.png'));
+load('RGB_Depth\trial_10_DepthMap.mat');
 
 NumofBP=280;
 colorbit=24;
@@ -25,7 +25,7 @@ DepthSeparater=DepthList;
 
 % DepthSeparater=[0,(DepthList(1:end-1)+DepthList(2:end))/2,1];
 
-residue_rollover = zeros(size(RGBImg(:,:,1)));  % Document
+residue_rollover = zeros(size(RGBImg(:,:,:)));  % Document
 imcount = 0;
 
 maxLED = 1;

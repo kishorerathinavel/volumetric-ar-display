@@ -66,6 +66,8 @@
 
 #include "filepaths.h"
 #include <FreeImage.h>
+#include "mat.h"
+#include "matrix.h"
 
 // This is for a shader uniform block
 struct MyMaterial {
@@ -123,7 +125,7 @@ struct MyMesh {
 	int numFaces;
 };
 
-#define NUM_MODELS 4
+#define NUM_MODELS 3
 class Model {
 public:
 	std::vector<struct MyMesh> myMesh;
@@ -776,6 +778,10 @@ void genVAOsAndUniformBuffer(Model& model) {
 // Reshape Callback Function
 //
 
+float Znear=0.20f;
+float Zfar = 4.0f;
+
+
 void changeSize(int w, int h) {
 
 	float ratio;
@@ -788,7 +794,7 @@ void changeSize(int w, int h) {
 	glViewport(0, 0, w, h);
 
 	ratio = (1.0f * w) / h;
-	buildProjectionMatrix(35.0f, ratio, 0.01f, 10.0f);
+	buildProjectionMatrix(35.0f, ratio, Znear, Zfar);
 }
 
 
@@ -846,16 +852,31 @@ void saveScreenShot(char* fname) {
 	//ilDeleteImage(imageID);
 }
 
+
+
+
+
+
 void saveImage(GLuint fbo, const char* outFilename1, const char* outFilename2) {
 	//allocate FreeImage memory
-	int width = 1024, height = 768;
+	const int width = 1024, height = 768;
 	int oldFramebuffer;
+	int status;
 
+
+	GLfloat* Depth;
+	Depth = new float[width*height];
+	
+	MATFile *pmat;
+	mxArray *depthArray;
+
+	/*
 	FIBITMAP *depth_img = FreeImage_Allocate(width, height, 32);
 	if (depth_img == NULL) {
 		printf("couldn't allocate depth_img for saving!\n");
 		return;
 	}
+	*/
 
 	FIBITMAP *color_img = FreeImage_Allocate(width, height, 24);
 	if (color_img == NULL) {
@@ -868,21 +889,49 @@ void saveImage(GLuint fbo, const char* outFilename1, const char* outFilename2) {
 
 	//bind desired FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_INT, FreeImage_GetBits(depth_img));
+	//glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_INT, FreeImage_GetBits(depth_img));
+	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, (GLvoid *)Depth);
 	glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, FreeImage_GetBits(color_img));
+
+	
+	
+	double temp;
+	double A = (Zfar + Znear) / (Zfar - Znear);
+	double B = 2 * Zfar*Znear / (Zfar - Znear);
+	
+	pmat = matOpen(outFilename1, "w");
+	depthArray = mxCreateDoubleMatrix(height, width, mxREAL);
+	double *D = mxGetPr(depthArray);
+	for (int i = 0; i < height; i++)
+		for (int j = 0; j < width; j++)
+		{ 
+			temp = (Depth[(height - i - 1)*width + j] - 0.5) * 2;
+			temp = (temp - A) / B;
+			D[j*height + i] = -1.0 / temp;
+		}
+			
+
+	//memcpy((void *)mxGetPr(depthArray), (void *)Depth, 4*width*height);
+	status = matPutVariable(pmat, "DepthMap", depthArray);
+	mxDestroyArray(depthArray);
+	matClose(pmat);
+	
 
 	//restore existing FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, oldFramebuffer);
 
 	//write depth_img
-	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename1), depth_img, outFilename1);
+	//FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename1), depth_img, outFilename1);
 	//write color_img
 	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename2), color_img, outFilename2);
 
 	//deallocate
-	FreeImage_Unload(depth_img);
+	//FreeImage_Unload(depth_img);
 	//deallocate
 	FreeImage_Unload(color_img);
+
+	delete Depth;
+
 }
 
 void drawModels() {
@@ -1023,7 +1072,7 @@ void renderScene() {
 	drawModels();
 
 	if (saveFramebufferOnce | saveFramebufferUntilStop) {
-		sprintf(fname1, "./outputs/trial_%02d_depth.png", imgCounter);
+		sprintf(fname1, "./outputs/trial_%02d_DepthMap.mat", imgCounter);
 		sprintf(fname2, "./outputs/trial_%02d_rgb.png", imgCounter);
 		saveImage(fbo_depth_image, fname1, fname2);
 		imgCounter++;
@@ -1089,13 +1138,13 @@ void processKeys(unsigned char key, int xx, int yy) {
 		break;
 	}
 	case 'q': {
-		currModel->scaleFactor -= 0.005f*stepSize;
+		currModel->scaleFactor -= 0.01f*stepSize;
 		if (currModel->scaleFactor < 0.005)
 			currModel->scaleFactor = 0.005;
 		break;
 	}
 	case 'w': {
-		currModel->scaleFactor += 0.005f*stepSize;
+		currModel->scaleFactor += 0.01f*stepSize;
 		break;
 	}
 	case 'e': currModel->rotation[0] -= stepSize; break;
@@ -1355,6 +1404,8 @@ int init()
 	}
 
 	glEnable(GL_DEPTH_TEST);
+	glDepthFunc(GL_LEQUAL);
+	glDepthRange(0.0f, 1.0f);
 	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 
 	//
