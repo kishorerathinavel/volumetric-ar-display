@@ -7,9 +7,10 @@ U=im2bw(UI_new,graythresh(UI_new));
 imshow(U,[]);
 %%
 checker=imread('4kCheckerboard.png');
-Ir=imrotate(checker,7);
-Ic=imcrop(Ir,[856 566 1023 767]);
-Ic=insertText(double(Ic),[220 100;600,400],{'2','0'},'FontSize',150, 'BoxColor','white','TextColor','Black');
+%Ir=imrotate(checker,7);
+Ic=imcrop(checker,[856 566 1023 767]);
+Ic=insertText(double(Ic),[200 300;500,300],{'2','0'},'FontSize',150, 'BoxColor',{'black','white'},'TextColor',{'white','Black'});
+
 I=im2bw(Ic,graythresh(Ic));
 imshow(I,[]);
 %%
@@ -33,7 +34,7 @@ imshow(I,[]);
 %%
 Img=zeros([768,1024,280]);
 NumofBP=280;
-Img(:,:,140-23:140)=repmat(I,1,1,24);
+Img(:,:,end-23:end)=repmat(I,1,1,24);
 %%Img(:,:,end)=U;
 load('FocusDepth.mat');
 
@@ -45,7 +46,7 @@ Img_order=flipud(Img(:,:,un_order));
 
 for i=1:NumofBP
        
-    str = sprintf('MTF_set2/Scene_%03d.png',i);
+    str = sprintf('MTF_set3/Scene_%03d.png',i);
     imwrite(Img_order(:,:,i),str);  
 
 end

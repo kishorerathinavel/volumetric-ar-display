@@ -1,4 +1,3 @@
-clear all;
 %{
  Slant Edge Script
  File: MTFscript.m
@@ -41,20 +40,23 @@ fabricate the edge to measure the pre-sampled MTF.
 %}
 %Identify and initialize all variables
 
+clear all;
 
-focallength=34;
+Focallength=34;
 
 physicalObjectSize = 0.5*(350.0/2560.0)*16.96;
 physicalObjectDist = 19;
 angleSubtendedByPhysicalObject=2*rad2deg(atan(physicalObjectSize/physicalObjectDist));
 cameraPixelsOccupiedByPhysicalObject = 1180;
 px_size = angleSubtendedByPhysicalObject/cameraPixelsOccupiedByPhysicalObject;
+% parameters used to calcute the pixels per degree of camera
+% used to derive cycles/deg from cycles/mm or cycles/pixels.
 
 isotropicpixelspacing = 0.0037; 
 % isotropic detector pixel spacing in mm, (i.e. pixel pitch).  
 % set this value to your detector
  
-pixel_subdivision = 0.1; 
+pixel_subdivision = 0.25; 
 % keep between 0.03 - > 0.15  
 % Samei, Flynn, and Reimann (Ref.2 )suggest that 0.1 subpixel bin spacing 
 % provides a good trade-off between sampling uniformity and noise.
@@ -80,11 +82,11 @@ boundplusminus_extra = 20;
 % boundplusminus_extra incorperates addition pixel values near the edge to 
 % include in the binned histogram. 
  
- 
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%LOAD IMAGE%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
- 
+
 Button_Image_Import = questdlg('What type of image would you like to import ?',...
     'Image type?',...
     'Dicom','Tiff or Jpeg','Matlab file','Tiff or Jpeg');
@@ -128,7 +130,7 @@ image = imcrop(h);
  
 close(h);
  
-
+%%
 %{
  Threshold image using Otsu's threshold criterion on cropped image
  
@@ -206,7 +208,7 @@ else % the edge is horizontal and the image is transposed
 end
 
     
-        for i =start_row:end_row
+for i =start_row:end_row
           
         %%%%%%%%%%%%%%%%%%%  USED FOR finding edge %%%%%%%%%%%%%%%%%
  
@@ -250,7 +252,7 @@ end
         array_values_near_edge(ii,:) = (image(i,bound_edge_left_expand:bound_edge_right_expand)); 
  
         arraypositions(ii,:) = [bound_edge_left_expand:bound_edge_right_expand];
-        end
+end
        
         
        
