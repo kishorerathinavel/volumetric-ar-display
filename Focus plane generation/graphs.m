@@ -144,6 +144,8 @@ if(triangular == true)
     end
     linewidth = 3; 
 
+    font_size = 20;
+    
     if(printGraphs == true)
         % filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
         % custom_plot_save(t, f_t_inverse, filename);
@@ -161,7 +163,7 @@ if(triangular == true)
         %                         filename, 0, 1.0, 0, 20);
         
         filename = sprintf('./graphs/triangular_longitudinal_blur_vs_time.svg');
-        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements));
+        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements))
         
         %xdata = t(1,1:end-ignore_elements);
         xdata = sorted_ie_diopters(1,1:end-ignore_elements);
@@ -172,11 +174,11 @@ if(triangular == true)
         plot(xdata, ydata1, '+', 'LineWidth', 2);
         hold on;
         plot(xdata, ydata2, 'LineWidth', 2);
-        legend('Depth blur at each focal plane','Average blur');
+        legend('Blur at focal plane','Average blur', 'Location', 'southeast');
         ylim([0 0.3]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
-        set(gca, 'FontSize', 50);
+        set(gca, 'FontSize', font_size);
         print(filename, '-dsvg');
 
         filename = sprintf('./graphs/triangular_lateral_blur_vs_time.svg');
@@ -191,7 +193,7 @@ if(triangular == true)
         ylim([0 0.8]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
-        set(gca, 'FontSize', 50);
+        set(gca, 'FontSize', font_size);
         print(filename, '-dsvg');
  
     end
@@ -327,7 +329,7 @@ if(sinusoidal == true)
         %                  filename, 0, 1.5, 0, 20);
         
         filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
-        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements));
+        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements))
         
         %xdata = t(1,1:end-ignore_elements);
         xdata = sorted_ie_diopters(1,1:end-ignore_elements);
@@ -338,11 +340,11 @@ if(sinusoidal == true)
         plot(xdata, ydata1, '+', 'LineWidth', 2);
         hold on;
         plot(xdata, ydata2, 'LineWidth', 2);
-        legend('Depth blur at each focal plane','Average blur');
+        legend('Blur at focal plane','Average blur', 'Location', 'southeast');
         ylim([0 0.3]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
-        set(gca, 'FontSize', 50);
+        set(gca, 'FontSize', font_size);
         print(filename, '-dsvg');
 
         filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
@@ -357,7 +359,7 @@ if(sinusoidal == true)
         ylim([0 0.8]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
-        set(gca, 'FontSize', 50);
+        set(gca, 'FontSize', font_size);
         print(filename, '-dsvg');
          
     end
