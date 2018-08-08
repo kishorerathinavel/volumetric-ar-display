@@ -125,7 +125,7 @@ struct MyMesh {
 	int numFaces;
 };
 
-#define NUM_MODELS 3
+#define NUM_MODELS 2
 class Model {
 public:
 	std::vector<struct MyMesh> myMesh;

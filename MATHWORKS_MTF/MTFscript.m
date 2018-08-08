@@ -46,8 +46,8 @@ Focallength=34;
 
 physicalObjectSize = 0.5*(350.0/2560.0)*16.96;
 physicalObjectDist = 19;
-angleSubtendedByPhysicalObject=2*rad2deg(atan(physicalObjectSize/physicalObjectDist));
 cameraPixelsOccupiedByPhysicalObject = 1180;
+angleSubtendedByPhysicalObject=2*rad2deg(atan(physicalObjectSize/physicalObjectDist));
 px_size = angleSubtendedByPhysicalObject/cameraPixelsOccupiedByPhysicalObject;
 % parameters used to calcute the pixels per degree of camera
 % used to derive cycles/deg from cycles/mm or cycles/pixels.
@@ -194,8 +194,8 @@ if abs(Angle_radians) > pi/4 % i.e. edge is vertical
     % if the edge is vertical the image keeps the same orientation
     % else we transpose the image
     
-    start_row = floor(rowlength/3);
-    end_row = ceil(2*rowlength/3);
+    start_row = 1;
+    end_row = rowlength;
     
 else % the edge is horizontal and the image is transposed
     
@@ -203,8 +203,8 @@ else % the edge is horizontal and the image is transposed
     
     [rowlength, columnlength] = size(image);
   
-    start_row = floor(rowlength/3);
-    end_row = ceil(2*rowlength/3);
+    start_row = 1;
+    end_row = rowlength;
 end
 
     

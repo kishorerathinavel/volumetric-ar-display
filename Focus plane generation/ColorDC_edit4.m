@@ -1,9 +1,9 @@
 clear all;
 warning off;
 %%
-RGBImg=imread('RGB_Depth/trial_13_rgb.png');
+RGBImg=imread('RGB_Depth/trial_14_rgb.png');
 load('FocusDepth.mat');
-load('RGB_Depth/trial_13_DepthMap.mat');
+load('RGB_Depth/trial_14_DepthMap.mat');
 
 figure;
 imshow(RGBImg,[]);

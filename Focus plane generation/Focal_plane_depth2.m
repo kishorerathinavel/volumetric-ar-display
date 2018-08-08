@@ -29,9 +29,9 @@ de=0.07; % measure
 %%
 
 num=280; % num of sample depths along z direction(depth direction)
-MinOpPower=15; % min optical power of focus tunable lens(in diopters)
+MinOpPower=12; % min optical power of focus tunable lens(in diopters)
 % current 87.5
-MaxOpPower=16; % max optical power of focus tunable lens(in diopters)
+MaxOpPower=15; % max optical power of focus tunable lens(in diopters)
 % current 137.5
 t=1:num;
 p=2;

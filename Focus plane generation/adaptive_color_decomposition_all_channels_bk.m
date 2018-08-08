@@ -10,17 +10,27 @@ close all;
 % copyfile clampLEDValues.m adaptive_color_decomposition_images/clampLEDValues.m
 % copyfile displayedImage.m adaptive_color_decomposition_images/displayedImage.m
 
-RGBImg=im2double(imread('RGB_Depth\trial_10_rgb.png'));
-load('RGB_Depth\trial_10_DepthMap.mat');
-
+RGBImg=im2double(imread('RGB_Depth\trial_09_rgb.png'));
+load('RGB_Depth\trial_09_DepthMap.mat');
+load('FocusDepth.mat');
 NumofBP=280;
 colorbit=24;
 
+nonliner=false;
+
+
+if nonliner
 DepthMap_norm=DepthMapNormalization(DepthMap);
-NumofCP=NumofBP-colorbit+1;
+DepthList=linspace(0,1,NumofBP);
+background=1;
+else
+DepthMap_norm=DepthMap;
+DepthList=linspace(d_sort(1),d_sort(end),NumofBP);
+background=max(max(DepthMap));
+end
 
 % DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
-DepthList=linspace(0,1,NumofBP);
+
 DepthSeparater=DepthList;
 
 % DepthSeparater=[0,(DepthList(1:end-1)+DepthList(2:end))/2,1];
@@ -34,10 +44,15 @@ Energy_all = [];
 LED_ALL = [];  % Document
 IMG = zeros(size(RGBImg));
 
+% exclude the background in depthmap to avoid rendering
+
+%%
 for subvolume_iter = 1:280-1%50 %280-windowLength
     trial = DepthMap_norm;
     trial(trial < DepthSeparater(subvolume_iter)) = 0;
     trial(trial > DepthSeparater(subvolume_iter+1)) = 0;
+    trial(trial ==background) = 0;
+    
     bw = im2double(im2bw(trial,0));
 
     subvolume = bw.*RGBImg;
@@ -46,9 +61,11 @@ for subvolume_iter = 1:280-1%50 %280-windowLength
     
 
     %% Initialization
+    
+    relaxP=1;
 
     toOptimize = subvolume;
-    toOptimize = toOptimize + residue_rollover;  % Document
+    toOptimize = toOptimize + relaxP*residue_rollover;  % Document
     gray_toOptimize = mean(toOptimize,3);  % Document
     
     % filename = sprintf('adaptive_color_decomposition_images/toOptimize_%02d.png', subvolume_iter);
@@ -56,8 +73,10 @@ for subvolume_iter = 1:280-1%50 %280-windowLength
 
     LEDs = returnMeanOfChannels(toOptimize); % Document
     LEDs = clampLEDValues(LEDs);   % Document
-   
-    bin_img = im2double(im2bw(gray_toOptimize, mean(LEDs)));
+    bin_img=zeros(size(gray_toOptimize));
+    bin_img(gray_toOptimize>=mean(LEDs))=1;
+    
+    % bin_img = im2double(im2bw(gray_toOptimize, mean(LEDs)));
     % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_iter, imcount);
     % custom_imagesc_save(bin_img, filename);
 
@@ -73,12 +92,22 @@ for subvolume_iter = 1:280-1%50 %280-windowLength
     currEnergy = residue.*residue;
     currEnergy = sum(currEnergy(:));
     Energy_all = [Energy_all currEnergy];
+    
+    
 
-    for iter = 1:2
+    for iter = 1:5
+        
+        %{
         gray_residue = mean(residue,3);
         bin_img = bin_img + gray_residue/mean(LEDs);
+        %}
+        
+         numerator=LEDs(1)*toOptimize(:,:,1)+LEDs(2)*toOptimize(:,:,2)+LEDs(3)*toOptimize(:,:,3);
+         denominator=sum(LEDs.^2)+ 1e-8;
+         bin_img=numerator/denominator;
+         
         % bin_img = bin_img + residue(:,:,1)/LEDs(1);
-        bin_img = im2double(im2bw(bin_img,0));
+        
         % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_iter, imcount);
         % custom_imagesc_save(bin_img, filename);
 
@@ -95,25 +124,30 @@ for subvolume_iter = 1:280-1%50 %280-windowLength
         Energy_all = [Energy_all currEnergy];
         imcount = imcount + 1;
 
-        lambda = 0.1;
+        lambda = 1;
         denominator = (bin_img.*bin_img + 1e-8);
         
         numerator = (residue(:,:,1).*bin_img);
-        delta = numerator./denominator;
+        
+        
+        %delta = numerator./denominator;
+        delta = sum(numerator(:))/sum(denominator(:));
         LEDs(1) = LEDs(1) + lambda*sum(delta(:));
         
         numerator = (residue(:,:,2).*bin_img);
-        delta = numerator./denominator;
+        %delta = numerator./denominator;
+        delta = sum(numerator(:))/sum(denominator(:));
         LEDs(2) = LEDs(2) + lambda*sum(delta(:));
         
         numerator = (residue(:,:,3).*bin_img);
-        delta = numerator./denominator;
+        %delta = numerator./denominator;
+        delta = sum(numerator(:))/sum(denominator(:));
         LEDs(3) = LEDs(3) + lambda*sum(delta(:));
         
         
-        LEDs = returnMeanOfChannels(toOptimize);
-        LEDs = clampLEDValues(LEDs);
+        %LEDs = returnMeanOfChannels(toOptimize);
         
+        LEDs = clampLEDValues(LEDs);
         img = displayedImage(LEDs, bin_img);
         % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_iter, imcount);
         % custom_imagesc_save(img, filename);
@@ -125,19 +159,32 @@ for subvolume_iter = 1:280-1%50 %280-windowLength
         Energy_all = [Energy_all currEnergy];
         imcount = imcount + 1;
     end
+    
+    %bin_img = im2double(im2bw(bin_img,0.5));
+    %LEDs = clampLEDValues(LEDs);
+    img = displayedImage(LEDs, bin_img);
+    residue = toOptimize - img;
+    currEnergy = residue.*residue;
+    currEnergy = sum(currEnergy(:));
+    Energy_all = [Energy_all currEnergy];
+    imcount = imcount + 1;
+    
+    
+    
+    
     Energy = [Energy, currEnergy];
     LED_ALL = [LED_ALL; LEDs];
     
     residue_rollover = residue; % using 1.01*residue has the effect of making LSB more
                                 % important. Distorts color
-    if(mod(subvolume_iter, 10) == 0)
-        filename = sprintf('adaptive_color_decomposition_images/residue_rollover_%02d.png', subvolume_iter);
+    if(mod(subvolume_iter, 1) == 0||subvolume_iter==279)
+        filename = sprintf('adaptive_color_decomposition_images_3/residue_rollover_%02d.png', subvolume_iter);
         custom_imagesc_save(residue_rollover, filename);
     end
 
     IMG = IMG + img;
-    if(mod(subvolume_iter, 10) == 0)
-        filename = sprintf('adaptive_color_decomposition_images/reconstructed_%02d.png', subvolume_iter);
+    if(mod(subvolume_iter, 1) == 0||subvolume_iter==279)
+        filename = sprintf('adaptive_color_decomposition_images_3/reconstructed_%02d.png', subvolume_iter);
         custom_imagesc_save(IMG, filename);
     end
 end
