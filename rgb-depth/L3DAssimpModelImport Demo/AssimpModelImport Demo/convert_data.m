@@ -4,7 +4,7 @@ close all;
 
 %%
 
-data = importdata('./outputs/trial_06_depth.png', 'png');
+data = importdata('./outputs/trial_00_depth.png', 'png');
 
 alpha = data.alpha;
 cdata = data.cdata;

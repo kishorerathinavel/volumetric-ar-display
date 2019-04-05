@@ -35,7 +35,6 @@ Samei, Flynn, and Reimann (Ref.2 ) have a good description on how to
 fabricate the edge to measure the pre-sampled MTF. 
  
 %%%%%%%%%%%%%%%%%%%%%Begin Script%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 close all;
 clear all;
@@ -59,28 +58,28 @@ bin_pad = 0.0001;
 % Bin_pad adds a small space so that all values are included the histogram 
 % of edge spread distances.
  
-span = 10;
+span = 13;
 % span is used to smooth the edge spread function 
 % Samei, Flynn, and Reimann (Ref.2 ) use a forth weighted,
 % Gaussian-weighted moving polynomial. 
  
-edge_span = 4;
+edge_span = 13;
 % Used to improve the location of the edge
  
-boundplusminus = 2; 
+boundplusminus = 20; 
 % boundplusminus is a variable that is used to crop a small section of the
 % edge in order to used to find the subpixel interpolated edge position.
  
  
-boundplusminus_extra = 6;
+boundplusminus_extra = 20;
 % boundplusminus_extra incorperates addition pixel values near the edge to 
 % include in the binned histogram. 
  
- 
+%%
 %%%%%%%%%%%%%%%%%%%%%%%%%LOAD IMAGE%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
- 
+
 Button_Image_Import = questdlg('What type of image would you like to import ?',...
     'Image type?',...
     'Dicom','Tiff or Jpeg','Matlab file','Tiff or Jpeg');
@@ -95,7 +94,7 @@ switch Button_Image_Import,
     
     case 'Tiff or Jpeg'  
  
-    [image_file, path_name] = uigetfile({'*.tif; *.tiff; *.jpg; *.jpeg'},'Please select the jpeg or tiff image you wish to import');
+    [image_file, path_name] = uigetfile({'*.tif; *.tiff; *.jpg; *.jpeg; *.png'},'Please select the jpeg or tiff image you wish to import');
     
     image = im2double(imread([path_name image_file]));
     if(size(image,3)==3)
@@ -112,8 +111,8 @@ switch Button_Image_Import,
     image = double(matstruct.image);
       
 end % switch
- 
- 
+
+
 % crop image to 50 % air and 50 % edge 
  
 h = figure('Name','Please select a region contain 50% Air and 50% of the edge. Right click and choose Crop Image'); hold on
@@ -124,7 +123,6 @@ image = imcrop(h);
  
 close(h);
  
- %%
 %{
  Threshold image using Otsu's threshold criterion on cropped image
  
@@ -132,7 +130,7 @@ close(h);
  
  The difference between's Otsu's threshold and the mean threshold is small 
 %}
- 
+
 level = graythresh(image);
  
 threshold =  double(((max(max(image)) - min(min(image))))*level + min(min(image)));
@@ -157,20 +155,23 @@ BW_edge = edge(double(image),'canny',level);
 % Locate edge positions
  
 [A_row_pos B_column_pos] = find(BW_edge==1);
+
+
+[rowlength, columnlength] = size(image);
  
 % Fit edge positions
  
-P = polyfit(B_column_pos,flipud(A_row_pos),1);
+P = polyfit(B_column_pos,(rowlength-A_row_pos),1);
  
 % determine rough edge angle to determine orientation
  
 Angle_radians = atan(P(1));
  
 % show the determined edge
+
+%edge_intensity=1;
+%imshow(image + BW_edge*edge_intensity,[]);
  
-% imshow(image + BW_edge*edge_intensity,[])
- 
-[rowlength, columnlength] = size(image);
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -185,8 +186,8 @@ if abs(Angle_radians) > pi/4 % i.e. edge is vertical
     % if the edge is vertical the image keeps the same orientation
     % else we transpose the image
     
-    start_row = boundplusminus_extra;
-    end_row = rowlength - boundplusminus_extra;
+    start_row = 1;
+    end_row = rowlength;
     
 else % the edge is horizontal and the image is transposed
     
@@ -194,16 +195,17 @@ else % the edge is horizontal and the image is transposed
     
     [rowlength, columnlength] = size(image);
   
-    start_row = boundplusminus_extra;
-    end_row = rowlength - boundplusminus_extra;
+    start_row = 1;
+    end_row = rowlength;
 end
+
     
-    
-      for i = start_row:end_row
+for i =start_row:end_row
           
         %%%%%%%%%%%%%%%%%%%  USED FOR finding edge %%%%%%%%%%%%%%%%%
  
         ii = i - start_row +1;
+        %ii=1;
         
         strip = image(i,:);
         
@@ -213,7 +215,7 @@ end
         
         strip_smoothed = convn(strip',window,'valid');
         
-        app_edge = find(abs(diff(strip_smoothed))== max(abs(diff(strip_smoothed)))) + 2;
+        app_edge = find(abs(diff(strip_smoothed))== max(abs(diff(strip_smoothed)))) + floor(edge_span/2);
         
         %  in case there are more than one maxima, take the first one
         
@@ -225,7 +227,9 @@ end
         
         temp_y = 1:length(strip_cropped);
         
-        edge_position_temp = interp1(strip_cropped,temp_y,threshold,'pchip');  
+        [strip_unique,strip_index]=unique(strip_cropped,'legacy');
+        
+        edge_position_temp = interp1(strip_unique,temp_y(strip_index),threshold,'pchip');  
         
         edge_position(ii) = edge_position_temp + bound_edge_left - 1;
         
@@ -240,9 +244,11 @@ end
         array_values_near_edge(ii,:) = (image(i,bound_edge_left_expand:bound_edge_right_expand)); 
  
         arraypositions(ii,:) = [bound_edge_left_expand:bound_edge_right_expand];
+end
+       
         
        
-      end
+    
     
     %{
       
@@ -274,7 +280,7 @@ end
  
           
    
-        array_positions_by_edge = arraypositions - (edge_position')*(ones(1,(1 + 2*boundplusminus_extra)));
+        array_positions_by_edge = arraypositions - (xfit')*(ones(1,(1 + 2*boundplusminus_extra)));
        
         % size of matrix
         
@@ -283,6 +289,7 @@ end
         array_values_by_edge = array_values_near_edge(1:(m*n)); 
         
         array_positions_by_edge = array_positions_by_edge(1:(m*n));
+        array_positions_by_edge = array_positions_by_edge*sin(Angle_radians);
         
        
  
@@ -306,7 +313,7 @@ for i = 1:numBins
     
 end
  
- 
+
  
 ESF = binMean(2:numBins - 1); % Eliminate first, second and last array position
  
@@ -319,17 +326,82 @@ ESF_nonan = ESF(logical(1-isnan(ESF)));
 xESF_nonan = xESF(logical(1-isnan(ESF)));
  
 ESF = interp1(xESF_nonan,ESF_nonan,xESF,'pchip');
- 
- 
+
+
+%{
+lineImg=image(floor((start_row+end_row)/2),:);
+lineAxis=(1:length(lineImg));
+lineAxis=lineAxis-length(lineAxis/2);
+[PLine,S,mu]=polyfit(lineAxis,lineImg,40);
+lineImgFit=polyval(PLine,lineAxis,S,mu);
+
+Hthresh=0.5382;
+Lthresh=0.12;
+
+% Hthresh=0.90*max(max(image));
+% Lthresh=0.1*max(max(image));
+
+
+lineImgFit(lineImgFit>Hthresh)=Hthresh;
+lineImgFit(lineImgFit<Lthresh)=Lthresh;
+
+LineImgGradient=[0,abs(diff(lineImgFit))];
+LineImgGradient=LineImgGradient/sum(LineImgGradient);
+e=find(LineImgGradient==max(LineImgGradient))-1;
+lineFFT=abs(fft(LineImgGradient));
+lineFFT=lineFFT(1:ceil(length(lineFFT)/2));
+
+mtfval=lineFFT/max(lineFFT);
+
+px_size=0.003612843576288;
+maxCycPerDeg=1/2/px_size;
+cpdAxis = linspace(0, maxCycPerDeg,length(mtfval));
+%}
+
+
 % smooth the edge spread function
- 
 window = ones(span,1)/span;
  
 smoothed = convn(ESF,window','valid');
+
+
+
+Hthresh=max(smoothed)*0.72;
+Lthresh=min(smoothed)*1.6;
+
+lineImg=smoothed;
+lineImg(lineImg>Hthresh)=Hthresh;
+lineImg(lineImg<Lthresh)=Lthresh;
+
+
+
+[PLine,S,mu]=polyfit(xESF(round(span/2):round((length(xESF)-span/2))),lineImg,30);
+lineImgFit=polyval(PLine,xESF(round(span/2):round((length(xESF)-span/2))),S,mu);
+LineImgGradient=[0,abs(diff(lineImgFit))];
+LineImgGradient=LineImgGradient/sum(LineImgGradient);
+
+%{
+lineImgFit=lineImg;
+LineImgGradient=[0,abs(diff(lineImgFit))];
+LineImgGradient=LineImgGradient/sum(LineImgGradient);
+%}
  
+
+ 
+
+
+
+
+
+%%
+
+usingFormula=true;
+
+
 subplot(2,2,1)
  
-plot(xESF,ESF,xESF(round(span/2):round((length(xESF)-span/2))),smoothed);
+plot(xESF,ESF,xESF(round(span/2):round((length(xESF)-span/2))),smoothed); hold on;
+plot(xESF(round(span/2):round((length(xESF)-span/2))),lineImgFit,'g--');
  
 title('\fontname{Arial} The Edge Spread Function')
  
@@ -372,15 +444,22 @@ LSF_raw = LSF_raw/sum(LSF_raw);
 % acquire this function
 % here:http://www.mathworks.com/matlabcentral/fileexchange/11733-gaussian-curve-fit
  
-[sigma,mu,A] = mygaussfit(xLSF_fit,LSF); 
+
+window = ones(7,1)/7;
+
+LSF_filter=filter(window,1,LSF);
+
+[sigma,mu,A] = mygaussfit(xESF(round(span/2):round((length(xESF)-span/2))),LineImgGradient,0.5); 
  
-yLSF_fit = A*exp(-(xLSF_fit-mu).^2/(2*sigma^2));
- 
+yLSF_fit = A*exp(-(xESF(round(span/2):round((length(xESF)-span/2)))-mu).^2/(2*sigma^2));
+
+yLSF_fit=yLSF_fit/sum(yLSF_fit);
  
  
 subplot(2,2,2)
  
-plot(xESF(round(span/2):round((length(xESF)-span/2)-1)),LSF,xESF(round(span/2):round((length(xESF)-span/2)-1)),yLSF_fit,xESF(1:(length(xESF)-1)),LSF_base_raw);
+plot(xESF(round(span/2):round((length(xESF)-span/2)-1)),LSF,xESF(round(span/2):round((length(xESF)-span/2))),yLSF_fit,xESF(1:(length(xESF)-1)),LSF_base_raw);hold on;
+plot(xESF(round(span/2):round((length(xESF)-span/2))),LineImgGradient,'g--')
  
 title('\fontname{Arial} The Line Spread Function of the Edge')
  
@@ -399,11 +478,7 @@ N = length(LSF);
  
 %generate the frequency axis
  
- if mod(N,2)==0
- q=-N/2:N/2-1; % N even
- else
- q=-(N-1)/2:(N-1)/2; % N odd
- end
+
     
  %{
  
@@ -411,10 +486,13 @@ N = length(LSF);
   
 %}
  
- 
-Fs = 1/(isotropicpixelspacing*pixel_subdivision);% sampling rate in samples per mm
+if usingFormula
+Fs = 1/(2*isotropicpixelspacing*pixel_subdivision)*pi*focallength/180;% sampling rate in samples per mm
+else
+Fs = 1/(2*pixel_subdivision*px_size); 
+end
    
-T = N/Fs;
+
     
 freq = q/T;
 
@@ -434,20 +512,24 @@ freq2(1,floor(length(freq2)/2)) = 0;
 
 % freq = freq2;
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
  %%%%Generate your MTF%%%%%
     
-MTF= abs(fft(LSF));  
+MTF= abs(fft(LSF,2048));  
  
-MTF_fit = abs(fft(yLSF_fit));
+MTF_fit = abs(fft(yLSF_fit,2048));
  
-MTF_raw = abs(fft(LSF_raw));
+MTF_raw = abs(fft(LSF_raw,2048));
+
+lineFFT=abs(fft(LineImgGradient,2048));
+
+mtfval=lineFFT/max(lineFFT);
+
  
 subplot(2,2,3)
  
-plot(freq,fftshift(MTF),freq,fftshift(MTF_fit),freq,fftshift(MTF_raw));
+plot(freq,fftshift(MTF),freq,fftshift(MTF_fit),freq,fftshift(MTF_raw));hold on;
+plot(freq,fftshift(mtfval),'g--');
  
 title('\fontname{Arial} The Modulation Transfer Function of the Edge')
  
@@ -458,21 +540,14 @@ xlabel('frequency distribution')
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
-zero_freq = find(freq == 0);
+
  
-freq = freq(zero_freq:length(freq));
- 
-MTF = fftshift(MTF);
- 
-MTF = MTF(zero_freq:length(MTF));
- 
-MTF_fit = fftshift(MTF_fit);
- 
-MTF_fit = MTF_fit(zero_freq:length(MTF_fit));
- 
-MTF_raw = fftshift(MTF_raw);
- 
-MTF_raw = MTF_raw(zero_freq:length(MTF_raw));
+freq = linspace(0,Fs,1024);
+MTF=MTF(1:1024);
+MTF_fit=MTF_fit(1:1024);
+MTF_raw=MTF_raw(1:1024);
+mtfval=mtfval(1:1024);
+
  
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -498,17 +573,17 @@ mtfpoint = find(MTF<0.05);
 YMTraw = interp1(MTF_raw(1:mtfpoint(1)),freq(1:mtfpoint(1)),YMTFfine,'pchip');
  
  
-LPP = YMTF(YMTFfine==0.1);
+LPP = YMTF(YMTFfine==0.5);
  
-Resolution_smoothed= (1/(LPP*2)) % in mm 
+Resolution_smoothed= LPP % in mm 
  
-LPP = YMTFit(YMTFfine==0.1);
+LPP = YMTFit(YMTFfine==0.5);
  
-Resolution_fit = (1/(LPP*2)) % in mm 
+Resolution_fit = LPP % in mm 
  
-LPP = YMTraw(YMTFfine==0.1);
+LPP = YMTraw(YMTFfine==0.5);
  
-Resolution_raw = (1/(LPP*2)) % in mm 
+Resolution_raw = LPP % in mm 
  
  
  
@@ -517,13 +592,14 @@ subplot(2,2,4)
  
 shortaxis = int16(length(freq)/8);
  
-plot(freq(1:shortaxis),MTF(1:shortaxis),freq(1:shortaxis),MTF_fit(1:shortaxis),freq(1:shortaxis),MTF_raw(1:shortaxis));
+plot(freq(1:shortaxis),MTF(1:shortaxis),freq(1:shortaxis),MTF_fit(1:shortaxis),freq(1:shortaxis),MTF_raw(1:shortaxis)); hold on;
+plot(freq(1:shortaxis),mtfval(1:shortaxis),'g--');
  
 title('\fontname{Arial} The Modulation Transfer Function of the Edge (ZOOMED)')
  
-legend(sprintf('Smoothed MTF Resolution = %3.1f microns',1000*Resolution_smoothed), sprintf('Fitted LSF (Gaussian) MTF Resolution = %3.1f microns', 1000*Resolution_fit),sprintf('Raw MTF Resolution = %3.1f microns',1000*Resolution_raw))
+legend(sprintf('Smoothed MTF Cutoff = %3.1f ',Resolution_smoothed), sprintf('Fitted LSF (Gaussian) MTF Cutoff = %3.1f ', Resolution_fit),sprintf('Raw MTF Cutoff = %3.1f ',Resolution_raw))
  
-xlabel('The pre-sampled MTF in line pairs per mm')
+xlabel('The pre-sampled MTF in cycles per degree')
  
  
  

@@ -59,10 +59,10 @@ if(triangular == true)
     ie=-i3+de;
     ie(ie > 5) = 5;
     ie_diopters = 1./ie;
-    
+   
     [sorted_ie sort_index] = sort(ie);
     sorted_ie_diopters = 1./sorted_ie;
-
+    
     ie_combined = [];
     changing_quantity = sorted_ie_diopters;
     for iter = 1:24
@@ -72,9 +72,52 @@ if(triangular == true)
         ie_diopters_offset(1,end-offset+1:end) = changing_quantity(1,1:offset);
         ie_combined = [ie_combined; ie_diopters_offset]; 
     end
-    longitudinal_pixel_blur = std(ie_combined);
+    old_longitudinal_pixel_blur = std(ie_combined);
+    dioptric_logitudinal_pixel_blur = old_longitudinal_pixel_blur;
+    ignore_elements = 24;
+    
+    range_pixel_blur = range(ie_combined);
+
+    %% Converting to weighted standard deviation
+    pre_weights = [1, 2, 4, 8, 16, 32, 64, 128];
+    % weights_per_color = pre_weights;
+    weights_per_color = 1./pre_weights;
+    weights = repmat(weights_per_color, [1, 1+floor(280/8)]);
+   
+    % Building the corresponding weight matrix
+    weights_combined = [];
+    for iter = 1:24
+        weights_offset = zeros(size(weights));
+        offset = iter;
+        weights_offset(1,1:end-offset) = weights(1,offset+1:end);
+        weights_offset(1,end-offset+1:end) = weights(1,1:offset);
+        weights_combined = [weights_combined; weights_offset]; 
+    end
+    
+    % Calculating weighted mean
+    % Formula
+    % \bar{p} = \frac{\sum w_i p_i}{w_i},
+    % where $w_i$ is the weight associated with $p_i$
+    weighted_changing_quantity = weights_combined.*ie_combined;
+    sum_weighted_changing_quantity = sum(weighted_changing_quantity,1);
+    sum_weights = sum(weights_combined,1);
+    weighted_average = sum_weighted_changing_quantity./sum_weights;
+    
+    % Calculating weighed standard deviation
+    % Formula
+    % \sigma = \sqrt{\frac{\sum w_i \left( p_i - \bar{p} \right)^2}{\sum w_i}},
+    bar_p = repmat(weighted_average, [24, 1]);
+    brackets = ie_combined - bar_p;
+    squared_diff = brackets.*brackets;
+    numerator_before_sum = weights_combined.*squared_diff;
+    numerator = sum(numerator_before_sum, 1);
+    fraction = numerator./sum_weights;
+    sigma = sqrt(fraction);
+    longitudinal_pixel_blur = sigma;
     dioptric_logitudinal_pixel_blur = longitudinal_pixel_blur;
     ignore_elements = 24;
+    
+    %% 
 
     m = m1*(m2.*m3);
     O_1 = 0.01778; % meters. O_1 = 0.7 inches
@@ -144,6 +187,8 @@ if(triangular == true)
     end
     linewidth = 3; 
 
+    font_size = 20;
+    
     if(printGraphs == true)
         % filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
         % custom_plot_save(t, f_t_inverse, filename);
@@ -160,8 +205,10 @@ if(triangular == true)
         % custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
         %                         filename, 0, 1.0, 0, 20);
         
+        %----------------------------------
+        % Exporting weighted standard deviation pixel blur image
         filename = sprintf('./graphs/triangular_longitudinal_blur_vs_time.svg');
-        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements));
+        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements))
         
         %xdata = t(1,1:end-ignore_elements);
         xdata = sorted_ie_diopters(1,1:end-ignore_elements);
@@ -172,13 +219,41 @@ if(triangular == true)
         plot(xdata, ydata1, '+', 'LineWidth', 2);
         hold on;
         plot(xdata, ydata2, 'LineWidth', 2);
-        legend('Depth blur at each focal plane','Average blur');
         ylim([0 0.3]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
-        set(gca, 'FontSize', 50);
+        set(gca, 'FontSize', font_size);
+        legend('Blur at focal plane','Average blur', 'Location', ...
+               'southeast');
         print(filename, '-dsvg');
+        filename = sprintf('./graphs/triangular_longitudinal_blur_vs_time.png');
+        print(filename, '-dpng');
 
+        %----------------------------------
+        % Exporting range pixel blur image
+        filename = sprintf('./graphs/triangular_rangePixelBlur_vs_time.svg');
+        mean_blur = mean(range_pixel_blur(1,1:end-ignore_elements))
+        
+        %xdata = t(1,1:end-ignore_elements);
+        xdata = sorted_ie_diopters(1,1:end-ignore_elements);
+        ydata1 = range_pixel_blur(1,1:end-ignore_elements);
+        ydata2 = repmat(mean_blur, size(ydata1));
+      
+        figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+        plot(xdata, ydata1, '+', 'LineWidth', 2);
+        hold on;
+        plot(xdata, ydata2, 'LineWidth', 2);
+        ylim([0 1.0]);
+        xlim([0 7]);
+        set(gcf, 'PaperPositionMode', 'auto');
+        set(gca, 'FontSize', font_size);
+        legend('Blur at focal plane','Average blur', 'Location', ...
+               'southeast');
+        print(filename, '-dsvg');
+        filename = sprintf('./graphs/triangular_rangePixelBlur_vs_time.png');
+        print(filename, '-dpng');
+       
+        %----------------------------------
         filename = sprintf('./graphs/triangular_lateral_blur_vs_time.svg');
         % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
         %                  filename, 0, 1.5, 0, 20);
@@ -191,7 +266,7 @@ if(triangular == true)
         ylim([0 0.8]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
-        set(gca, 'FontSize', 50);
+        set(gca, 'FontSize', font_size);
         print(filename, '-dsvg');
  
     end
@@ -237,6 +312,48 @@ if(sinusoidal == true)
     longitudinal_pixel_blur = std(ie_combined);
     dioptric_logitudinal_pixel_blur = longitudinal_pixel_blur;
     ignore_elements = 24;
+    range_pixel_blur = range(ie_combined);
+    %% Converting to weighted standard deviation
+    pre_weights = [1, 2, 4, 8, 16, 32, 64, 128];
+    % weights_per_color = pre_weights;
+    weights_per_color = 1./pre_weights;
+    weights = repmat(weights_per_color, [1, 1+floor(280/8)]);
+   
+    % Building the corresponding weight matrix
+    weights_combined = [];
+    for iter = 1:24
+        weights_offset = zeros(size(weights));
+        offset = iter;
+        weights_offset(1,1:end-offset) = weights(1,offset+1:end);
+        weights_offset(1,end-offset+1:end) = weights(1,1:offset);
+        weights_combined = [weights_combined; weights_offset]; 
+    end
+    
+    % Calculating weighted mean
+    % Formula
+    % \bar{p} = \frac{\sum w_i p_i}{w_i},
+    % where $w_i$ is the weight associated with $p_i$
+    weighted_changing_quantity = weights_combined.*ie_combined;
+    sum_weighted_changing_quantity = sum(weighted_changing_quantity,1);
+    sum_weights = sum(weights_combined,1);
+    weighted_average = sum_weighted_changing_quantity./sum_weights;
+    
+    % Calculating weighed standard deviation
+    % Formula
+    % \sigma = \sqrt{\frac{\sum w_i \left( p_i - \bar{p} \right)^2}{\sum w_i}},
+    bar_p = repmat(weighted_average, [24, 1]);
+    brackets = ie_combined - bar_p;
+    squared_diff = brackets.*brackets;
+    numerator_before_sum = weights_combined.*squared_diff;
+    numerator = sum(numerator_before_sum, 1);
+    fraction = numerator./sum_weights;
+    sigma = sqrt(fraction);
+    longitudinal_pixel_blur = sigma;
+    dioptric_logitudinal_pixel_blur = longitudinal_pixel_blur;
+    ignore_elements = 24;
+    
+    %% 
+
 
 
     m = m1*(m2.*m3);
@@ -326,8 +443,10 @@ if(sinusoidal == true)
         % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
         %                  filename, 0, 1.5, 0, 20);
         
+        %----------------------------------
+        % Exporting weighted standard deviation pixel blur image
         filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
-        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements));
+        mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements))
         
         %xdata = t(1,1:end-ignore_elements);
         xdata = sorted_ie_diopters(1,1:end-ignore_elements);
@@ -338,13 +457,41 @@ if(sinusoidal == true)
         plot(xdata, ydata1, '+', 'LineWidth', 2);
         hold on;
         plot(xdata, ydata2, 'LineWidth', 2);
-        legend('Depth blur at each focal plane','Average blur');
         ylim([0 0.3]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
-        set(gca, 'FontSize', 50);
+        set(gca, 'FontSize', font_size);
+        legend('Blur at focal plane','Average blur', 'Location', 'southeast');
         print(filename, '-dsvg');
+        filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.png');
+        print(filename, '-dpng');
 
+        %----------------------------------
+        % Exporting range pixel blur image
+        filename = sprintf('./graphs/sinusoidal_rangePixelBlur_vs_time.svg');
+        mean_blur = mean(range_pixel_blur(1,1:end-ignore_elements))
+        
+        %xdata = t(1,1:end-ignore_elements);
+        xdata = sorted_ie_diopters(1,1:end-ignore_elements);
+        ydata1 = range_pixel_blur(1,1:end-ignore_elements);
+        ydata2 = repmat(mean_blur, size(ydata1));
+      
+        figure('units','normalized','outerposition', [0 0 0.99 0.98], 'visible', 'on');
+        plot(xdata, ydata1, '+', 'LineWidth', 2);
+        hold on;
+        plot(xdata, ydata2, 'LineWidth', 2);
+        ylim([0 1.0]);
+        xlim([0 7]);
+        set(gcf, 'PaperPositionMode', 'auto');
+        set(gca, 'FontSize', font_size);
+        legend('Blur at focal plane','Average blur', 'Location', ...
+               'southeast');
+        print(filename, '-dsvg');
+        filename = sprintf('./graphs/sinusoidal_rangePixelBlur_vs_time.png');
+        print(filename, '-dpng');
+       
+        %----------------------------------
+        
         filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
         % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
         %                  filename, 0, 1.5, 0, 20);
@@ -357,7 +504,7 @@ if(sinusoidal == true)
         ylim([0 0.8]);
         xlim([0 7]);
         set(gcf, 'PaperPositionMode', 'auto');
-        set(gca, 'FontSize', 50);
+        set(gca, 'FontSize', font_size);
         print(filename, '-dsvg');
          
     end

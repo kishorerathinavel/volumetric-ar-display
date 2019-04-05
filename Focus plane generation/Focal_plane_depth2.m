@@ -30,7 +30,9 @@ de=0.07; % measure
 
 num=280; % num of sample depths along z direction(depth direction)
 MinOpPower=12; % min optical power of focus tunable lens(in diopters)
-MaxOpPower=16; % max optical power of focus tunable lens(in diopters)
+% current 87.5
+MaxOpPower=15; % max optical power of focus tunable lens(in diopters)
+% current 137.5
 t=1:num;
 p=2;
 %% linear driving singal
@@ -73,6 +75,14 @@ end
 
 f_t_inverse=repmat(f_t_inverse,1,p);
 f2=1./f_t_inverse;
+
+%% finding depthlist using sin driving signal
+t=0:58:1e6/60*p;
+Magnitude=(MaxOpPower-MinOpPower)/2;
+offset=(MaxOpPower+MinOpPower)/2;
+f_t_inverse=Magnitude*cos(2*pi*60/1e6*t)+offset;
+f2=1./f_t_inverse;
+
 %% considering three lens separately
 i1=f1*o1/(o1-f1);
 o2=i1-d1;
@@ -159,8 +169,13 @@ ylabel('Field of view');
 
 %%
 d=ie_phase;
+
+
+
 [d_sort,order]=sort(d);
 un_order(order)=1:num;
+
+
 
 %[f_sort,forder]=sort(f_t_inverse(1:280));
 %%

@@ -6,24 +6,24 @@ NumofBP=280;
 load('FocusDepth.mat');
 m=colorbit/3;
 n=floor(NumofBP/colorbit)+1;
-
+load('ColorCalibration.mat')
 MaxIntensityDec=hex2dec(MaxIntensityHex);
 R_index=zeros([colorbit,1]);
 G_index=zeros([colorbit,1]);
 B_index=zeros([colorbit,1]);
 
 %%
-MaxIntensityDecR=MaxIntensityDec*0.4;
-MaxIntensityDecG=MaxIntensityDec*1.5;
-MaxIntensityDecB=MaxIntensityDec*0.4;
+MaxIntensityDecR=MaxIntensityDec*0.6;
+MaxIntensityDecG=MaxIntensityDec*1.2;
+MaxIntensityDecB=MaxIntensityDec*kb;
 %% for simple color decomposition
 R_index(1:m)=0.5.^(0:1:m-1);
 G_index(m+1:2*m)=0.5.^(0:1:m-1);
 B_index(2*m+1:3*m)=0.5.^(0:1:m-1);
 %% for calibration
-R_index(1:end)=ones([colorbit,1]);
-G_index(1:end)=ones([colorbit,1]);
-B_index(1:end)=ones([colorbit,1]);
+R_index(1:m)=1;
+G_index(m+1:2*m)=1;
+B_index(2*m+1:3*m)=1;
 %%
 IntensityR_Dec=floor(R_index*MaxIntensityDecR);
 IntensityG_Dec=floor(G_index*MaxIntensityDecG);
