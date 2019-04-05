@@ -39,11 +39,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>.\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\kishore\AppData\Local\Continuum\Anaconda2\envs\py37\include;.\include;$(IncludePath);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>.\dependencies\include;$(IncludePath)</IncludePath>
+    <IncludePath>C:\Users\kishore\AppData\Local\Continuum\Anaconda2\envs\py37\include;.\dependencies\include;$(IncludePath);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -57,8 +57,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>.\libs\assimp\assimp_debug-dll_win32;.\libs\DevIL;.\libs\GL\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>DevIL.lib;ILU.lib;ILUT.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\kishore\AppData\Local\Continuum\Anaconda2\envs\py37\libs;.\libs\assimp\assimp_debug-dll_win32;.\libs\DevIL;.\libs\GL\Win32;%(AdditionalLibraryDirectories);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\Users\kishore\AppData\Local\Continuum\Anaconda2\envs\py37\libs\python35.lib;python35.lib;DevIL.lib;ILU.lib;ILUT.lib;%(AdditionalDependencies);%(AdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -76,8 +76,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>.\dependencies\libs\FreeImage\x32;.\dependencies\libs\DevIL;.\dependencies\libs\assimp\assimp_release-dll_win32;.\dependencies\libs\GL\Win32;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>FreeImage.lib;DevIL.lib;ILU.lib;ILUT.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>C:\Users\kishore\AppData\Local\Continuum\Anaconda2\envs\py37\libs;.\dependencies\libs\FreeImage\x32;.\dependencies\libs\DevIL;.\dependencies\libs\assimp\assimp_release-dll_win32;.\dependencies\libs\GL\Win32;%(AdditionalLibraryDirectories);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>C:\Users\kishore\AppData\Local\Continuum\Anaconda2\envs\py37\libs\python35.lib;python35.lib;FreeImage.lib;DevIL.lib;ILU.lib;ILUT.lib;%(AdditionalDependencies);%(AdditionalDependencies);%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

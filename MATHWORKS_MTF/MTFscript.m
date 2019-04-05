@@ -36,15 +36,21 @@ fabricate the edge to measure the pre-sampled MTF.
  
 %%%%%%%%%%%%%%%%%%%%%Begin Script%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
- 
+
+close all;
+clear all;
+
 %}
 %Identify and initialize all variables
  
-isotropicpixelspacing = 0.72; 
+% isotropicpixelspacing = 0.72; 
+isotropicpixelspacing = 0.0036128435; %KISHORE
 % isotropic detector pixel spacing in mm, (i.e. pixel pitch).  
 % set this value to your detector
  
-pixel_subdivision = 0.10; 
+pixel_subdivision =0.1; 
+%pixel_subdivision = 2.0;  % KISHORE
+
 % keep between 0.03 - > 0.15  
 % Samei, Flynn, and Reimann (Ref.2 )suggest that 0.1 subpixel bin spacing 
 % provides a good trade-off between sampling uniformity and noise.
@@ -110,7 +116,7 @@ end % switch
  
 % crop image to 50 % air and 50 % edge 
  
-h = figure('Name','Please select a region contain 50% Air and 50% of the edge'); hold on
+h = figure('Name','Please select a region contain 50% Air and 50% of the edge. Right click and choose Crop Image'); hold on
  
 imshow(image,[]);
  
@@ -118,7 +124,7 @@ image = imcrop(h);
  
 close(h);
  
- 
+ %%
 %{
  Threshold image using Otsu's threshold criterion on cropped image
  
@@ -411,8 +417,23 @@ Fs = 1/(isotropicpixelspacing*pixel_subdivision);% sampling rate in samples per 
 T = N/Fs;
     
 freq = q/T;
- 
- 
+
+physicalObjectSize = 0.5*(350.0/2560.0)*25.25*2.54;
+physicalObjectDist = 101*2.54;
+angleSubtendedByPhysicalObject = 2*rad2deg(atan(physicalObjectSize/physicalObjectDist));
+cameraPixelsOccupiedByPhysicalObject = 542;
+px_size = angleSubtendedByPhysicalObject/cameraPixelsOccupiedByPhysicalObject;
+maxCycPerDeg = 1/(2*px_size);
+freq2 = linspace(-maxCycPerDeg, maxCycPerDeg, length(freq));
+freq2(1,floor(length(freq2)/2)) = 0;
+
+% figure;
+% plot(freq);
+% hold on;
+% plot(freq2);
+
+% freq = freq2;
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
  
@@ -494,7 +515,7 @@ Resolution_raw = (1/(LPP*2)) % in mm
  
 subplot(2,2,4)
  
-shortaxis = int16(length(freq)/4);
+shortaxis = int16(length(freq)/8);
  
 plot(freq(1:shortaxis),MTF(1:shortaxis),freq(1:shortaxis),MTF_fit(1:shortaxis),freq(1:shortaxis),MTF_raw(1:shortaxis));
  

@@ -35,7 +35,6 @@
 #pragma comment(lib,"assimp.lib")
 #pragma comment(lib,"devil.lib")
 #pragma comment(lib,"glew32.lib")
-
 #endif
 
 #include <windows.h>
@@ -66,6 +65,10 @@
 
 #include "filepaths.h"
 #include <FreeImage.h>
+
+#include <stdio.h>
+#include <conio.h>
+#include <Python.h>
 
 // This is for a shader uniform block
 struct MyMaterial {
@@ -123,7 +126,7 @@ struct MyMesh {
 	int numFaces;
 };
 
-#define NUM_MODELS 4
+#define NUM_MODELS 3
 class Model {
 public:
 	std::vector<struct MyMesh> myMesh;
@@ -176,7 +179,7 @@ DegToRad(float degrees)
 };
 
 // Frame counting and FPS computation
-long time, timebase = 0, frame = 0;
+long time_fps, timebase = 0, frame = 0;
 char s[32];
 
 //-----------------------------------------------------------------
@@ -1032,11 +1035,11 @@ void renderScene() {
 
 	// FPS computation and display
 	frame++;
-	time = glutGet(GLUT_ELAPSED_TIME);
-	if (time - timebase > 1000) {
+	time_fps = glutGet(GLUT_ELAPSED_TIME);
+	if (time_fps - timebase > 1000) {
 		sprintf(s, "FPS:%4.2f",
-			frame*1000.0 / (time - timebase));
-		timebase = time;
+			frame*1000.0 / (time_fps - timebase));
+		timebase = time_fps;
 		frame = 0;
 		glutSetWindowTitle(s);
 	}
@@ -1412,6 +1415,17 @@ int init()
 	return true;
 }
 
+void testPython() {
+	PyObject* pInt;
+	Py_Initialize();
+	PyRun_SimpleString("print('Hello world from embedded python!!')");
+	Py_Finalize();
+	printf("Press any key to exit \n");
+	if(!_getch())
+		_getch();
+	
+}
+
 
 // ------------------------------------------------------------
 //
@@ -1419,62 +1433,66 @@ int init()
 //
 int main(int argc, char **argv) {
 
-	//  GLUT initialization
-	glutInit(&argc, argv);
+	testPython();
 
-	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE);
+	if(false) {
+		//  GLUT initialization
+		glutInit(&argc, argv);
 
-	//glutInitContextVersion(3, 3);
-	//glutInitContextFlags(GLUT_COMPATIBILITY_PROFILE);
+		glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA | GLUT_MULTISAMPLE);
 
-	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(1024, 768);
-	glutCreateWindow("Lighthouse3D - Assimp Demo");
+		//glutInitContextVersion(3, 3);
+		//glutInitContextFlags(GLUT_COMPATIBILITY_PROFILE);
+
+		glutInitWindowPosition(100, 100);
+		glutInitWindowSize(1024, 768);
+		glutCreateWindow("Lighthouse3D - Assimp Demo");
 
 
-	//  Callback Registration
-	glutDisplayFunc(renderScene);
-	glutReshapeFunc(changeSize);
-	glutIdleFunc(renderScene);
+		//  Callback Registration
+		glutDisplayFunc(renderScene);
+		glutReshapeFunc(changeSize);
+		glutIdleFunc(renderScene);
 
-	//	Mouse and Keyboard Callbacks
-	glutKeyboardFunc(processKeys);
-	glutMouseFunc(processMouseButtons);
-	glutMotionFunc(processMouseMotion);
+		//	Mouse and Keyboard Callbacks
+		glutKeyboardFunc(processKeys);
+		glutMouseFunc(processMouseButtons);
+		glutMotionFunc(processMouseMotion);
 
-	glutMouseWheelFunc(mouseWheel);
+		glutMouseWheelFunc(mouseWheel);
 
-	//	Init GLEW
+		//	Init GLEW
 		//glewExperimental = GL_TRUE;
-	glewInit();
-	if (glewIsSupported("GL_VERSION_3_3"))
-		printf("Ready for OpenGL 3.3\n");
-	else {
-		printf("OpenGL 3.3 not supported\n");
-		return(1);
+		glewInit();
+		if (glewIsSupported("GL_VERSION_3_3"))
+			printf("Ready for OpenGL 3.3\n");
+		else {
+			printf("OpenGL 3.3 not supported\n");
+			return(1);
+		}
+
+		//  Init the app (load model and textures) and OpenGL
+		if (!init())
+			printf("Could not Load the Model\n");
+
+		printf("Vendor: %s\n", glGetString(GL_VENDOR));
+		printf("Renderer: %s\n", glGetString(GL_RENDERER));
+		printf("Version: %s\n", glGetString(GL_VERSION));
+		printf("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+
+
+		// return from main loop
+		glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
+
+		//  GLUT main loop
+		glutMainLoop();
+
+		// delete buffers
+		glDeleteBuffers(1, &matricesUniBuffer);
+		glDeleteRenderbuffers(1, &rbo_depth_image);
+		glDeleteFramebuffers(1, &fbo_depth_image);
+
+		return(0);
 	}
-
-	//  Init the app (load model and textures) and OpenGL
-	if (!init())
-		printf("Could not Load the Model\n");
-
-	printf("Vendor: %s\n", glGetString(GL_VENDOR));
-	printf("Renderer: %s\n", glGetString(GL_RENDERER));
-	printf("Version: %s\n", glGetString(GL_VERSION));
-	printf("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-
-
-	// return from main loop
-	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
-
-	//  GLUT main loop
-	glutMainLoop();
-
-	// delete buffers
-	glDeleteBuffers(1, &matricesUniBuffer);
-	glDeleteRenderbuffers(1, &rbo_depth_image);
-	glDeleteFramebuffers(1, &fbo_depth_image);
-
-	return(0);
 }
 
