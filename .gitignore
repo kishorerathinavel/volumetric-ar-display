@@ -9,9 +9,9 @@ rgb-depth/VS-projects/
 **/Debug/
 **/Release/
 **/ipch/
-rgb-depth/L3DAssimpModelImport Demo/AssimpModelImport Demo/outputs/
-rgb-depth/L3DAssimpModelImport Demo/AssimpModelImport Demo/filepaths.h
-rgb-depth/L3DAssimpModelImport Demo/AssimpModelImport Demo/filepaths.h
+rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/outputs/
+rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/filepaths.h
+rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/filepaths.h
 Simulation Image/Navie scan conversion/Model Set/
 Simulation Image/Navie scan conversion/Triangle_all/
 Focus plane generation/Model3/
