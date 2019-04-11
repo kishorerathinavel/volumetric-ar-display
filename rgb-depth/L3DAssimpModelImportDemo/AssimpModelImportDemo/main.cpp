@@ -192,7 +192,7 @@ int startX, startY, tracking = 0;
 float alpha = 0.0f, beta = 0.0f;
 float r = 1.2f;
 
-bool saveFramebufferOnce = true;
+bool saveFramebufferOnce = false;
 bool saveFramebufferUntilStop = false;
 
 GLuint tex_background;
@@ -914,16 +914,10 @@ void saveScreenShot(char* fname) {
 	//ilDeleteImage(imageID);
 }
 
-void saveImage(GLuint fbo, const char* outFilename1, const char* outFilename2) {
+void saveColorImage(GLuint fbo, const char* outFilename) {
 	//allocate FreeImage memory
 	int width = dmd_size[0], height = dmd_size[1];
 	int oldFramebuffer;
-
-	FIBITMAP *depth_img = FreeImage_Allocate(width, height, 32);
-	if (depth_img == NULL) {
-		printf("couldn't allocate depth_img for saving!\n");
-		return;
-	}
 
 	FIBITMAP *color_img = FreeImage_Allocate(width, height, 24);
 	if (color_img == NULL) {
@@ -936,21 +930,47 @@ void saveImage(GLuint fbo, const char* outFilename1, const char* outFilename2) {
 
 	//bind desired FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_INT, FreeImage_GetBits(depth_img));
 	glReadPixels(0, 0, width, height, GL_BGR, GL_UNSIGNED_BYTE, FreeImage_GetBits(color_img));
 
 	//restore existing FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, oldFramebuffer);
 
-	//write depth_img
-	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename1), depth_img, outFilename1);
 	//write color_img
-	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename2), color_img, outFilename2);
+	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename), color_img, outFilename);
+
+	//deallocate
+	FreeImage_Unload(color_img);
+
+	printf("Done saving color image\n");
+}
+
+void saveDepthImage(GLuint fbo, const char* outFilename) {
+	//allocate FreeImage memory
+	int width = dmd_size[0], height = dmd_size[1];
+	int oldFramebuffer;
+
+	FIBITMAP *depth_img = FreeImage_Allocate(width, height, 32);
+	if (depth_img == NULL) {
+		printf("couldn't allocate depth_img for saving!\n");
+		return;
+	}
+
+	//save existing bound FBO
+	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &oldFramebuffer);
+
+	//bind desired FBO
+	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_INT, FreeImage_GetBits(depth_img));
+
+	//restore existing FBO
+	glBindFramebuffer(GL_FRAMEBUFFER, oldFramebuffer);
+
+	//write depth_img
+	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename), depth_img, outFilename);
 
 	//deallocate
 	FreeImage_Unload(depth_img);
-	//deallocate
-	FreeImage_Unload(color_img);
+	printf("Done saving depth image\n");
 }
 
 void drawModels() {
@@ -1094,13 +1114,14 @@ void renderScene() {
 
 		drawModels();
 
-		if (saveFramebufferOnce | saveFramebufferUntilStop) {
-			sprintf(fname1, "./outputs/trial_%02d_depth.png", imgCounter);
-			sprintf(fname2, "./outputs/trial_%02d_rgb.png", imgCounter);
-			saveImage(fbo_rgbd, fname1, fname2);
-			imgCounter++;
-			saveFramebufferOnce = false;
-		}
+		//if (saveFramebufferOnce | saveFramebufferUntilStop) {
+		//	sprintf(fname1, "./outputs/trial_%02d_depth.png", imgCounter);
+		//	sprintf(fname2, "./outputs/trial_%02d_rgb.png", imgCounter);
+		//	saveColorImage(fbo_rgbd, fname2);
+		//	saveDepthImage(fbo_rgbd, fname1);
+		//	imgCounter++;
+		//	saveFramebufferOnce = false;
+		//}
 
 		glPopAttrib();
 	}
@@ -1138,6 +1159,13 @@ void renderScene() {
 			glDisable(GL_TEXTURE_2D);
 			// Important to set default active texture back to GL_TEXTURE0
 			glActiveTexture(GL_TEXTURE0);
+
+			if (saveFramebufferOnce | saveFramebufferUntilStop) {
+				sprintf(fname2, "./outputs/synthetic_%02d_rgb.png", imgCounter);
+				saveColorImage(fbo_synthetic1_rgb, fname2);
+				imgCounter++;
+				saveFramebufferOnce = false;
+			}
 		}
 		glPopAttrib();
 	}
@@ -1236,7 +1264,7 @@ void updateCamVariables() {
 // Events from the Keyboard
 //
 float stepSize = 0.1;
-int keymapmode = 1;
+int keymapmode = 2;
 void processKeys(unsigned char key, int xx, int yy) {
 
 	if (key == '`') {
