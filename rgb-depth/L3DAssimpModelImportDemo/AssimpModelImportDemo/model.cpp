@@ -56,17 +56,17 @@ void color4_to_float4(const aiColor4D *c, float f[4]) {
 }
 
 Model::Model() {
-	scene = NULL;
-	scaleFactor = 0.05;
+	this->scene = NULL;
+	this->scaleFactor = 0.05;
 }
 
 Model::~Model() {
-	textureIdMap.clear();
+	this->textureIdMap.clear();
 	// clear myMeshes stuff
-	for (unsigned int i = 0; i < myMesh.size(); ++i) {
-		glDeleteVertexArrays(1, &(myMesh[i].vao));
-		glDeleteTextures(1, &(myMesh[i].texIndex));
-		glDeleteBuffers(1, &(myMesh[i].uniformBlockIndex));
+	for (unsigned int i = 0; i < this->myMesh.size(); ++i) {
+		glDeleteVertexArrays(1, &(this->myMesh[i].vao));
+		glDeleteTextures(1, &(this->myMesh[i].texIndex));
+		glDeleteBuffers(1, &(this->myMesh[i].uniformBlockIndex));
 	}
 }
 

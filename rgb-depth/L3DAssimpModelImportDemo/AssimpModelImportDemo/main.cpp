@@ -72,7 +72,6 @@ bool saveFramebufferUntilStop = false;
 
 GLuint tex_background;
 
-
 #define M_PI       3.14159265358979323846f
 
 // Uniform Buffer for Matrices
@@ -308,9 +307,7 @@ char *fname_bitplanes_fragment_shader = "bitplanes.frag";
 
 // END For Program 3 |||||||||||||||||||||||||||||||||||||
 
-static inline float
-DegToRad(float degrees)
-{
+static inline float DegToRad(float degrees) {
 	return (float)(degrees * (M_PI / 180.0f));
 };
 
@@ -326,8 +323,7 @@ char s[32];
 
 #define printOpenGLError() printOglError(__FILE__, __LINE__)
 
-int printOglError(char *file, int line)
-{
+int printOglError(char *file, int line) {
 
 	GLenum glErr;
 	int    retCode = 0;
@@ -350,7 +346,6 @@ int printOglError(char *file, int line)
 
 // res = a cross b;
 void crossProduct(float *a, float *b, float *res) {
-
 	res[0] = a[1] * b[2] - b[1] * a[2];
 	res[1] = a[2] * b[0] - b[2] * a[0];
 	res[2] = a[0] * b[1] - b[0] * a[1];
@@ -359,7 +354,6 @@ void crossProduct(float *a, float *b, float *res) {
 
 // Normalize a vec3
 void normalize(float *a) {
-
 	float mag = sqrt(a[0] * a[0] + a[1] * a[1] + a[2] * a[2]);
 
 	a[0] /= mag;
@@ -375,14 +369,12 @@ void normalize(float *a) {
 // Push and Pop for modelMatrix
 
 void pushMatrix() {
-
 	float *aux = (float *)malloc(sizeof(float) * 16);
 	memcpy(aux, modelMatrix, sizeof(float) * 16);
 	matrixStack.push_back(aux);
 }
 
 void popMatrix() {
-
 	float *m = matrixStack[matrixStack.size() - 1];
 	memcpy(modelMatrix, m, sizeof(float) * 16);
 	matrixStack.pop_back();
@@ -392,7 +384,6 @@ void popMatrix() {
 // sets the square matrix mat to the identity matrix,
 // size refers to the number of rows (or columns)
 void setIdentityMatrix(float *mat, int size) {
-
 	// fill matrix with 0s
 	for (int i = 0; i < size * size; ++i)
 		mat[i] = 0.0f;
@@ -407,7 +398,6 @@ void setIdentityMatrix(float *mat, int size) {
 // a = a * b;
 //
 void multMatrix(float *a, float *b) {
-
 	float res[16];
 
 	for (int i = 0; i < 4; ++i) {
@@ -419,13 +409,11 @@ void multMatrix(float *a, float *b) {
 		}
 	}
 	memcpy(a, res, 16 * sizeof(float));
-
 }
 
 
 // Defines a transformation matrix mat with a translation
 void setTranslationMatrix(float *mat, float x, float y, float z) {
-
 	setIdentityMatrix(mat, 4);
 	mat[12] = x;
 	mat[13] = y;
@@ -434,7 +422,6 @@ void setTranslationMatrix(float *mat, float x, float y, float z) {
 
 // Defines a transformation matrix mat with a scale
 void setScaleMatrix(float *mat, float sx, float sy, float sz) {
-
 	setIdentityMatrix(mat, 4);
 	mat[0] = sx;
 	mat[5] = sy;
@@ -444,7 +431,6 @@ void setScaleMatrix(float *mat, float sx, float sy, float sz) {
 // Defines a transformation matrix mat with a rotation 
 // angle alpha and a rotation axis (x,y,z)
 void setRotationMatrix(float *mat, float angle, float x, float y, float z) {
-
 	float radAngle = DegToRad(angle);
 	float co = cos(radAngle);
 	float si = sin(radAngle);
@@ -471,7 +457,6 @@ void setRotationMatrix(float *mat, float angle, float x, float y, float z) {
 	mat[7] = 0.0f;
 	mat[11] = 0.0f;
 	mat[15] = 1.0f;
-
 }
 
 // ----------------------------------------------------
@@ -488,7 +473,6 @@ void setModelMatrix() {
 
 // The equivalent to glTranslate applied to the model matrix
 void translate(float x, float y, float z) {
-
 	float aux[16];
 
 	setTranslationMatrix(aux, x, y, z);
@@ -498,7 +482,6 @@ void translate(float x, float y, float z) {
 
 // The equivalent to glRotate applied to the model matrix
 void rotate(float angle, float x, float y, float z) {
-
 	float aux[16];
 
 	setRotationMatrix(aux, angle, x, y, z);
@@ -508,7 +491,6 @@ void rotate(float angle, float x, float y, float z) {
 
 // The equivalent to glScale applied to the model matrix
 void scale(float x, float y, float z) {
-
 	float aux[16];
 
 	setScaleMatrix(aux, x, y, z);
@@ -522,7 +504,6 @@ void scale(float x, float y, float z) {
 // Computes the projection Matrix and stores it in the uniform buffer
 
 void buildProjectionMatrix(float fov, float ratio, float nearp, float farp) {
-
 	float projMatrix[16];
 
 	float f = 1.0f / tan(fov * (M_PI / 360.0f));
@@ -539,7 +520,6 @@ void buildProjectionMatrix(float fov, float ratio, float nearp, float farp) {
 	glBindBuffer(GL_UNIFORM_BUFFER, matricesUniBuffer);
 	glBufferSubData(GL_UNIFORM_BUFFER, ProjMatrixOffset, MatrixSize, projMatrix);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
-
 }
 
 
@@ -725,7 +705,6 @@ void setCamera(float posX, float posY, float posZ,
 //
 float ratio;
 void changeSize(int w, int h) {
-
 	// Prevent a divide by zero, when window is too short
 	// (you cant make a window of zero width).
 	if (h == 0)
@@ -747,7 +726,6 @@ void changeSize(int w, int h) {
 // Render Assimp Model
 
 void recursive_render(Model& model, const aiNode* nd) {
-
 	// Get node transformation matrix
 	aiMatrix4x4 m = nd->mTransformation;
 	// OpenGL matrices are column major
@@ -761,7 +739,6 @@ void recursive_render(Model& model, const aiNode* nd) {
 	multMatrix(modelMatrix, aux);
 	setModelMatrix();
 
-
 	// draw all meshes assigned to this node
 	for (unsigned int n = 0; n < nd->mNumMeshes; ++n) {
 		// bind material uniform
@@ -772,7 +749,6 @@ void recursive_render(Model& model, const aiNode* nd) {
 		glBindVertexArray(model.myMesh[nd->mMeshes[n]].vao);
 		// draw
 		glDrawElements(GL_TRIANGLES, model.myMesh[nd->mMeshes[n]].numFaces * 3, GL_UNSIGNED_INT, 0);
-
 	}
 
 	// draw all children
@@ -1406,6 +1382,14 @@ void loadTexture(const char* lpszPathName, GLuint tex) {
 int init() {
 	/* initialization of DevIL */
 	ilInit();
+
+	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
+		model[modelIter].basepath = file_path_and_name[modelIter][0];
+		model[modelIter].modelname = file_path_and_name[modelIter][1];
+		if (!model[modelIter].Import3DFromFile())
+			return(0);
+		model[modelIter].LoadGLTextures();
+	}
 
 	//for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
 	//	model[modelIter].basepath = file_path_and_name[modelIter][0];

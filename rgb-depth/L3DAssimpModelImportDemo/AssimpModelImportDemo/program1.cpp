@@ -22,21 +22,12 @@ program1_class::~program1_class() {
 	glDeleteFramebuffers(1, &this->fbo_rgbd);
 }
 
-int program1_class::delayed_init() {
-	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
-		model[modelIter].basepath = file_path_and_name[modelIter][0];
-		model[modelIter].modelname = file_path_and_name[modelIter][1];
-		if (!model[modelIter].Import3DFromFile())
-			return(0);
-		model[modelIter].LoadGLTextures();
-	}
-
+void program1_class::delayed_init() {
 	this->program = this->setup_shaders();
 
 	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
 		this->genVAOs(model[modelIter]);
 	}
-
 
 	glGenTextures(1, &this->tex_rgb);
 	glBindTexture(GL_TEXTURE_2D, this->tex_rgb);
@@ -163,7 +154,7 @@ void program1_class::genVAOs(Model& model) {
 			glGenBuffers(1, &buffer);
 			glBindBuffer(GL_ARRAY_BUFFER, buffer);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mVertices, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(program1_vertexLoc);
+			glEnableVertexAttribArray(this->program1_vertexLoc);
 			glVertexAttribPointer(program1_vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 		}
 
@@ -172,7 +163,7 @@ void program1_class::genVAOs(Model& model) {
 			glGenBuffers(1, &buffer);
 			glBindBuffer(GL_ARRAY_BUFFER, buffer);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(program1_normalLoc);
+			glEnableVertexAttribArray(this->program1_normalLoc);
 			glVertexAttribPointer(program1_normalLoc, 3, GL_FLOAT, 0, 0, 0);
 		}
 
@@ -188,8 +179,8 @@ void program1_class::genVAOs(Model& model) {
 			glGenBuffers(1, &buffer);
 			glBindBuffer(GL_ARRAY_BUFFER, buffer);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
-			glEnableVertexAttribArray(program1_texCoordLoc);
-			glVertexAttribPointer(program1_texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
+			glEnableVertexAttribArray(this->program1_texCoordLoc);
+			glVertexAttribPointer(this->program1_texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
 		}
 
 		// unbind buffers

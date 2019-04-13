@@ -4,7 +4,6 @@ program2_class::program2_class() {
 	// Shader Names
 	this->fname_synthetic1_vertex_shader = "synthetic1.vert";
 	this->fname_synthetic1_fragment_shader = "synthetic1.frag";
-
 }
 
 program2_class::~program2_class() {
@@ -80,8 +79,8 @@ GLuint program2_class::setup_shaders() {
 	glAttachShader(p, v);
 	glAttachShader(p, f);
 
-	glBindAttribLocation(p, synthetic1_vertexLoc, "position");
-	glBindAttribLocation(p, synthetic1_textureLoc, "texCoord");
+	glBindAttribLocation(p, this->synthetic1_vertexLoc, "position");
+	glBindAttribLocation(p, this->synthetic1_textureLoc, "texCoord");
 	glBindFragDataLocation(p, 0, "FragColor");
 
 	glLinkProgram(p);
@@ -92,8 +91,8 @@ GLuint program2_class::setup_shaders() {
 	this->synthetic1_vertexShader = v;
 	this->synthetic1_fragmentShader = f;
 
-	this->synthetic1_rgb_img = glGetUniformLocation(program2, "rgb_img");
-	this->synthetic1_depth_map = glGetUniformLocation(program2, "depth_map");
+	this->synthetic1_rgb_img = glGetUniformLocation(this->program2, "rgb_img");
+	this->synthetic1_depth_map = glGetUniformLocation(this->program2, "depth_map");
 
 	return(p);
 }

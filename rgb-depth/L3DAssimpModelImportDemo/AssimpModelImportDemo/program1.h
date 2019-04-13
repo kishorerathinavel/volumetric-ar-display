@@ -41,7 +41,8 @@ public:
 
 	program1_class();
 	~program1_class();
-	int delayed_init();
+	void delayed_init();
 	void genVAOs(Model&);
 	GLuint setup_shaders();
 };
+
