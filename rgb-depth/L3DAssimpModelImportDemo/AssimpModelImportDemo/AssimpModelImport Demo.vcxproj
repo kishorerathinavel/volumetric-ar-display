@@ -155,7 +155,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="common_var_func.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="model.cpp" />
+    <ClCompile Include="program1.cpp" />
+    <ClCompile Include="program2.cpp" />
     <ClCompile Include="textfile.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -165,7 +169,11 @@
     <None Include="synthetic1.vert" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="common_var_func.h" />
     <ClInclude Include="filepaths.h" />
+    <ClInclude Include="model.h" />
+    <ClInclude Include="program1.h" />
+    <ClInclude Include="program2.h" />
     <ClInclude Include="textfile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
