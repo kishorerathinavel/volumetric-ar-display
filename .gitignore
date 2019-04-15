@@ -25,6 +25,7 @@ Focus plane generation/Calibration Capture/
 Focus plane generation/graphs/
 Focus plane generation/adaptive_color_decomposition_images*/
 Focus plane generation/binary_pulse_modulation_images/
+bk_code/
 Focus plane generation/*.avi
 
 *.mat
