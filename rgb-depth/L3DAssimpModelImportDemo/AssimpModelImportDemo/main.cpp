@@ -1144,6 +1144,7 @@ void processKeys(unsigned char key, int xx, int yy) {
 			case '1': currModel = &model[0]; printf("Current Model is 1 \n"); break;
 			case '2': currModel = &model[1]; printf("Current Model is 2 \n"); break;
 			case '3': currModel = &model[2]; printf("Current Model is 2 \n"); break;
+			case '4': currModel = &model[3]; printf("Current Model is 3 \n"); break;
 			case '9': stepSize = stepSize / 3.0; break;
 			case '0': stepSize = stepSize * 3.0; break;
 			case 's': rgb = true; saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
@@ -1406,8 +1407,8 @@ int init() {
 	glBindBufferRange = (PFNGLBINDBUFFERRANGEPROC)glutGetProcAddress("glBindBufferRange");
 	glDeleteVertexArrays = (PFNGLDELETEVERTEXARRAYSPROC)glutGetProcAddress("glDeleteVertexArrays");
 
-	prog1.delayed_init();
-	prog2.delayed_init();
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 	//char fileName[1024] = "background.png";
 	char fileName[1024] = "white1.png";
@@ -1417,12 +1418,8 @@ int init() {
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	loadTexture(fileName, tex_background);
 
-	glGenVertexArrays(1, &postprocess_VAO);
-	glGenBuffers(1, &postprocess_VBO);
-	glGenBuffers(1, &postprocess_EBO);
-
 	//
-	// Uniform Block
+	// Uniform Block. Must declare this before calling prog1.delayed_init()
 	//
 	glGenBuffers(1, &matricesUniBuffer);
 	glBindBuffer(GL_UNIFORM_BUFFER, matricesUniBuffer);
@@ -1430,8 +1427,13 @@ int init() {
 	glBindBufferRange(GL_UNIFORM_BUFFER, prog1.matricesUniLoc, matricesUniBuffer, 0, MatricesUniBufferSize);	//setUniforms();
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
-	glEnable(GL_DEPTH_TEST);
-	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+	// Must declare this before prog2.delayed_init()
+	glGenVertexArrays(1, &postprocess_VAO);
+	glGenBuffers(1, &postprocess_VBO);
+	glGenBuffers(1, &postprocess_EBO);
+
+	prog1.delayed_init();
+	prog2.delayed_init();
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1482,7 +1484,6 @@ int main(int argc, char **argv) {
 	}
 	glutCreateWindow("Varifocal Occlusion");
 
-
 	//  Callback Registration
 	glutDisplayFunc(renderScene);
 	glutReshapeFunc(changeSize);
@@ -1518,8 +1519,8 @@ int main(int argc, char **argv) {
 	// return from main loop
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
-	usePosition();
-	updateCamVariables();
+	//usePosition();
+	//updateCamVariables();
 	//  GLUT main loop
 	glutMainLoop();
 

@@ -117,7 +117,6 @@ GLuint program1_class::setup_shaders() {
 }
 
 void program1_class::genVAOs(Model& model) {
-
 	struct MyMesh aMesh;
 	struct MyMaterial aMat;
 	GLuint buffer;
@@ -155,7 +154,7 @@ void program1_class::genVAOs(Model& model) {
 			glBindBuffer(GL_ARRAY_BUFFER, buffer);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mVertices, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(this->program1_vertexLoc);
-			glVertexAttribPointer(program1_vertexLoc, 3, GL_FLOAT, 0, 0, 0);
+			glVertexAttribPointer(this->program1_vertexLoc, 3, GL_FLOAT, 0, 0, 0);
 		}
 
 		// buffer for vertex normals
@@ -164,7 +163,7 @@ void program1_class::genVAOs(Model& model) {
 			glBindBuffer(GL_ARRAY_BUFFER, buffer);
 			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
 			glEnableVertexAttribArray(this->program1_normalLoc);
-			glVertexAttribPointer(program1_normalLoc, 3, GL_FLOAT, 0, 0, 0);
+			glVertexAttribPointer(this->program1_normalLoc, 3, GL_FLOAT, 0, 0, 0);
 		}
 
 		// buffer for vertex texture coordinates
