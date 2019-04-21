@@ -17,12 +17,10 @@ void program3_class::delayed_init() {
 	for (int iter = 0; iter < 8; iter++) {
 		glGenTextures(1, &this->tex_rgb[iter]);
 		glBindTexture(GL_TEXTURE_2D, this->tex_rgb[iter]);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dmd_size[0], dmd_size[1], 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-		glGenerateMipmap(GL_TEXTURE_2D); // Allocates the mipmaps
 	}
-	this->max_mipmap_level = floor(log2(std::max(dmd_size[0], dmd_size[1])));
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	glGenFramebuffers(1, &this->fbo_rgb);

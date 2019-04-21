@@ -48,7 +48,7 @@ bool display_on_device = !true;
 int display_1[] ={ 2560, 1600 };
 int display_2[] ={ 2560, 1600 };
 int window_position[] ={0, 0 };
-int window_size[] ={ 1024, 768 };
+int window_size[] ={ 1920, 1080 };
 
 // Model Matrix (part of the OpenGL Model View Matrix)
 float modelMatrix[16];
@@ -631,12 +631,53 @@ void drawTextureToFramebuffer(int textureID) {
 	glPopMatrix();
 }
 
+int slice_number = 0;
+GLubyte slice_img[1920*1080*3];
+GLubyte r_value, g_value, b_value;
+float r_avg_value, g_avg_value, b_avg_value;
+int r_count = 0, g_count = 0, b_count = 0;
+void calculate_average_color() {
+	glEnable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[slice_number]);
+	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, slice_img);
+
+	r_count = 0;
+	g_count = 0;
+	b_count = 0;
+	r_avg_value = 0.0;
+	g_avg_value = 0.0;
+	b_avg_value = 0.0;
+
+	for (int iterx = 0; iterx < 1920; iterx++) {
+		for (int itery = 0; itery < 1080; itery++) {
+			r_value = slice_img[0 + 3*(iterx * 1080 + itery)*(sizeof(GLubyte))];
+			g_value = slice_img[1 + 3*(iterx * 1080 + itery)*(sizeof(GLubyte))];
+			b_value = slice_img[2 + 3*(iterx * 1080 + itery)*(sizeof(GLubyte))];
+
+			if (r_value > 0) {
+				r_count++;
+				r_avg_value += r_value;
+			}
+
+			if (g_value > 0) {
+				g_count++;
+				g_avg_value += g_value;
+			}
+
+			if (b_value > 0) {
+				b_count++;
+				b_avg_value += b_value;
+			}
+		}
+	}
+	//printf("%f %f %f\n", r_avg_value / r_count, g_avg_value / g_count, b_avg_value / b_count);
+}
+
 int imgCounter = 0;
 char fname[1024], fname1[1024], fname2[1024];
 bool useShaders = 1;
 bool exec_program2 = 0;
 bool exec_program3 = 1;
-int slice_number = 0;
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
@@ -675,7 +716,8 @@ void renderScene() {
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, prog2.fbo_rgb);
 		glPushAttrib(GL_VIEWPORT_BIT);
-		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+		float fraction = 0.2;
+		glViewport(dmd_size[0]*(1.0 - fraction)*0.5, dmd_size[1]*(1.0 - fraction)*0.5, dmd_size[0]*fraction, dmd_size[1]*fraction);
 
 		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -745,12 +787,6 @@ void renderScene() {
 			glBindVertexArray(postprocess_VAO);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-			glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[slice_number]);
-			glGenerateMipmap(GL_TEXTURE_2D);
-			//GLubyte* average_color[3];
-			int average_color;
-			glGetTexImage(GL_TEXTURE_2D, 10, GL_RGB, GL_UNSIGNED_BYTE, &average_color);
-			printf("%d \n", average_color);
 			//printf("%x, %x, %x \n", (average_color&0xFF0000)>>16, (average_color&0x00FF00)>>8, average_color&0x0000FF);
 			//printf("%d, %d, %d \n", int(average_color[0]), int(average_color[1]), int(average_color[2]));
 
@@ -774,14 +810,14 @@ void renderScene() {
 		}
 		else {
 			glPushAttrib(GL_VIEWPORT_BIT);
-			
 			glUseProgram(0);
-
 			glViewport(0, 0, dmd_size[0], dmd_size[1]);
+
 			if (exec_program2) {
 				drawTextureToFramebuffer(prog2.tex_rgb);
 			}
 			else if (exec_program3) {
+				calculate_average_color();
 				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
 			}
 			else {

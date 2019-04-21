@@ -1,6 +1,6 @@
 #include "common_var_func.h"
 
-int dmd_size[] = { 1024, 768 };
+int dmd_size[] = { 1920, 1080 };
 unsigned int postprocess_VBO = 0;
 unsigned int postprocess_VAO = 1;
 unsigned int postprocess_EBO = 2;
