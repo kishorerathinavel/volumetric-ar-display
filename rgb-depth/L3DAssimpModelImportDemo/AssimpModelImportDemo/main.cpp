@@ -633,44 +633,40 @@ void drawTextureToFramebuffer(int textureID) {
 
 int slice_number = 0;
 GLubyte slice_img[1920*1080*3];
-GLubyte r_value, g_value, b_value;
-float r_avg_value, g_avg_value, b_avg_value;
-int r_count = 0, g_count = 0, b_count = 0;
+float average_colors[8][3];
+GLubyte px_value;
+int nz_count;
 void calculate_average_color() {
 	glEnable(GL_TEXTURE_2D);
-	glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[slice_number]);
-	glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, slice_img);
 
-	r_count = 0;
-	g_count = 0;
-	b_count = 0;
-	r_avg_value = 0.0;
-	g_avg_value = 0.0;
-	b_avg_value = 0.0;
+	for (int iters = 0; iters < 8; iters++) {
+		glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[iters]);
+		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, slice_img);
 
-	for (int iterx = 0; iterx < 1920; iterx++) {
-		for (int itery = 0; itery < 1080; itery++) {
-			r_value = slice_img[0 + 3*(iterx * 1080 + itery)*(sizeof(GLubyte))];
-			g_value = slice_img[1 + 3*(iterx * 1080 + itery)*(sizeof(GLubyte))];
-			b_value = slice_img[2 + 3*(iterx * 1080 + itery)*(sizeof(GLubyte))];
+		for (int iterc = 0; iterc < 3; iterc++) {
+			average_colors[iters][iterc] = 0.0;
+		}
 
-			if (r_value > 0) {
-				r_count++;
-				r_avg_value += r_value;
+		for (int iterc = 0; iterc < 3; iterc++) {
+			nz_count = 0;
+			for (int iterx = 0; iterx < 1920; iterx++) {
+				for (int itery = 0; itery < 1080; itery++) {
+					px_value = slice_img[iterc + 3 * (iterx * 1080 + itery)*(sizeof(GLubyte))];
+					if (px_value > 0) {
+						nz_count++;
+						average_colors[iters][iterc] += px_value;
+					}
+				}
 			}
-
-			if (g_value > 0) {
-				g_count++;
-				g_avg_value += g_value;
-			}
-
-			if (b_value > 0) {
-				b_count++;
-				b_avg_value += b_value;
-			}
+			average_colors[iters][iterc] = average_colors[iters][iterc] / nz_count;
 		}
 	}
-	//printf("%f %f %f\n", r_avg_value / r_count, g_avg_value / g_count, b_avg_value / b_count);
+		
+	for (int iters = 0; iters < 8; iters++) {
+		printf("%f %f %f\n", average_colors[iters][0], average_colors[iters][1], average_colors[iters][2]);
+	}
+
+	glDisable(GL_TEXTURE_2D);
 }
 
 int imgCounter = 0;
@@ -817,7 +813,7 @@ void renderScene() {
 				drawTextureToFramebuffer(prog2.tex_rgb);
 			}
 			else if (exec_program3) {
-				calculate_average_color();
+				//calculate_average_color();
 				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
 			}
 			else {
