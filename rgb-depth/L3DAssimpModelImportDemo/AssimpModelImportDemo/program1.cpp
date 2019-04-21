@@ -63,7 +63,6 @@ void program1_class::delayed_init() {
 }
 
 
-
 GLuint program1_class::setup_shaders() {
 	char *vs = NULL, *fs = NULL, *fs2 = NULL;
 

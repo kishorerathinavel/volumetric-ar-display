@@ -41,6 +41,7 @@
 #include "model.h"
 #include "program1.h"
 #include "program2.h"
+#include "program3.h"
 #include "filepaths.h"
 
 bool display_on_device = !true;
@@ -86,206 +87,9 @@ GLuint matricesUniBuffer;
 
 Model model[NUM_MODELS];
 
-//// For Program 1 ======================================
-//GLuint rbo_depth_image, fbo_rgbd, tex_rgb, tex_depth;
-//
-//// Vertex Attribute Locations
-//GLuint program1_vertexLoc = 0, program1_normalLoc = 1, program1_texCoordLoc = 2;
-//
-//// Uniform Bindings Points
-//GLuint matricesUniLoc = 1, materialUniLoc = 2;
-//
-//// The sampler uniform for textured models
-//// we are assuming a single texture so this will
-////always be texture unit 0
-//GLuint texUnit;
-//
-//// Program and Shader Identifiers
-//GLuint program, vertexShader, fragmentShader;
-//
-//// Shader Names
-//char *fname_vertex_shader = "dirlightdiffambpix.vert";
-//char *fname_fragment_shader_rgb = "dirlightdiffambpix.frag";
-//
-//GLuint setup_program1_shader() {
-//
-//	char *vs = NULL, *fs = NULL, *fs2 = NULL;
-//
-//	GLuint p, v, f;
-//
-//	v = glCreateShader(GL_VERTEX_SHADER);
-//	f = glCreateShader(GL_FRAGMENT_SHADER);
-//
-//	vs = textFileRead(fname_vertex_shader);
-//	fs = textFileRead(fname_fragment_shader_rgb);
-//
-//	const char * vv = vs;
-//	const char * ff = fs;
-//
-//	glShaderSource(v, 1, &vv, NULL);
-//	glShaderSource(f, 1, &ff, NULL);
-//
-//	free(vs); free(fs);
-//
-//	glCompileShader(v);
-//	glCompileShader(f);
-//
-//	printShaderInfoLog(v);
-//	printShaderInfoLog(f);
-//
-//	p = glCreateProgram();
-//	glAttachShader(p, v);
-//	glAttachShader(p, f);
-//
-//	glBindFragDataLocation(p, 0, "FragColor");
-//
-//	glBindAttribLocation(p, program1_vertexLoc, "position");
-//	glBindAttribLocation(p, program1_normalLoc, "normal");
-//	glBindAttribLocation(p, program1_texCoordLoc, "texCoord");
-//
-//	glLinkProgram(p);
-//	glValidateProgram(p);
-//	printProgramInfoLog(p);
-//
-//	program = p;
-//	vertexShader = v;
-//	fragmentShader = f;
-//
-//	GLuint k = glGetUniformBlockIndex(p, "Matrices");
-//	glUniformBlockBinding(p, k, matricesUniLoc);
-//	glUniformBlockBinding(p, glGetUniformBlockIndex(p, "Material"), materialUniLoc);
-//
-//	texUnit = glGetUniformLocation(p, "texUnit");
-//
-//	return(p);
-//}
-//
-//void genVAOs_program1(Model& model) {
-//
-//	struct MyMesh aMesh;
-//	struct MyMaterial aMat;
-//	GLuint buffer;
-//
-//	// For each mesh
-//	for (unsigned int n = 0; n < model.scene->mNumMeshes; ++n) {
-//		const aiMesh* mesh = model.scene->mMeshes[n];
-//
-//		// create array with faces
-//		// have to convert from Assimp format to array
-//		unsigned int *faceArray;
-//		faceArray = (unsigned int *)malloc(sizeof(unsigned int) * mesh->mNumFaces * 3);
-//		unsigned int faceIndex = 0;
-//
-//		for (unsigned int t = 0; t < mesh->mNumFaces; ++t) {
-//			const aiFace* face = &mesh->mFaces[t];
-//
-//			memcpy(&faceArray[faceIndex], face->mIndices, 3 * sizeof(unsigned int));
-//			faceIndex += 3;
-//		}
-//		aMesh.numFaces = model.scene->mMeshes[n]->mNumFaces;
-//
-//		// generate Vertex Array for mesh
-//		glGenVertexArrays(1, &(aMesh.vao));
-//		glBindVertexArray(aMesh.vao);
-//
-//		// buffer for faces
-//		glGenBuffers(1, &buffer);
-//		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffer);
-//		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(unsigned int) * mesh->mNumFaces * 3, faceArray, GL_STATIC_DRAW);
-//
-//		// buffer for vertex positions
-//		if (mesh->HasPositions()) {
-//			glGenBuffers(1, &buffer);
-//			glBindBuffer(GL_ARRAY_BUFFER, buffer);
-//			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mVertices, GL_STATIC_DRAW);
-//			glEnableVertexAttribArray(program1_vertexLoc);
-//			glVertexAttribPointer(program1_vertexLoc, 3, GL_FLOAT, 0, 0, 0);
-//		}
-//
-//		// buffer for vertex normals
-//		if (mesh->HasNormals()) {
-//			glGenBuffers(1, &buffer);
-//			glBindBuffer(GL_ARRAY_BUFFER, buffer);
-//			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 3 * mesh->mNumVertices, mesh->mNormals, GL_STATIC_DRAW);
-//			glEnableVertexAttribArray(program1_normalLoc);
-//			glVertexAttribPointer(program1_normalLoc, 3, GL_FLOAT, 0, 0, 0);
-//		}
-//
-//		// buffer for vertex texture coordinates
-//		if (mesh->HasTextureCoords(0)) {
-//			float *texCoords = (float *)malloc(sizeof(float) * 2 * mesh->mNumVertices);
-//			for (unsigned int k = 0; k < mesh->mNumVertices; ++k) {
-//
-//				texCoords[k * 2] = mesh->mTextureCoords[0][k].x;
-//				texCoords[k * 2 + 1] = mesh->mTextureCoords[0][k].y;
-//
-//			}
-//			glGenBuffers(1, &buffer);
-//			glBindBuffer(GL_ARRAY_BUFFER, buffer);
-//			glBufferData(GL_ARRAY_BUFFER, sizeof(float) * 2 * mesh->mNumVertices, texCoords, GL_STATIC_DRAW);
-//			glEnableVertexAttribArray(program1_texCoordLoc);
-//			glVertexAttribPointer(program1_texCoordLoc, 2, GL_FLOAT, 0, 0, 0);
-//		}
-//
-//		// unbind buffers
-//		glBindVertexArray(0);
-//		glBindBuffer(GL_ARRAY_BUFFER, 0);
-//		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-//
-//		// create material uniform buffer
-//		aiMaterial *mtl = model.scene->mMaterials[mesh->mMaterialIndex];
-//
-//		aiString texPath;	//contains filename of texture
-//		if (AI_SUCCESS == mtl->GetTexture(aiTextureType_DIFFUSE, 0, &texPath)) {
-//			//bind texture
-//			unsigned int texId = model.textureIdMap[texPath.data];
-//			aMesh.texIndex = texId;
-//			aMat.texCount = 1;
-//		}
-//		else
-//			aMat.texCount = 0;
-//
-//		float c[4];
-//		set_float4(c, 0.5f, 0.5f, 0.5f, 1.0f);
-//		aiColor4D diffuse;
-//		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_DIFFUSE, &diffuse))
-//			color4_to_float4(&diffuse, c);
-//		memcpy(aMat.diffuse, c, sizeof(c));
-//
-//		set_float4(c, 0.1f, 0.1f, 0.1f, 1.0f);
-//		aiColor4D ambient;
-//		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_AMBIENT, &ambient))
-//			color4_to_float4(&ambient, c);
-//		memcpy(aMat.ambient, c, sizeof(c));
-//
-//		set_float4(c, 0.0f, 0.0f, 0.0f, 1.0f);
-//		aiColor4D specular;
-//		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_SPECULAR, &specular))
-//			color4_to_float4(&specular, c);
-//		memcpy(aMat.specular, c, sizeof(c));
-//
-//		set_float4(c, 0.0f, 0.0f, 0.0f, 1.0f);
-//		aiColor4D emission;
-//		if (AI_SUCCESS == aiGetMaterialColor(mtl, AI_MATKEY_COLOR_EMISSIVE, &emission))
-//			color4_to_float4(&emission, c);
-//		memcpy(aMat.emissive, c, sizeof(c));
-//
-//		float shininess = 0.0;
-//		unsigned int max;
-//		aiGetMaterialFloatArray(mtl, AI_MATKEY_SHININESS, &shininess, &max);
-//		aMat.shininess = shininess;
-//
-//		glGenBuffers(1, &(aMesh.uniformBlockIndex));
-//		glBindBuffer(GL_UNIFORM_BUFFER, aMesh.uniformBlockIndex);
-//		glBufferData(GL_UNIFORM_BUFFER, sizeof(aMat), (void *)(&aMat), GL_STATIC_DRAW);
-//
-//		model.myMesh.push_back(aMesh);
-//	}
-//}
-//// For Program 1 ======================================
-//
 program1_class prog1;
 program2_class prog2;
+program3_class prog3;
 
 // For Program 3 ||||||||||||||||||||||||||||||||||||||
 GLuint fbo_bitplanes_rgb, tex_bitplanes_rgb;
@@ -582,123 +386,6 @@ void setCamera(float posX, float posY, float posZ,
 }
 
 
-// ----------------------------------------------------------------------------
-//bool Import3DFromFile(Model &model) {
-//
-//	std::string pFile = model.basepath + model.modelname;
-//	//check if file exists
-//	std::ifstream fin(pFile.c_str());
-//	if (!fin.fail()) {
-//		fin.close();
-//	}
-//	else {
-//		printf("Couldn't open file: %s\n", pFile.c_str());
-//		printf("%s\n", model.importer.GetErrorString());
-//		return false;
-//	}
-//
-//	printf("Reading file... \n");
-//	model.scene = model.importer.ReadFile(pFile, aiProcessPreset_TargetRealtime_Quality);
-//	// If the import failed, report it
-//	if (!model.scene)
-//	{
-//		printf("%s\n", model.importer.GetErrorString());
-//		return false;
-//	}
-//
-//	printf("Done reading file... \n");
-//
-//
-//	// Now we can access the file's contents.
-//	printf("Import of scene %s succeeded. \n", pFile.c_str());
-//
-//	//float tempScaleFactor;
-//	//aiVector3D scene_min, scene_max, scene_center;
-//	//get_bounding_box(&scene_min, &scene_max, scene);
-//	//float tmp;
-//	//tmp = scene_max.x-scene_min.x;
-//	//tmp = scene_max.y - scene_min.y > tmp?scene_max.y - scene_min.y:tmp;
-//	//tmp = scene_max.z - scene_min.z > tmp?scene_max.z - scene_min.z:tmp;
-//	//tempScaleFactor = 1.0 / tmp;
-//
-//	// We're done. Everything will be cleaned up by the importer destructor
-//	return true;
-//}
-
-
-//int LoadGLTextures(Model& model) {
-//	ILboolean success;
-//
-//
-//	/* scan scene's materials for textures */
-//	for (unsigned int m = 0; m < model.scene->mNumMaterials; ++m)
-//	{
-//		int texIndex = 0;
-//		aiString path;	// filename
-//
-//		aiReturn texFound = model.scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-//		while (texFound == AI_SUCCESS) {
-//			//fill map with textures, OpenGL image ids set to 0
-//			model.textureIdMap[path.data] = 0;
-//			// more textures?
-//			texIndex++;
-//			texFound = model.scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, texIndex, &path);
-//		}
-//	}
-//
-//	int numTextures = model.textureIdMap.size();
-//
-//	/* create and fill array with DevIL texture ids */
-//	ILuint* imageIds = new ILuint[numTextures];
-//	ilGenImages(numTextures, imageIds);
-//
-//	/* create and fill array with GL texture ids */
-//	GLuint* textureIds = new GLuint[numTextures];
-//	glGenTextures(numTextures, textureIds); /* Texture name generation */
-//
-//	/* get iterator */
-//	std::map<std::string, GLuint>::iterator itr = model.textureIdMap.begin();
-//	int i = 0;
-//	for (; itr != model.textureIdMap.end(); ++i, ++itr)
-//	{
-//		//save IL image ID
-//		std::string filename = (*itr).first;  // get filename
-//		(*itr).second = textureIds[i];	  // save texture id for filename in map
-//
-//		ilBindImage(imageIds[i]); /* Binding of DevIL image name */
-//		ilEnable(IL_ORIGIN_SET);
-//		ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
-//		std::string fileloc = model.basepath + filename;	/* Loading of image */
-//		success = ilLoadImage(fileloc.c_str());
-//		if (success) {
-//			/* Convert image to RGBA */
-//			ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
-//
-//			/* Create and load textures to OpenGL */
-//			glBindTexture(GL_TEXTURE_2D, textureIds[i]);
-//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ilGetInteger(IL_IMAGE_WIDTH),
-//				ilGetInteger(IL_IMAGE_HEIGHT), 0, GL_RGBA, GL_UNSIGNED_BYTE,
-//				ilGetData());
-//		}
-//		else
-//			printf("Couldn't load Image: %s\n", filename.c_str());
-//	}
-//	/* Because we have already copied image data into texture data
-//	we can release memory used by image. */
-//	ilDeleteImages(numTextures, imageIds);
-//
-//	//Cleanup
-//	delete[] imageIds;
-//	delete[] textureIds;
-//
-//	//return success;
-//	return true;
-//}
-
-
-
 // ------------------------------------------------------------
 //
 // Reshape Callback Function
@@ -944,9 +631,12 @@ void drawTextureToFramebuffer(int textureID) {
 	glPopMatrix();
 }
 
-bool rgb = true;
 int imgCounter = 0;
 char fname[1024], fname1[1024], fname2[1024];
+bool useShaders = 1;
+bool exec_program2 = 0;
+bool exec_program3 = 1;
+int slice_number = 0;
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
@@ -981,9 +671,9 @@ void renderScene() {
 	}
 
 	// Render Program 2
-	bool useShaders = 1;
+	if(exec_program2)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, prog2.fbo_synthetic1_rgb);
+		glBindFramebuffer(GL_FRAMEBUFFER, prog2.fbo_rgb);
 		glPushAttrib(GL_VIEWPORT_BIT);
 		glViewport(0, 0, dmd_size[0], dmd_size[1]);
 
@@ -997,11 +687,11 @@ void renderScene() {
 			//drawTextureToFramebuffer(tex_rgb);
 		}
 		else { // Uses shaders
-			glUseProgram(prog2.program2);
+			glUseProgram(prog2.program);
 
 			// Important that these two lines come after the glUseProgram() command
-			glUniform1i(prog2.synthetic1_rgb_img, 0);
-			glUniform1i(prog2.synthetic1_depth_map, 1);
+			glUniform1i(prog2.rgb_img, 0);
+			glUniform1i(prog2.depth_map, 1);
 			glEnable(GL_TEXTURE_2D);
 			glActiveTexture(GL_TEXTURE0 + 0);
 			glBindTexture(GL_TEXTURE_2D, prog1.tex_rgb);
@@ -1016,10 +706,57 @@ void renderScene() {
 
 			if (saveFramebufferOnce | saveFramebufferUntilStop) {
 				sprintf(fname2, "./outputs/synthetic_%02d_rgb.png", imgCounter);
-				saveColorImage(prog2.fbo_synthetic1_rgb, fname2);
+				saveColorImage(prog2.fbo_rgb, fname2);
 				imgCounter++;
 				saveFramebufferOnce = false;
 			}
+		}
+		glPopAttrib();
+	}
+
+	if (exec_program3)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, prog3.fbo_rgb);
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if (useShaders == 0) { // Debugging
+			glUseProgram(0);
+			//drawTextureToFramebuffer(tex_background);
+			drawTextureToFramebuffer(prog1.tex_depth);
+			//drawTextureToFramebuffer(tex_rgb);
+		}
+		else { // Uses shaders
+			glUseProgram(prog3.program);
+
+			glUniform1i(prog3.rgb_img, 0);
+			glUniform1i(prog3.depth_map, 1);
+			glUniform1f(prog3.zFar, zFar);
+			glUniform1f(prog3.zNear, zNear);
+			glEnable(GL_TEXTURE_2D);
+			glActiveTexture(GL_TEXTURE0 + 0);
+			glBindTexture(GL_TEXTURE_2D, prog1.tex_rgb);
+			glActiveTexture(GL_TEXTURE0 + 1);
+			glBindTexture(GL_TEXTURE_2D, prog1.tex_depth);
+
+			glBindVertexArray(postprocess_VAO);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+			glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[slice_number]);
+			glGenerateMipmap(GL_TEXTURE_2D);
+			//GLubyte* average_color[3];
+			int average_color;
+			glGetTexImage(GL_TEXTURE_2D, 10, GL_RGB, GL_UNSIGNED_BYTE, &average_color);
+			printf("%d \n", average_color);
+			//printf("%x, %x, %x \n", (average_color&0xFF0000)>>16, (average_color&0x00FF00)>>8, average_color&0x0000FF);
+			//printf("%d, %d, %d \n", int(average_color[0]), int(average_color[1]), int(average_color[2]));
+
+			// Important to set default active texture back to GL_TEXTURE0
+			glActiveTexture(GL_TEXTURE0);
+			glDisable(GL_TEXTURE_2D);
 		}
 		glPopAttrib();
 	}
@@ -1031,10 +768,8 @@ void renderScene() {
 		if (display_on_device) {
 			glPushAttrib(GL_VIEWPORT_BIT);
 			glViewport(0, 0, dmd_size[0], dmd_size[1]);
-
 			glUseProgram(0);
 			drawTextureToFramebuffer(tex_background);
-
 			glPopAttrib();
 		}
 		else {
@@ -1043,16 +778,16 @@ void renderScene() {
 			glUseProgram(0);
 
 			glViewport(0, 0, dmd_size[0], dmd_size[1]);
-			//drawTextureToFramebuffer(prog2.tex_synthetic1_rgb);
-			drawTextureToFramebuffer(prog1.tex_rgb);
-
-			//glViewport(0, 0, dmd_size[0]/2, dmd_size[1]/2);
-			//drawTextureToFramebuffer(tex_synthetic1_rgb);
-			//glViewport(dmd_size[0]/2, 0, dmd_size[0]/2, dmd_size[1]/2);
-			//drawTextureToFramebuffer(tex_rgb);
-
+			if (exec_program2) {
+				drawTextureToFramebuffer(prog2.tex_rgb);
+			}
+			else if (exec_program3) {
+				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
+			}
+			else {
+				drawTextureToFramebuffer(prog1.tex_rgb);
+			}
 			glPopAttrib();
-
 		}
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1084,7 +819,6 @@ int modify_valuei(int value, int delta, int min_value, int max_value) {
 
 	return value;
 }
-
 
 void print_valuei(int value, char name[]) {
 	printf("%s: %d \n", name, value);
@@ -1130,6 +864,7 @@ void processKeys(unsigned char key, int xx, int yy) {
 		if (keymapmode == 2) { // Adjusting 3d models
 			/*
 			Remaining letters:
+			    5678  
 			       io 
 			a     j  
 			       
@@ -1147,9 +882,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 			case '4': currModel = &model[3]; printf("Current Model is 3 \n"); break;
 			case '9': stepSize = stepSize / 3.0; break;
 			case '0': stepSize = stepSize * 3.0; break;
-			case 's': rgb = true; saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
+			case 's': saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
 			case 'S': {
-						  rgb = true;
 						  saveFramebufferUntilStop = !saveFramebufferUntilStop;
 						  if (saveFramebufferUntilStop) {
 							  printf("Saving framebuffer until stop. Press S again to stop \n");
@@ -1188,6 +922,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 			case 'u': usePosition(); break;
 			case 'k': zFar = modify_valuef(zFar, -0.1, zNear, 200.0); printf("zFar: %f \n", zFar); break;
 			case 'l': zFar = modify_valuef(zFar, 0.1, zNear, 200.0); printf("zFar: %f \n", zFar); break;
+			case '5': slice_number = modify_valuei(slice_number, -1, 0, 7); print_valuei(slice_number, "slice_number"); break;
+			case '6': slice_number = modify_valuei(slice_number, +1, 0, 7); print_valuei(slice_number, "slice_number"); break;
 			default: printf("Entered key does nothing \n");
 			}
 			updateCamVariables();
@@ -1197,7 +933,6 @@ void processKeys(unsigned char key, int xx, int yy) {
 	//  uncomment this if not using an idle func
 	//	glutPostRedisplay();
 }
-
 
 // ------------------------------------------------------------
 //
@@ -1320,66 +1055,6 @@ void loadTexture(const char* lpszPathName, GLuint tex) {
 	}
 }
 
-//void init_program1() {
-//	program = setup_program1_shader();
-//
-//	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
-//		genVAOs_program1(model[modelIter]);
-//	}
-//
-//
-//	glGenTextures(1, &tex_rgb);
-//	glBindTexture(GL_TEXTURE_2D, tex_rgb);
-//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dmd_size[0], dmd_size[1], 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-//	glBindTexture(GL_TEXTURE_2D, 0);
-//
-//	glGenTextures(1, &tex_depth);
-//	glBindTexture(GL_TEXTURE_2D, tex_depth);
-//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, dmd_size[0], dmd_size[1], 0, GL_DEPTH_COMPONENT, GL_UNSIGNED_INT, 0);
-//	glBindTexture(GL_TEXTURE_2D, 0);
-//
-//	//create fbos/renderbuffers
-//	glGenRenderbuffers(1, &rbo_depth_image);
-//	glBindRenderbuffer(GL_RENDERBUFFER, rbo_depth_image);
-//	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, dmd_size[0], dmd_size[1]);
-//
-//	glGenFramebuffers(1, &fbo_rgbd);
-//	glBindFramebuffer(GL_FRAMEBUFFER, fbo_rgbd);
-//	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rbo_depth_image);
-//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, tex_depth, 0);
-//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_rgb, 0);
-//
-//	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-//	if (status != GL_FRAMEBUFFER_COMPLETE) {
-//		printf("Error in creating framebuffer \n");
-//	}
-//}
-
-//void init_program2() {
-//	program2 = setup_program2_shaders();
-//	genVAOs_program2();
-//
-//	glGenTextures(1, &tex_synthetic1_rgb);
-//	glBindTexture(GL_TEXTURE_2D, tex_synthetic1_rgb);
-//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-//	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dmd_size[0], dmd_size[1], 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
-//	glBindTexture(GL_TEXTURE_2D, 0);
-//
-//	glGenFramebuffers(1, &fbo_synthetic1_rgb);
-//	glBindFramebuffer(GL_FRAMEBUFFER, fbo_synthetic1_rgb);
-//	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, tex_synthetic1_rgb, 0);
-//
-//	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
-//	if (status != GL_FRAMEBUFFER_COMPLETE) {
-//		printf("Error in creating framebuffer \n");
-//	}
-//}
-
 int init() {
 	/* initialization of DevIL */
 	ilInit();
@@ -1391,14 +1066,6 @@ int init() {
 			return(0);
 		model[modelIter].LoadGLTextures();
 	}
-
-	//for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
-	//	model[modelIter].basepath = file_path_and_name[modelIter][0];
-	//	model[modelIter].modelname = file_path_and_name[modelIter][1];
-	//	if (!Import3DFromFile(model[modelIter]))
-	//		return(0);
-	//	LoadGLTextures(model[modelIter]);
-	//}
 
 	glGetUniformBlockIndex = (PFNGLGETUNIFORMBLOCKINDEXPROC)glutGetProcAddress("glGetUniformBlockIndex");
 	glUniformBlockBinding = (PFNGLUNIFORMBLOCKBINDINGPROC)glutGetProcAddress("glUniformBlockBinding");
@@ -1434,6 +1101,7 @@ int init() {
 
 	prog1.delayed_init();
 	prog2.delayed_init();
+	prog3.delayed_init();
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -1515,12 +1183,11 @@ int main(int argc, char **argv) {
 	printf("Version: %s\n", glGetString(GL_VERSION));
 	printf("GLSL: %s\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
 
-
 	// return from main loop
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
-	//usePosition();
-	//updateCamVariables();
+	usePosition();
+	updateCamVariables();
 	//  GLUT main loop
 	glutMainLoop();
 

@@ -160,6 +160,7 @@
     <ClCompile Include="model.cpp" />
     <ClCompile Include="program1.cpp" />
     <ClCompile Include="program2.cpp" />
+    <ClCompile Include="program3.cpp" />
     <ClCompile Include="textfile.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -174,6 +175,7 @@
     <ClInclude Include="model.h" />
     <ClInclude Include="program1.h" />
     <ClInclude Include="program2.h" />
+    <ClInclude Include="program3.h" />
     <ClInclude Include="textfile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
