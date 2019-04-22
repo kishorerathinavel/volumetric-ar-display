@@ -42,6 +42,7 @@
 #include "program1.h"
 #include "program2.h"
 #include "program3.h"
+#include "program4.h"
 #include "filepaths.h"
 
 bool display_on_device = !true;
@@ -90,6 +91,8 @@ Model model[NUM_MODELS];
 program1_class prog1;
 program2_class prog2;
 program3_class prog3;
+program4_class prog4;
+
 
 // For Program 3 ||||||||||||||||||||||||||||||||||||||
 GLuint fbo_bitplanes_rgb, tex_bitplanes_rgb;
@@ -674,6 +677,7 @@ char fname[1024], fname1[1024], fname2[1024];
 bool useShaders = 1;
 bool exec_program2 = 0;
 bool exec_program3 = 1;
+bool exec_program4 = 1;
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
@@ -770,11 +774,11 @@ void renderScene() {
 		else { // Uses shaders
 			glUseProgram(prog3.program);
 
+			glEnable(GL_TEXTURE_2D);
 			glUniform1i(prog3.rgb_img, 0);
 			glUniform1i(prog3.depth_map, 1);
 			glUniform1f(prog3.zFar, zFar);
 			glUniform1f(prog3.zNear, zNear);
-			glEnable(GL_TEXTURE_2D);
 			glActiveTexture(GL_TEXTURE0 + 0);
 			glBindTexture(GL_TEXTURE_2D, prog1.tex_rgb);
 			glActiveTexture(GL_TEXTURE0 + 1);
@@ -793,6 +797,43 @@ void renderScene() {
 		glPopAttrib();
 	}
 
+	if (exec_program4)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, prog4.fbo_rgb);
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if (useShaders == 0) { // Debugging
+			glUseProgram(0);
+			//drawTextureToFramebuffer(tex_background);
+			drawTextureToFramebuffer(prog1.tex_depth);
+			//drawTextureToFramebuffer(tex_rgb);
+		}
+		else { // Uses shaders
+			glUseProgram(prog4.program);
+
+			for (int iters = 0; iters < 8; iters++) {
+				glUniform1i(prog4.rgb_img[iters], iters);
+			}
+			glEnable(GL_TEXTURE_2D);
+			for (int iters = 0; iters < 8; iters++) {
+				glActiveTexture(GL_TEXTURE0 + iters);
+				glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[iters]);
+			}
+
+			glBindVertexArray(postprocess_VAO);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+			// Important to set default active texture back to GL_TEXTURE0
+			glActiveTexture(GL_TEXTURE0);
+			glDisable(GL_TEXTURE_2D);
+		}
+		glPopAttrib();
+	}	
+	
 	// Render to screen or display
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -812,9 +853,12 @@ void renderScene() {
 			if (exec_program2) {
 				drawTextureToFramebuffer(prog2.tex_rgb);
 			}
-			else if (exec_program3) {
+			else if (exec_program3 && !exec_program4) {
 				//calculate_average_color();
 				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
+			}
+			else if (exec_program4) {
+				drawTextureToFramebuffer(prog4.tex_rgb[slice_number]);
 			}
 			else {
 				drawTextureToFramebuffer(prog1.tex_rgb);
@@ -1134,6 +1178,7 @@ int init() {
 	prog1.delayed_init();
 	prog2.delayed_init();
 	prog3.delayed_init();
+	prog4.delayed_init();
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

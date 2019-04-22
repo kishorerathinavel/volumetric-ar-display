@@ -1,7 +1,7 @@
 #pragma once
 #include "common_var_func.h"
 
-class program3_class {
+class program4_class {
 public:
 	// Shader Names
 	char *fname_vertex_shader, *fname_fragment_shader;
@@ -12,14 +12,13 @@ public:
 	GLuint vertexLoc, textureLoc;
 
 	// Sampler Uniform
-	GLuint rgb_img, depth_map;
-	GLuint zNear, zFar;
+	GLuint rgb_img[8];
 
 	// Program and Shader Identifiers
 	GLuint program, vertexShader, fragmentShader;
 
-	program3_class();
-	~program3_class();
+	program4_class();
+	~program4_class();
 	void delayed_init();
 	void genVAOs();
 	GLuint setup_shaders();
