@@ -751,14 +751,15 @@ void renderScene() {
 			glDisable(GL_TEXTURE_2D);
 			// Important to set default active texture back to GL_TEXTURE0
 			glActiveTexture(GL_TEXTURE0);
-
-			if (saveFramebufferOnce | saveFramebufferUntilStop) {
-				sprintf(fname2, "./outputs/synthetic_%02d_rgb.png", imgCounter);
-				saveColorImage(prog2.fbo_rgb, fname2);
-				imgCounter++;
-				saveFramebufferOnce = false;
-			}
 		}
+
+		if (saveFramebufferOnce | saveFramebufferUntilStop) {
+			sprintf(fname2, "./outputs/synthetic_%02d_rgb.png", imgCounter);
+			saveColorImage(prog2.fbo_rgb, fname2);
+			imgCounter++;
+			saveFramebufferOnce = false;
+		}
+
 		glPopAttrib();
 	}
 
@@ -911,6 +912,14 @@ void renderScene() {
 			glActiveTexture(GL_TEXTURE0);
 			glDisable(GL_TEXTURE_2D);
 		}
+
+		if (saveFramebufferOnce | saveFramebufferUntilStop) {
+			sprintf(fname2, "./outputs/encoded_%02d.png", imgCounter);
+			saveColorImage(prog6.fbo_encoded, fname2);
+			imgCounter++;
+			saveFramebufferOnce = false;
+		}
+
 		glPopAttrib();
 
 	}

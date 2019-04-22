@@ -31,6 +31,6 @@ void main() {
 	FragColor = vec4(1.0/4.0);
   } 
   else {
-    FragColor = vec4(1.0/2.0);
+    FragColor = vec4(128.0/255.0);
   }
 }
