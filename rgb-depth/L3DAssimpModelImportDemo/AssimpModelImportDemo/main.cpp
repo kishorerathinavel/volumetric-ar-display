@@ -59,7 +59,7 @@ float modelMatrix[16];
 // For push and pop matrix
 std::vector<float *> matrixStack;
 
-float zNear = 0.01, zFar = 21.0;
+float zNear = 0.01, zFar = 16.9;
 
 // Camera Position
 float camX = 0, camY = 0, camZ = 1.2;
@@ -703,6 +703,7 @@ void renderScene() {
 		// so we have set this uniform separately
 		//glUniform1i(texUnit, tex_background);
 
+		//glutWireTeapot(2.0);
 		drawModels();
 
 		//if (saveFramebufferOnce | saveFramebufferUntilStop) {
@@ -902,7 +903,7 @@ void renderScene() {
 			glEnable(GL_TEXTURE_2D);
 			for (int iters = 0; iters < 8; iters++) {
 				glActiveTexture(GL_TEXTURE0 + iters);
-				glBindTexture(GL_TEXTURE_2D, prog5.tex_binary[iters]);
+				glBindTexture(GL_TEXTURE_2D, prog4.tex_gray[iters]);
 			}
 
 			glBindVertexArray(postprocess_VAO);
@@ -1362,8 +1363,8 @@ int main(int argc, char **argv) {
 	// return from main loop
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE, GLUT_ACTION_GLUTMAINLOOP_RETURNS);
 
-	usePosition();
-	updateCamVariables();
+	//usePosition();
+	//updateCamVariables();
 	//  GLUT main loop
 	glutMainLoop();
 
