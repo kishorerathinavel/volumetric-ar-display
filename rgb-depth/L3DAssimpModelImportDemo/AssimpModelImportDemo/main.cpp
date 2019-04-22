@@ -43,6 +43,8 @@
 #include "program2.h"
 #include "program3.h"
 #include "program4.h"
+#include "program5.h"
+#include "program6.h"
 #include "filepaths.h"
 
 bool display_on_device = !true;
@@ -92,6 +94,8 @@ program1_class prog1;
 program2_class prog2;
 program3_class prog3;
 program4_class prog4;
+program5_class prog5;
+program6_class prog6;
 
 
 // For Program 3 ||||||||||||||||||||||||||||||||||||||
@@ -675,9 +679,11 @@ void calculate_average_color() {
 int imgCounter = 0;
 char fname[1024], fname1[1024], fname2[1024];
 bool useShaders = 1;
-bool exec_program2 = 0;
-bool exec_program3 = 1;
-bool exec_program4 = 1;
+bool exec_program2 = 0; // synthetic.frag
+bool exec_program3 = 1; //voxelization.frag
+bool exec_program4 = 1; //rgb2gray_slices.frag
+bool exec_program5 = 1; //dithering.frag
+bool exec_program6 = 1; //encoding.frag
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
@@ -799,7 +805,7 @@ void renderScene() {
 
 	if (exec_program4)
 	{
-		glBindFramebuffer(GL_FRAMEBUFFER, prog4.fbo_rgb);
+		glBindFramebuffer(GL_FRAMEBUFFER, prog4.fbo_gray);
 		glPushAttrib(GL_VIEWPORT_BIT);
 		glViewport(0, 0, dmd_size[0], dmd_size[1]);
 
@@ -834,6 +840,82 @@ void renderScene() {
 		glPopAttrib();
 	}	
 	
+	if (exec_program5)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, prog5.fbo_binary);
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if (useShaders == 0) { // Debugging
+			glUseProgram(0);
+			//drawTextureToFramebuffer(tex_background);
+			drawTextureToFramebuffer(prog1.tex_depth);
+			//drawTextureToFramebuffer(tex_rgb);
+		}
+		else { // Uses shaders
+			glUseProgram(prog5.program);
+
+			for (int iters = 0; iters < 8; iters++) {
+				glUniform1i(prog5.gray_img[iters], iters);
+			}
+			glEnable(GL_TEXTURE_2D);
+			for (int iters = 0; iters < 8; iters++) {
+				glActiveTexture(GL_TEXTURE0 + iters);
+				glBindTexture(GL_TEXTURE_2D, prog4.tex_gray[iters]);
+			}
+
+			glBindVertexArray(postprocess_VAO);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+			// Important to set default active texture back to GL_TEXTURE0
+			glActiveTexture(GL_TEXTURE0);
+			glDisable(GL_TEXTURE_2D);
+		}
+		glPopAttrib();
+	}	
+
+	if (exec_program6)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, prog6.fbo_encoded);
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+
+		//glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+		if (useShaders == 0) { // Debugging
+			glUseProgram(0);
+			//drawTextureToFramebuffer(tex_background);
+			drawTextureToFramebuffer(prog1.tex_depth);
+			//drawTextureToFramebuffer(tex_rgb);
+		}
+		else { // Uses shaders
+			glUseProgram(prog6.program);
+
+			for (int iters = 0; iters < 8; iters++) {
+				glUniform1i(prog6.binary_img[iters], iters);
+			}
+			glEnable(GL_TEXTURE_2D);
+			for (int iters = 0; iters < 8; iters++) {
+				glActiveTexture(GL_TEXTURE0 + iters);
+				glBindTexture(GL_TEXTURE_2D, prog5.tex_binary[iters]);
+			}
+
+			glBindVertexArray(postprocess_VAO);
+			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+			// Important to set default active texture back to GL_TEXTURE0
+			glActiveTexture(GL_TEXTURE0);
+			glDisable(GL_TEXTURE_2D);
+		}
+		glPopAttrib();
+
+	}
+	
+	
 	// Render to screen or display
 	{
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -857,8 +939,14 @@ void renderScene() {
 				//calculate_average_color();
 				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
 			}
-			else if (exec_program4) {
-				drawTextureToFramebuffer(prog4.tex_rgb[slice_number]);
+			else if (exec_program4 && !exec_program5) {
+				drawTextureToFramebuffer(prog4.tex_gray[slice_number]);
+			}
+			else if (exec_program5 && !exec_program6) {
+				drawTextureToFramebuffer(prog5.tex_binary[slice_number]);
+			}
+			else if (exec_program6) {
+				drawTextureToFramebuffer(prog6.tex_encoded);
 			}
 			else {
 				drawTextureToFramebuffer(prog1.tex_rgb);
@@ -1179,6 +1267,8 @@ int init() {
 	prog2.delayed_init();
 	prog3.delayed_init();
 	prog4.delayed_init();
+	prog5.delayed_init();
+	prog6.delayed_init();
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

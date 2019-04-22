@@ -162,13 +162,19 @@
     <ClCompile Include="program2.cpp" />
     <ClCompile Include="program3.cpp" />
     <ClCompile Include="program4.cpp" />
+    <ClCompile Include="program5.cpp" />
+    <ClCompile Include="program6.cpp" />
     <ClCompile Include="textfile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="dirlightdiffambpix.frag" />
     <None Include="dirlightdiffambpix.vert" />
+    <None Include="dithering.frag" />
+    <None Include="encoding.frag" />
+    <None Include="rgb2gray_slices.frag" />
     <None Include="synthetic1.frag" />
     <None Include="synthetic1.vert" />
+    <None Include="voxelization.frag" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common_var_func.h" />
@@ -178,6 +184,8 @@
     <ClInclude Include="program2.h" />
     <ClInclude Include="program3.h" />
     <ClInclude Include="program4.h" />
+    <ClInclude Include="program5.h" />
+    <ClInclude Include="program6.h" />
     <ClInclude Include="textfile.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

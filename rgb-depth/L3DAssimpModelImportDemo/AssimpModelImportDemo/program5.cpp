@@ -1,32 +1,32 @@
-#include "program4.h"
+#include "program5.h"
 
-program4_class::program4_class() {
+program5_class::program5_class() {
 	// Shader Names
 	this->fname_vertex_shader = "synthetic1.vert";
-	this->fname_fragment_shader = "rgb2gray_slices.frag";
+	this->fname_fragment_shader = "dithering.frag";
 }
 
-program4_class::~program4_class() {
-	glDeleteFramebuffers(1, &this->fbo_gray);
+program5_class::~program5_class() {
+	glDeleteFramebuffers(1, &this->fbo_binary);
 }
 
-void program4_class::delayed_init() {
+void program5_class::delayed_init() {
 	this->program = this->setup_shaders();
 	this->genVAOs();
 
 	for (int iter = 0; iter < 8; iter++) {
-		glGenTextures(1, &this->tex_gray[iter]);
-		glBindTexture(GL_TEXTURE_2D, this->tex_gray[iter]);
+		glGenTextures(1, &this->tex_binary[iter]);
+		glBindTexture(GL_TEXTURE_2D, this->tex_binary[iter]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, dmd_size[0], dmd_size[1], 0, GL_RGB, GL_UNSIGNED_BYTE, 0);
 	}
 	glBindTexture(GL_TEXTURE_2D, 0);
 
-	glGenFramebuffers(1, &this->fbo_gray);
-	glBindFramebuffer(GL_FRAMEBUFFER, this->fbo_gray);
+	glGenFramebuffers(1, &this->fbo_binary);
+	glBindFramebuffer(GL_FRAMEBUFFER, this->fbo_binary);
 	for (int iter = 0; iter < 8; iter++) {
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+iter, GL_TEXTURE_2D, this->tex_gray[iter], 0);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+iter, GL_TEXTURE_2D, this->tex_binary[iter], 0);
 	}
 
 	GLenum DrawBuffers[8] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, 
@@ -42,7 +42,7 @@ void program4_class::delayed_init() {
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void program4_class::genVAOs() {
+void program5_class::genVAOs() {
 	glBindVertexArray(postprocess_VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, postprocess_VBO);
@@ -59,7 +59,7 @@ void program4_class::genVAOs() {
 	glEnableVertexAttribArray(this->textureLoc);
 }
 
-GLuint program4_class::setup_shaders() {
+GLuint program5_class::setup_shaders() {
 	char *vs = NULL, *fs = NULL, *fs2 = NULL;
 
 	GLuint p, v, f;
@@ -101,14 +101,14 @@ GLuint program4_class::setup_shaders() {
 	this->vertexShader = v;
 	this->fragmentShader = f;
 
-	this->rgb_img[0] = glGetUniformLocation(this->program, "rgb_img[0]");
-	this->rgb_img[1] = glGetUniformLocation(this->program, "rgb_img[1]");
-	this->rgb_img[2] = glGetUniformLocation(this->program, "rgb_img[2]");
-	this->rgb_img[3] = glGetUniformLocation(this->program, "rgb_img[3]");
-	this->rgb_img[4] = glGetUniformLocation(this->program, "rgb_img[4]");
-	this->rgb_img[5] = glGetUniformLocation(this->program, "rgb_img[5]");
-	this->rgb_img[6] = glGetUniformLocation(this->program, "rgb_img[6]");
-	this->rgb_img[7] = glGetUniformLocation(this->program, "rgb_img[7]");
+	this->gray_img[0] = glGetUniformLocation(this->program, "gray_img[0]");
+	this->gray_img[1] = glGetUniformLocation(this->program, "gray_img[1]");
+	this->gray_img[2] = glGetUniformLocation(this->program, "gray_img[2]");
+	this->gray_img[3] = glGetUniformLocation(this->program, "gray_img[3]");
+	this->gray_img[4] = glGetUniformLocation(this->program, "gray_img[4]");
+	this->gray_img[5] = glGetUniformLocation(this->program, "gray_img[5]");
+	this->gray_img[6] = glGetUniformLocation(this->program, "gray_img[6]");
+	this->gray_img[7] = glGetUniformLocation(this->program, "gray_img[7]");
 
 	return(p);
 }
