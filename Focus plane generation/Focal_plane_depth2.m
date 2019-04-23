@@ -168,6 +168,40 @@ xlabel('time/s');
 ylabel('Field of view');
 
 %%
+% for 8 binary planes
+int = floor(num / 8);
+index = phaseNum:int:phaseNum+7*int;
+
+t_8 = t(index); 
+f_t_inverse_8 = f_t_inverse(index);
+ie_8=ie(index);
+
+figure;
+subplot(2,2,1)
+plot(t,f_t_inverse,'b-',t_8,f_t_inverse_8,'r*'); hold on;
+title('Focus-tunable Lens Driving signal');
+xlabel('time/s');
+ylabel('Optical power/diopter');
+
+
+subplot(2,2,2)
+plot(t,1./ie,'b-',t_8,1./ie_8,'r*');
+title('Focal plane depth changes in diopter');
+xlabel('time/s');
+ylabel('Focal plane depth/diopter');
+
+subplot(2,2,3)
+plot(t,ie,'b-',t_8,ie_8,'r*');
+title('Focal plane depth changes in meter');
+xlabel('time/s');
+ylabel('Focal plane depth/m');
+
+subplot(2,2,4)
+plot(t,theta,'r*');
+title('Field of view');
+xlabel('time/s');
+ylabel('Field of view');
+%%
 d=ie_phase;
 
 
@@ -180,3 +214,4 @@ un_order(order)=1:num;
 %[f_sort,forder]=sort(f_t_inverse(1:280));
 %%
 save FocusDepth.mat d d_sort order un_order;
+%%

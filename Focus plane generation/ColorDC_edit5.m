@@ -1,15 +1,22 @@
 clear all;
 warning off;
+%
+addpath('C:\Program Files\MATLAB\R2016b\toolbox\openexr');
 %%
-RGBImg=imread('RGB_Depth/trial_05_rgb.png');
+info = exrinfo('RGB_Depth/Image0002.exr');clc
+DepthMap =4* exrreadchannels( 'RGB_Depth/Image0002.exr',info.channels(4) );
+%%
+RGBImg=imread('RGB_Depth/trial_21_rgb.png');
 load('FocusDepth.mat');
-load('RGB_Depth/trial_05_DepthMap.mat');
+
 
 figure;
 imshow(RGBImg,[]);
 
 figure;
 imshow(DepthMap,[]);
+figure;
+imagesc(DepthMap);
 %%
 NumofBP=280;
 colorbit=24;
@@ -99,8 +106,8 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 %%
 
 for i=1:NumofBP
-       
-    str = sprintf('Model2/Scene_%03d.png',i);
+        
+    str = sprintf('Model3/Scene_%03d.png',i);
     imwrite(ImageSeq_order(:,:,i),str);  
 
 end

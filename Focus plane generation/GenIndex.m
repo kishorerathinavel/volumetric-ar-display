@@ -13,9 +13,9 @@ G_index=zeros([colorbit,1]);
 B_index=zeros([colorbit,1]);
 
 %%
-MaxIntensityDecR=MaxIntensityDec*0.6;
+MaxIntensityDecR=MaxIntensityDec*0.4;
 MaxIntensityDecG=MaxIntensityDec*1.2;
-MaxIntensityDecB=MaxIntensityDec*kb;
+MaxIntensityDecB=MaxIntensityDec*0.5;
 %% for simple color decomposition
 R_index(1:m)=0.5.^(0:1:m-1);
 G_index(m+1:2*m)=0.5.^(0:1:m-1);

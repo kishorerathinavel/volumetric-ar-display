@@ -72,7 +72,7 @@ void setupSPI() {
 
   SPI1.begin();
   SPI1.setBitOrder(MSBFIRST);
-  SPI1.setClockDivider(SPI_CLOCK_DIV4);
+  SPI1.setClockDivider(SPI_CLOCK_DIV8);
   SPI1.setDataMode(SPI_MODE3);   
 
   SPI2.begin();
@@ -81,19 +81,33 @@ void setupSPI() {
   SPI2.setDataMode(SPI_MODE3);   
 }
 
-static uint16_t code = 0x2000;
+static uint16_t code = 0x8000;
 void setup()   {
   Serial.begin(1*1000*1000);
   while(!Serial) {};
   Serial.println("Begin setup");
   setupSPI();
   
-  sendDacCodes(code, code, code);
+  sendDacCodes(0x1000, 0x0, 0);
+  
+  
 }
 
 uint16_t gcode, rcode,  bcode;
 
 void loop() {
+//  while(true) {  
+//    sendDacCodes(0x5C5C, 0, 0);
+////        sendDacCodes(0*code, 0*code, 0*code);
+//    delay(250);
+  //  sendDacCodes(0xCFFF, 0x0, 0);
+  //  delay(500);
+  //  doClear();
+  //   delay(250);
+//    sendDacCodes(0x1111, 0, 0x0);
+//    delay(250);
+//  }
+  
     yield();
 }
 

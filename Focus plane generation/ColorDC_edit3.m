@@ -105,7 +105,7 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 
 for i=1:NumofBP
        
-    str = sprintf('Model/Scene_%03d.png',i);
+    str = sprintf('Model3/Scene_%03d.png',i);
     imwrite(ImageSeq_order(:,:,i),str);  
 
 end
