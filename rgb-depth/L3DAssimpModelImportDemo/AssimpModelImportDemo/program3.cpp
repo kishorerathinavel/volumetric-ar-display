@@ -14,7 +14,7 @@ void program3_class::delayed_init() {
 	this->program = this->setup_shaders();
 	this->genVAOs();
 
-	for (int iter = 0; iter < 8; iter++) {
+	for (int iter = 0; iter < PROG3_NUM_OUTPUT_TEXTURES; iter++) {
 		glGenTextures(1, &this->tex_rgb[iter]);
 		glBindTexture(GL_TEXTURE_2D, this->tex_rgb[iter]);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -25,15 +25,13 @@ void program3_class::delayed_init() {
 
 	glGenFramebuffers(1, &this->fbo_rgb);
 	glBindFramebuffer(GL_FRAMEBUFFER, this->fbo_rgb);
-	for (int iter = 0; iter < 8; iter++) {
+	for (int iter = 0; iter < PROG3_NUM_OUTPUT_TEXTURES; iter++) {
 		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0+iter, GL_TEXTURE_2D, this->tex_rgb[iter], 0);
 	}
 
-	GLenum DrawBuffers[8] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, 
-							GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3, 
-							GL_COLOR_ATTACHMENT4, GL_COLOR_ATTACHMENT5, 
-							GL_COLOR_ATTACHMENT6, GL_COLOR_ATTACHMENT7 };
-	glDrawBuffers(8, DrawBuffers);
+	// Make this line independent of the size of the buffer
+	GLenum DrawBuffers[PROG3_NUM_OUTPUT_TEXTURES] = { GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1 };
+	glDrawBuffers(PROG3_NUM_OUTPUT_TEXTURES, DrawBuffers);
 
 	GLenum status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 	if (status != GL_FRAMEBUFFER_COMPLETE) {

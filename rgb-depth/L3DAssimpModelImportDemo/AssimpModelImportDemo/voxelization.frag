@@ -1,6 +1,6 @@
 #version 330
 
-out vec4 FragColor[8];
+out vec4 FragColor[2];
 
 in vec2 TexCoord;
 in vec4 gl_FragCoord;
@@ -26,28 +26,10 @@ void main() {
 
   FragColor[0] = vec4(vec3(0.0), 1.0);
   FragColor[1] = vec4(vec3(0.0), 1.0);
-  FragColor[2] = vec4(vec3(0.0), 1.0);
-  FragColor[3] = vec4(vec3(0.0), 1.0);
-  FragColor[4] = vec4(vec3(0.0), 1.0);
-  FragColor[5] = vec4(vec3(0.0), 1.0);
-  FragColor[6] = vec4(vec3(0.0), 1.0);
-  FragColor[7] = vec4(vec3(0.0), 1.0);
 
-  if(normalized_linear_depth < 1.0/8.0) {
+  if(normalized_linear_depth < 0.5) {
     FragColor[0] = rgb_color;
-  } else if (normalized_linear_depth < 2.0/8.0) {
-    FragColor[1] = rgb_color;
-  } else if (normalized_linear_depth < 3.0/8.0) {
-    FragColor[2] = rgb_color;
-  } else if (normalized_linear_depth < 4.0/8.0) {
-    FragColor[3] = rgb_color;
-  } else if (normalized_linear_depth < 5.0/8.0) {
-    FragColor[4] = rgb_color;
-  } else if (normalized_linear_depth < 6.0/8.0) {
-    FragColor[5] = rgb_color;
-  } else if (normalized_linear_depth < 7.0/8.0) {
-    FragColor[6] = rgb_color;
   } else {
-    FragColor[7] = rgb_color;
+    FragColor[1] = rgb_color;
   }
 }

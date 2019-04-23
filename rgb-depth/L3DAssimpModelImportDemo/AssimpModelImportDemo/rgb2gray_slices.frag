@@ -5,12 +5,17 @@ out vec4 FragColor[8];
 in vec2 TexCoord;
 in vec4 gl_FragCoord;
 
-uniform	sampler2D rgb_img[8];
+uniform	sampler2D rgb_img[2];
 
 void main() {
-  for (int iters = 0; iters < 8; iters++) {
-    vec4 rgb_color = texture(rgb_img[iters], TexCoord);
-    float gray_color = (rgb_color[0] + rgb_color[1] + rgb_color[2])/3.0;
-    FragColor[iters] = vec4(vec3(gray_color), 1.0);
-  }
+  vec4 rgb_color0 = texture(rgb_img[0], TexCoord);
+  vec4 rgb_color1 = texture(rgb_img[1], TexCoord);
+  FragColor[0] = vec4(vec3(rgb_color0[0]), 1.0);
+  FragColor[1] = vec4(vec3(rgb_color0[1]), 1.0);
+  FragColor[2] = vec4(vec3(rgb_color0[2]), 1.0);
+  FragColor[3] = vec4(vec3(0.0), 1.0);
+  FragColor[4] = vec4(vec3(0.0), 1.0);
+  FragColor[5] = vec4(vec3(rgb_color1[0]), 1.0);
+  FragColor[6] = vec4(vec3(rgb_color1[1]), 1.0);
+  FragColor[7] = vec4(vec3(rgb_color1[2]), 1.0);
 }

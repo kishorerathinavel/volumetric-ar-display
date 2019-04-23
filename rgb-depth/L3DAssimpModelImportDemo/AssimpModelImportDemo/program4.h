@@ -1,5 +1,6 @@
 #pragma once
 #include "common_var_func.h"
+#include "program3.h"
 
 class program4_class {
 public:
@@ -12,7 +13,7 @@ public:
 	GLuint vertexLoc, textureLoc;
 
 	// Sampler Uniform
-	GLuint rgb_img[8];
+	GLuint rgb_img[PROG3_NUM_OUTPUT_TEXTURES];
 
 	// Program and Shader Identifiers
 	GLuint program, vertexShader, fragmentShader;

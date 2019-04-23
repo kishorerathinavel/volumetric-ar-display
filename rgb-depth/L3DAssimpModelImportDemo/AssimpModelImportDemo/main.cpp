@@ -652,7 +652,7 @@ int nz_count;
 void calculate_average_color() {
 	glEnable(GL_TEXTURE_2D);
 
-	for (int iters = 0; iters < 8; iters++) {
+	for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
 		glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[iters]);
 		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, slice_img);
 
@@ -675,8 +675,8 @@ void calculate_average_color() {
 		}
 	}
 		
-	for (int iters = 0; iters < 8; iters++) {
-		printf("%f %f %f\n", average_colors[iters][0], average_colors[iters][1], average_colors[iters][2]);
+	for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
+		printf("Slice %d: %f %f %f\n", iters, average_colors[iters][0], average_colors[iters][1], average_colors[iters][2]);
 	}
 
 	glDisable(GL_TEXTURE_2D);
@@ -690,7 +690,7 @@ bool vned = 1;
 bool exec_program3 = vned; //voxelization.frag
 bool exec_program4 = vned; //rgb2gray_slices.frag
 bool exec_program5 = vned; //dithering.frag
-bool exec_program6 = 0; //encoding.frag
+bool exec_program6 = vned; //encoding.frag
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
@@ -810,6 +810,10 @@ void renderScene() {
 			glDisable(GL_TEXTURE_2D);
 		}
 		glPopAttrib();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glUseProgram(0);
+		//calculate_average_color();
 	}
 
 	if (exec_program4)
@@ -830,11 +834,11 @@ void renderScene() {
 		else { // Uses shaders
 			glUseProgram(prog4.program);
 
-			for (int iters = 0; iters < 8; iters++) {
+			for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
 				glUniform1i(prog4.rgb_img[iters], iters);
 			}
 			glEnable(GL_TEXTURE_2D);
-			for (int iters = 0; iters < 8; iters++) {
+			for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
 				glActiveTexture(GL_TEXTURE0 + iters);
 				glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[iters]);
 			}
@@ -954,8 +958,12 @@ void renderScene() {
 				drawTextureToFramebuffer(prog2.tex_rgb);
 			}
 			else if (exec_program3 && !exec_program4) {
-				//calculate_average_color();
-				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
+				if (slice_number > 1) {
+					drawTextureToFramebuffer(prog3.tex_rgb[1]);
+				}
+				else {
+					drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
+				}
 			}
 			else if (exec_program4 && !exec_program5) {
 				drawTextureToFramebuffer(prog4.tex_gray[slice_number]);
