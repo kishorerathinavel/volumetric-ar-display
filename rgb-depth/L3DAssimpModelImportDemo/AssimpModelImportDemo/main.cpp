@@ -686,11 +686,11 @@ int imgCounter = 0;
 char fname[1024], fname1[1024], fname2[1024];
 bool useShaders = 1;
 bool exec_program2 = 0; // synthetic.frag
-bool vned = 0;
+bool vned = 1;
 bool exec_program3 = vned; //voxelization.frag
 bool exec_program4 = vned; //rgb2gray_slices.frag
 bool exec_program5 = vned; //dithering.frag
-bool exec_program6 = vned; //encoding.frag
+bool exec_program6 = 0; //encoding.frag
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
