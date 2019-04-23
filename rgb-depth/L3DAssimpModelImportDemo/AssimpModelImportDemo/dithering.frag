@@ -23,7 +23,7 @@ float dither(float color) {
   float secondClosestColor = 1.0 - closestColor;
   float d = indexValue();
   float distance = abs(closestColor - color);
-  return (distance < d)?closestColor:secondClosestColor;
+  return (distance <= d)?closestColor:secondClosestColor;
 }
 
 

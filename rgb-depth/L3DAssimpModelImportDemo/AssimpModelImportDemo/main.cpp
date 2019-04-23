@@ -59,6 +59,7 @@ float modelMatrix[16];
 // For push and pop matrix
 std::vector<float *> matrixStack;
 
+//float zNear = 0.01, zFar = 21.1;
 float zNear = 0.01, zFar = 16.9;
 
 // Camera Position
@@ -549,9 +550,9 @@ void savePosition() {
 	}
 
 	Position <<"C " << r <<" "<<alpha <<" "<<beta<< std::endl;
+	Position << "Z " << zFar << std::endl;
 	Position.close();
 }
-
 
 Model *currModel = &model[0];
 void usePosition() {
@@ -571,7 +572,7 @@ void usePosition() {
 		c1 = fgetc(fp);
 		
 
-		while (!(c1 == 'M' || c1 == 'T' || c1 == 'R' || c1 == 'S' || c1 == 'C')) {
+		while (!(c1 == 'M' || c1 == 'T' || c1 == 'R' || c1 == 'S' || c1 == 'C' || c1 == 'Z')) {
 			c1 = fgetc(fp);
 			if (feof(fp))
 				break;
@@ -609,6 +610,11 @@ void usePosition() {
 			alpha = y;
 			beta = z;
          }
+
+		if ((c1 == 'Z') && (c2 == ' ')) {
+			fscanf(fp, "%f", &x);
+			zFar = x;
+		}
 	}
 	fclose(fp);
 	currModel = &model[0];
@@ -680,10 +686,11 @@ int imgCounter = 0;
 char fname[1024], fname1[1024], fname2[1024];
 bool useShaders = 1;
 bool exec_program2 = 0; // synthetic.frag
-bool exec_program3 = 1; //voxelization.frag
-bool exec_program4 = 1; //rgb2gray_slices.frag
-bool exec_program5 = 1; //dithering.frag
-bool exec_program6 = 1; //encoding.frag
+bool vned = 0;
+bool exec_program3 = vned; //voxelization.frag
+bool exec_program4 = vned; //rgb2gray_slices.frag
+bool exec_program5 = vned; //dithering.frag
+bool exec_program6 = vned; //encoding.frag
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
@@ -903,7 +910,8 @@ void renderScene() {
 			glEnable(GL_TEXTURE_2D);
 			for (int iters = 0; iters < 8; iters++) {
 				glActiveTexture(GL_TEXTURE0 + iters);
-				glBindTexture(GL_TEXTURE_2D, prog4.tex_gray[iters]);
+				//glBindTexture(GL_TEXTURE_2D, prog4.tex_gray[iters]);
+				glBindTexture(GL_TEXTURE_2D, prog5.tex_binary[iters]);
 			}
 
 			glBindVertexArray(postprocess_VAO);
@@ -1117,22 +1125,18 @@ void processMouseButtons(int button, int state, int xx, int yy) {
 	// start tracking the mouse
 	if (state == GLUT_DOWN) {
 		startX = xx;
-		startY = yy;
 		if (button == GLUT_LEFT_BUTTON)
 			tracking = 1;
-		else if (button == GLUT_RIGHT_BUTTON)
-			tracking = 2;
 	}
 
 	//stop tracking the mouse
 	else if (state == GLUT_UP) {
-		if (tracking == 1) {
-			alpha += (startX - xx);
-			beta += (yy - startY);
-		}
-		else if (tracking == 2) {
-			r += (yy - startY) * 0.01f;
-		}
+		//if (tracking == 1) {
+		//	alpha = (startX - xx);
+		//	for (int iterm = 0; iterm < NUM_MODELS; iterm++) {
+		//		model[iterm].rotation[1] = alpha;
+		//	}
+		//}
 		tracking = 0;
 	}
 }
@@ -1140,43 +1144,85 @@ void processMouseButtons(int button, int state, int xx, int yy) {
 // Track mouse motion while buttons are pressed
 void processMouseMotion(int xx, int yy) {
 
-	int deltaX, deltaY;
-	float alphaAux, betaAux;
-	float rAux;
+	int deltaX;
+	float alphaAux;
 
 	deltaX = startX - xx;
-	deltaY = yy - startY;
+	startX = xx;
 
 	// left mouse button: move camera
 	if (tracking == 1) {
-		alphaAux = alpha + deltaX;
-		betaAux = beta + deltaY;
-
-		if (betaAux > 85.0f)
-			betaAux = 85.0f;
-		else if (betaAux < -85.0f)
-			betaAux = -85.0f;
-		rAux = r;
-
-		camX = rAux * cos(betaAux * 3.14f / 180.0f) * sin(alphaAux * 3.14f / 180.0f);
-		camZ = rAux * cos(betaAux * 3.14f / 180.0f) * cos(alphaAux * 3.14f / 180.0f);
-		camY = rAux * sin(betaAux * 3.14f / 180.0f);
-	}
-	// right mouse button: zoom
-	else if (tracking == 2) {
-
-		alphaAux = alpha;
-		betaAux = beta;
-		rAux = r + (deltaY * 0.01f);
-
-		camX = rAux * cos(betaAux * 3.14f / 180.0f) * sin(alphaAux * 3.14f / 180.0f);
-		camZ = rAux * cos(betaAux * 3.14f / 180.0f) * cos(alphaAux * 3.14f / 180.0f);
-		camY = rAux * sin(betaAux * 3.14f / 180.0f);
+		model[0].rotation[1] += deltaX*stepSize;
+		model[1].rotation[2] += deltaX*stepSize;
 	}
 	//  uncomment this if not using an idle func
 	//	glutPostRedisplay();
 }
 
+//void processMouseButtons(int button, int state, int xx, int yy) {
+//	// start tracking the mouse
+//	if (state == GLUT_DOWN) {
+//		startX = xx;
+//		startY = yy;
+//		if (button == GLUT_LEFT_BUTTON)
+//			tracking = 1;
+//		else if (button == GLUT_RIGHT_BUTTON)
+//			tracking = 2;
+//	}
+//
+//	//stop tracking the mouse
+//	else if (state == GLUT_UP) {
+//		if (tracking == 1) {
+//			alpha += (startX - xx);
+//			beta += (yy - startY);
+//		}
+//		else if (tracking == 2) {
+//			r += (yy - startY) * 0.01f;
+//		}
+//		tracking = 0;
+//	}
+//}
+//
+//// Track mouse motion while buttons are pressed
+//void processMouseMotion(int xx, int yy) {
+//
+//	int deltaX, deltaY;
+//	float alphaAux, betaAux;
+//	float rAux;
+//
+//	deltaX = startX - xx;
+//	deltaY = yy - startY;
+//
+//	// left mouse button: move camera
+//	if (tracking == 1) {
+//		alphaAux = alpha + deltaX;
+//		betaAux = beta + deltaY;
+//
+//		if (betaAux > 85.0f)
+//			betaAux = 85.0f;
+//		else if (betaAux < -85.0f)
+//			betaAux = -85.0f;
+//		rAux = r;
+//
+//		camX = rAux * cos(betaAux * 3.14f / 180.0f) * sin(alphaAux * 3.14f / 180.0f);
+//		camZ = rAux * cos(betaAux * 3.14f / 180.0f) * cos(alphaAux * 3.14f / 180.0f);
+//		camY = rAux * sin(betaAux * 3.14f / 180.0f);
+//	}
+//	// right mouse button: zoom
+//	else if (tracking == 2) {
+//
+//		alphaAux = alpha;
+//		betaAux = beta;
+//		rAux = r + (deltaY * 0.01f);
+//
+//		camX = rAux * cos(betaAux * 3.14f / 180.0f) * sin(alphaAux * 3.14f / 180.0f);
+//		camZ = rAux * cos(betaAux * 3.14f / 180.0f) * cos(alphaAux * 3.14f / 180.0f);
+//		camY = rAux * sin(betaAux * 3.14f / 180.0f);
+//	}
+//	//  uncomment this if not using an idle func
+//	//	glutPostRedisplay();
+//}
+//
 void mouseWheel(int wheel, int direction, int x, int y) {
 	r += direction * 0.1f;
 	updateCamVariables();
