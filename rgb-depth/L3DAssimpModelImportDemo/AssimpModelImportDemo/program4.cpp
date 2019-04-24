@@ -104,6 +104,9 @@ GLuint program4_class::setup_shaders() {
 	// Make these lines independent of number of rgb_img
 	this->rgb_img[0] = glGetUniformLocation(this->program, "rgb_img[0]");
 	this->rgb_img[1] = glGetUniformLocation(this->program, "rgb_img[1]");
+	this->brightness[0] = glGetUniformLocation(this->program, "brightness[0]");
+	this->brightness[1] = glGetUniformLocation(this->program, "brightness[1]");
+	this->brightness[2] = glGetUniformLocation(this->program, "brightness[2]");
 
 	return(p);
 }

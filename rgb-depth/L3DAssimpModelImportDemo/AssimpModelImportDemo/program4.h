@@ -14,6 +14,8 @@ public:
 
 	// Sampler Uniform
 	GLuint rgb_img[PROG3_NUM_OUTPUT_TEXTURES];
+	GLuint brightness[3];
+
 
 	// Program and Shader Identifiers
 	GLuint program, vertexShader, fragmentShader;

@@ -684,6 +684,7 @@ void calculate_average_color() {
 
 int imgCounter = 0;
 char fname[1024], fname1[1024], fname2[1024];
+float main_brightness[3] = { 0.41, 1.0, 0.11 };
 bool useShaders = 1;
 bool exec_program2 = 0; // synthetic.frag
 bool vned = 1;
@@ -834,6 +835,9 @@ void renderScene() {
 		else { // Uses shaders
 			glUseProgram(prog4.program);
 
+			glUniform1f(prog4.brightness[0], main_brightness[0]);
+			glUniform1f(prog4.brightness[1], main_brightness[1]);
+			glUniform1f(prog4.brightness[2], main_brightness[2]);
 			for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
 				glUniform1i(prog4.rgb_img[iters], iters);
 			}
@@ -842,6 +846,7 @@ void renderScene() {
 				glActiveTexture(GL_TEXTURE0 + iters);
 				glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[iters]);
 			}
+
 
 			glBindVertexArray(postprocess_VAO);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -1042,7 +1047,7 @@ void updateCamVariables() {
 //
 // Events from the Keyboard
 //
-float stepSize = 0.1;
+float stepSize = 0.025;
 int keymapmode = 2;
 void processKeys(unsigned char key, int xx, int yy) {
 
@@ -1070,8 +1075,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 			case '2': currModel = &model[1]; printf("Current Model is 2 \n"); break;
 			case '3': currModel = &model[2]; printf("Current Model is 2 \n"); break;
 			case '4': currModel = &model[3]; printf("Current Model is 3 \n"); break;
-			case '9': stepSize = stepSize / 3.0; break;
-			case '0': stepSize = stepSize * 3.0; break;
+			case '9': stepSize = stepSize / 3.0; printf("stepSize = %f\n", stepSize);  break;
+			case '0': stepSize = stepSize * 3.0; printf("stepSize = %f\n", stepSize); break;
 			case 's': saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
 			case 'S': {
 						  saveFramebufferUntilStop = !saveFramebufferUntilStop;
@@ -1112,11 +1117,22 @@ void processKeys(unsigned char key, int xx, int yy) {
 			case 'u': usePosition(); break;
 			case 'k': zFar = modify_valuef(zFar, -0.1, zNear, 200.0); printf("zFar: %f \n", zFar); break;
 			case 'l': zFar = modify_valuef(zFar, 0.1, zNear, 200.0); printf("zFar: %f \n", zFar); break;
+			}
+			updateCamVariables();
+		}
+		else if (keymapmode == 3) {
+			switch (key) {
+			case 27: { glutLeaveMainLoop(); break; }
+			case 'q': main_brightness[0] = modify_valuef(main_brightness[0], -0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 'w': main_brightness[0] = modify_valuef(main_brightness[0], +0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 'a': main_brightness[1] = modify_valuef(main_brightness[1], -0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 's': main_brightness[1] = modify_valuef(main_brightness[1], +0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 'z': main_brightness[2] = modify_valuef(main_brightness[2], -0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 'x': main_brightness[2] = modify_valuef(main_brightness[2], +0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
 			case '5': slice_number = modify_valuei(slice_number, -1, 0, 7); print_valuei(slice_number, "slice_number"); break;
 			case '6': slice_number = modify_valuei(slice_number, +1, 0, 7); print_valuei(slice_number, "slice_number"); break;
 			default: printf("Entered key does nothing \n");
 			}
-			updateCamVariables();
 		}
 	}
 
@@ -1160,8 +1176,8 @@ void processMouseMotion(int xx, int yy) {
 
 	// left mouse button: move camera
 	if (tracking == 1) {
-		model[0].rotation[1] += deltaX*stepSize;
-		model[1].rotation[2] += deltaX*stepSize;
+		model[0].rotation[1] -= deltaX*stepSize;
+		model[1].rotation[2] -= deltaX*stepSize;
 	}
 	//  uncomment this if not using an idle func
 	//	glutPostRedisplay();
