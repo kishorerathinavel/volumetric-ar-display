@@ -1,7 +1,6 @@
 clear all;
 close all;
 
-
 %% Hanpeng's amazing guess
 % d1+o1=0.09 % measure
 o1=0.06; % Guess
