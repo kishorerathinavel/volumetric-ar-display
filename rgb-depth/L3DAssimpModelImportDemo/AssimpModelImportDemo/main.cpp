@@ -45,6 +45,7 @@
 #include "program4.h"
 #include "program5.h"
 #include "program6.h"
+#include "program7.h"
 #include "filepaths.h"
 
 bool display_on_device = !true;
@@ -97,6 +98,7 @@ program3_class prog3;
 program4_class prog4;
 program5_class prog5;
 program6_class prog6;
+program7_class prog7;
 
 
 // For Program 3 ||||||||||||||||||||||||||||||||||||||
@@ -686,11 +688,12 @@ int imgCounter = 0;
 char fname[1024], fname1[1024], fname2[1024];
 bool useShaders = 1;
 bool exec_program2 = 0; // synthetic.frag
-bool vned = 1;
+bool vned = 0;
 bool exec_program3 = vned; //voxelization.frag
 bool exec_program4 = vned; //rgb2gray_slices.frag
 bool exec_program5 = vned; //dithering.frag
 bool exec_program6 = vned; //encoding.frag
+bool exec_program7 = vned;
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
@@ -713,14 +716,14 @@ void renderScene() {
 		//glutWireTeapot(2.0);
 		drawModels();
 
-		//if (saveFramebufferOnce | saveFramebufferUntilStop) {
-		//	sprintf(fname1, "./outputs/trial_%02d_depth.png", imgCounter);
-		//	sprintf(fname2, "./outputs/trial_%02d_rgb.png", imgCounter);
-		//	saveColorImage(fbo_rgbd, fname2);
-		//	saveDepthImage(fbo_rgbd, fname1);
-		//	imgCounter++;
-		//	saveFramebufferOnce = false;
-		//}
+		if (saveFramebufferOnce | saveFramebufferUntilStop) {
+			sprintf(fname1, "./outputs/trial_%02d_depth.png", imgCounter);
+			sprintf(fname2, "./outputs/trial_%02d_rgb.png", imgCounter);
+			saveColorImage(prog1.fbo_rgbd, fname2);
+			saveDepthImage(prog1.fbo_rgbd, fname1);
+			imgCounter++;
+			saveFramebufferOnce = false;
+		}
 
 		glPopAttrib();
 	}
@@ -761,12 +764,12 @@ void renderScene() {
 			glActiveTexture(GL_TEXTURE0);
 		}
 
-		if (saveFramebufferOnce | saveFramebufferUntilStop) {
-			sprintf(fname2, "./outputs/synthetic_%02d_rgb.png", imgCounter);
-			saveColorImage(prog2.fbo_rgb, fname2);
-			imgCounter++;
-			saveFramebufferOnce = false;
-		}
+		//if (saveFramebufferOnce | saveFramebufferUntilStop) {
+		//	sprintf(fname2, "./outputs/synthetic_%02d_rgb.png", imgCounter);
+		//	saveColorImage(prog2.fbo_rgb, fname2);
+		//	imgCounter++;
+		//	saveFramebufferOnce = false;
+		//}
 
 		glPopAttrib();
 	}
@@ -926,59 +929,110 @@ void renderScene() {
 			glDisable(GL_TEXTURE_2D);
 		}
 
+		//if (saveFramebufferOnce | saveFramebufferUntilStop) {
+		//	sprintf(fname2, "./outputs/encoded_%02d.png", imgCounter);
+		//	saveColorImage(prog6.fbo_encoded, fname2);
+		//	imgCounter++;
+		//	saveFramebufferOnce = false;
+		//}
+
+		glPopAttrib();
+
+	}
+
+
+	// Render to screen or display
+	if (exec_program7) {
+		glBindFramebuffer(GL_FRAMEBUFFER, prog7.fbo);
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+
+		glUseProgram(prog7.program);
+		glEnable(GL_TEXTURE_2D);
+		glUniform1i(prog7.rgb_img, 0);
+		if (exec_program2) {
+			glBindTexture(GL_TEXTURE_2D, prog2.tex_rgb);
+		}
+		else if (exec_program3 && !exec_program4) {
+			if (slice_number > 1) {
+				glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[1]);
+			}
+			else {
+				glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[slice_number]);
+			}
+		}
+		else if (exec_program4 && !exec_program5) {
+			glBindTexture(GL_TEXTURE_2D, prog4.tex_gray[slice_number]);
+		}
+		else if (exec_program5 && !exec_program6) {
+			glBindTexture(GL_TEXTURE_2D, prog5.tex_binary[slice_number]);
+		}
+		else if (exec_program6) {
+			glBindTexture(GL_TEXTURE_2D, prog6.tex_encoded);
+		}
+		else {
+			glBindTexture(GL_TEXTURE_2D, prog1.tex_depth);
+		}
+
+		glBindVertexArray(postprocess_VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		// Important to set default active texture back to GL_TEXTURE0
+		glActiveTexture(GL_TEXTURE0);
+		glDisable(GL_TEXTURE_2D);
+
 		if (saveFramebufferOnce | saveFramebufferUntilStop) {
-			sprintf(fname2, "./outputs/encoded_%02d.png", imgCounter);
-			saveColorImage(prog6.fbo_encoded, fname2);
+			sprintf(fname2, "./outputs/currentFrameBuffer_%02d.png", imgCounter);
+			saveColorImage(prog7.fbo, fname2);
 			imgCounter++;
 			saveFramebufferOnce = false;
 		}
 
 		glPopAttrib();
 
+	} 
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if (display_on_device) {
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+		glUseProgram(0);
+		drawTextureToFramebuffer(tex_background);
+		glPopAttrib();
 	}
-	
-	
-	// Render to screen or display
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		if (display_on_device) {
-			glPushAttrib(GL_VIEWPORT_BIT);
-			glViewport(0, 0, dmd_size[0], dmd_size[1]);
-			glUseProgram(0);
-			drawTextureToFramebuffer(tex_background);
-			glPopAttrib();
-		}
-		else {
-			glPushAttrib(GL_VIEWPORT_BIT);
-			glUseProgram(0);
-			glViewport(0, 0, dmd_size[0], dmd_size[1]);
+	else {
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glUseProgram(0);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
 
-			if (exec_program2) {
-				drawTextureToFramebuffer(prog2.tex_rgb);
-			}
-			else if (exec_program3 && !exec_program4) {
-				if (slice_number > 1) {
-					drawTextureToFramebuffer(prog3.tex_rgb[1]);
-				}
-				else {
-					drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
-				}
-			}
-			else if (exec_program4 && !exec_program5) {
-				drawTextureToFramebuffer(prog4.tex_gray[slice_number]);
-			}
-			else if (exec_program5 && !exec_program6) {
-				drawTextureToFramebuffer(prog5.tex_binary[slice_number]);
-			}
-			else if (exec_program6) {
-				drawTextureToFramebuffer(prog6.tex_encoded);
+		if (exec_program2) {
+			drawTextureToFramebuffer(prog2.tex_rgb);
+		}
+		else if (exec_program3 && !exec_program4) {
+			if (slice_number > 1) {
+				drawTextureToFramebuffer(prog3.tex_rgb[1]);
 			}
 			else {
-				drawTextureToFramebuffer(prog1.tex_rgb);
+				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
 			}
-			glPopAttrib();
 		}
+		else if (exec_program4 && !exec_program5) {
+			drawTextureToFramebuffer(prog4.tex_gray[slice_number]);
+		}
+		else if (exec_program5 && !exec_program6) {
+			drawTextureToFramebuffer(prog5.tex_binary[slice_number]);
+		}
+		else if (exec_program6) {
+			drawTextureToFramebuffer(prog6.tex_encoded);
+		}
+		else if (exec_program7) {
+			drawTextureToFramebuffer(prog7.tex);
+		}
+		else {
+			drawTextureToFramebuffer(prog1.tex_depth);
+		}
+		glPopAttrib();
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glUseProgram(0);
@@ -1112,6 +1166,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 			case 'u': usePosition(); break;
 			case 'k': zFar = modify_valuef(zFar, -0.1, zNear, 200.0); printf("zFar: %f \n", zFar); break;
 			case 'l': zFar = modify_valuef(zFar, 0.1, zNear, 200.0); printf("zFar: %f \n", zFar); break;
+			case 'i': zNear = modify_valuef(zNear, -0.1, 0.1, 200.0); printf("zNear: %f \n", zNear); break;
+			case 'o': zNear = modify_valuef(zNear, 0.1, 0.1, 200.0); printf("zNear: %f \n", zNear); break;
 			case '5': slice_number = modify_valuei(slice_number, -1, 0, 7); print_valuei(slice_number, "slice_number"); break;
 			case '6': slice_number = modify_valuei(slice_number, +1, 0, 7); print_valuei(slice_number, "slice_number"); break;
 			default: printf("Entered key does nothing \n");
@@ -1333,6 +1389,7 @@ int init() {
 	prog4.delayed_init();
 	prog5.delayed_init();
 	prog6.delayed_init();
+	prog7.delayed_init();
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
