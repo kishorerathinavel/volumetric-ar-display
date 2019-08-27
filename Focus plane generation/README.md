@@ -68,6 +68,7 @@
 - **videos.m** - Generates video that simulates decomposition
 
 # mat files
+
 - bw_Img_all.mat - 
 - FocusDepth.mat
 - Full.mat
@@ -97,3 +98,4 @@
 - trial.avi
 - trial2.avi
 - trial3.avi
+
