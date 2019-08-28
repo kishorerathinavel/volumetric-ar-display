@@ -1,9 +1,18 @@
 clear all;
+close all;
 warning off;
+
 %%
-RGBImg=imread('RGB_Depth/trial_08_rgb.png');
-load('FocusDepth.mat');
-load('RGB_Depth/trial_08_DepthMap.mat');
+input_dir = 'G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/RGBD_data';
+output_dir = 'G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/scene_decomposition_output/current';
+
+%%
+filename = sprintf('%s/trial_00_rgb.png',input_dir);
+RGBImg=imread(filename);
+filename = sprintf('FocusDepth.mat',input_dir);
+load(filename);
+filename = sprintf('%s/trial_00_DepthMap.mat',input_dir);
+load(filename);
 
 figure;
 imshow(RGBImg,[]);
@@ -104,17 +113,14 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 %%
 
 for i=1:NumofBP
-       
-    str = sprintf('Model/Scene_%03d.png',i);
-    imwrite(ImageSeq_order(:,:,i),str);  
-
+    filename = sprintf('%s/Scene_%03d.png', output_dir, i);
+    imwrite(ImageSeq_order(:,:,i),filename);  
 end
 
 %%
 ImageSeq_Binary=uint8(ImageSeq_Binary);
 
-save ImageSeq_Binary.mat ImageSeq_Binary
-save ImageSeq_Binary.mat ImageSeq_Binary
-
+filename = sprintf('%s/ImageSeq_Binary.mat', output_dir);
+save(filename, 'ImageSeq_Binary');
 
 
