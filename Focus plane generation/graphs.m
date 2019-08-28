@@ -1,6 +1,11 @@
 clear all;
 close all;
 
+%%
+data_folder_path = get_data_folder_path();
+output_dir = sprintf('%s/graphs', data_folder_path);
+
+
 %% Generating graphs to go into the paper
 
 o1=0.03; % Exhaustive search
@@ -207,7 +212,7 @@ if(triangular == true)
         
         %----------------------------------
         % Exporting weighted standard deviation pixel blur image
-        filename = sprintf('./graphs/triangular_longitudinal_blur_vs_time.svg');
+        filename = sprintf('%s/triangular_longitudinal_blur_vs_time.svg', output_dir);
         mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements))
         
         %xdata = t(1,1:end-ignore_elements);
@@ -226,12 +231,12 @@ if(triangular == true)
         legend('Blur at focal plane','Average blur', 'Location', ...
                'southeast');
         print(filename, '-dsvg');
-        filename = sprintf('./graphs/triangular_longitudinal_blur_vs_time.png');
+        filename = sprintf('%s/triangular_longitudinal_blur_vs_time.png', output_dir);
         print(filename, '-dpng');
 
         %----------------------------------
         % Exporting range pixel blur image
-        filename = sprintf('./graphs/triangular_rangePixelBlur_vs_time.svg');
+        filename = sprintf('%s/triangular_rangePixelBlur_vs_time.svg', output_dir);
         mean_blur = mean(range_pixel_blur(1,1:end-ignore_elements))
         
         %xdata = t(1,1:end-ignore_elements);
@@ -250,11 +255,11 @@ if(triangular == true)
         legend('Blur at focal plane','Average blur', 'Location', ...
                'southeast');
         print(filename, '-dsvg');
-        filename = sprintf('./graphs/triangular_rangePixelBlur_vs_time.png');
+        filename = sprintf('%s/triangular_rangePixelBlur_vs_time.png', output_dir);
         print(filename, '-dpng');
        
         %----------------------------------
-        filename = sprintf('./graphs/triangular_lateral_blur_vs_time.svg');
+        filename = sprintf('%s/triangular_lateral_blur_vs_time.svg', output_dir);
         % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
         %                  filename, 0, 1.5, 0, 20);
         
@@ -445,7 +450,7 @@ if(sinusoidal == true)
         
         %----------------------------------
         % Exporting weighted standard deviation pixel blur image
-        filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
+        filename = sprintf('%s/sinusoidal_longitudinal_blur_vs_time.svg', output_dir);
         mean_blur = mean(dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements))
         
         %xdata = t(1,1:end-ignore_elements);
@@ -463,12 +468,12 @@ if(sinusoidal == true)
         set(gca, 'FontSize', font_size);
         legend('Blur at focal plane','Average blur', 'Location', 'southeast');
         print(filename, '-dsvg');
-        filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.png');
+        filename = sprintf('%s/sinusoidal_longitudinal_blur_vs_time.png', output_dir);
         print(filename, '-dpng');
 
         %----------------------------------
         % Exporting range pixel blur image
-        filename = sprintf('./graphs/sinusoidal_rangePixelBlur_vs_time.svg');
+        filename = sprintf('%s/sinusoidal_rangePixelBlur_vs_time.svg', output_dir);
         mean_blur = mean(range_pixel_blur(1,1:end-ignore_elements))
         
         %xdata = t(1,1:end-ignore_elements);
@@ -487,12 +492,12 @@ if(sinusoidal == true)
         legend('Blur at focal plane','Average blur', 'Location', ...
                'southeast');
         print(filename, '-dsvg');
-        filename = sprintf('./graphs/sinusoidal_rangePixelBlur_vs_time.png');
+        filename = sprintf('%s/sinusoidal_rangePixelBlur_vs_time.png', output_dir);
         print(filename, '-dpng');
        
         %----------------------------------
         
-        filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
+        filename = sprintf('%s/sinusoidal_lateral_blur_vs_time.svg', output_dir);
         % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
         %                  filename, 0, 1.5, 0, 20);
         
@@ -645,7 +650,7 @@ for f3 = 0.055:0.001:0.06
                     ylabel('Field of view');
                     
                     set(gcf, 'PaperPositionMode', 'auto');
-                    filename = sprintf('./graphs/%1.2f_%1.2f_%1.2f_%1.2f.png', f3, o1, f1, d1);
+                    filename = sprintf('output_dir/%1.2f_%1.2f_%1.2f_%1.2f.png', output_dir, f3, o1, f1, d1);
                     
                     saveas(gcf, filename, 'png');
                     %close(gcf);

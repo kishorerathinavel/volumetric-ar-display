@@ -85,4 +85,8 @@ un_order(order)=1:280;
 
 
 %%
-save FocusDepth.mat d d_sort order un_order;
+
+data_folder_path = get_data_folder_path();
+output_dir = sprintf('%s/FocusDepth', data_folder_path);
+filename = sprintf('%s/FocusDepth.mat', output_dir);
+save(filename, 'd', 'd_sort', 'order', 'un_order');

@@ -1,7 +1,9 @@
 clear all;
 close all;
 %%
-input_dir = 'G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/RGBD_data';
+
+data_folder_path = get_data_folder_path();
+input_dir = sprintf('%s/RGBD_data', data_folder_path);
 output_dir = input_dir;
 
 %%

@@ -2,14 +2,15 @@ clear all;
 warning off;
 
 %%
-input_dir = 'G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/RGBD_data';
-output_dir = 'G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/scene_decomposition_output/current';
+data_folder_path = get_data_folder_path();
+input_dir = sprintf('%s/RGBD_data', data_folder_path);
+output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
 
 %%
 
 filename = sprintf('%s/trial_00_rgb.png',input_dir);
 RGBImg=imread(filename);
-filename = sprintf('FocusDepth.mat',input_dir);
+filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
 load(filename);
 filename = sprintf('%s/trial_00_DepthMap.mat',input_dir);
 load(filename);
