@@ -50,7 +50,7 @@ function [RGBImg_out,DepthImg_out]=ResizeImg(RGBImg,DepthImg,Isize)
 [m1,n1,q1]=size(RGBImg);
 [m2,n2,q2]=size(DepthImg);
 
-if (m1~=m2)&&(n1~=n2)
+if (m1~=m2)||(n1~=n2)
     error(message('RGBImg and DepthImg not match'));
 end
 
