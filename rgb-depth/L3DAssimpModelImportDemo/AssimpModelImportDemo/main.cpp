@@ -540,7 +540,8 @@ void drawModels() {
 void savePosition() {
 	// save position information for each model
 	std::ofstream Position;
-	Position.open("D:/whp17/Google Drive/FocusPlaneGenerationData/model_positions/Position.txt",std::ios::trunc);
+	std::string fname = data_folder_path + "/model_positions/Position.txt";
+	Position.open(fname, std::ios::trunc);
 	Position << "N " << NUM_MODELS << std::endl;
 	
 	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
@@ -563,7 +564,8 @@ void usePosition() {
 	int c1, c2;
 	int mn;
 
-	fp = fopen("D:/whp17/Google Drive/FocusPlaneGenerationData/model_positions/Position.txt", "rb");
+	std::string fname = data_folder_path + "/model_positions/Position.txt";
+	fp = fopen(fname.c_str(), "rb");
 
 	if (fp == NULL) {
 		printf("Error loading Position \n");
@@ -718,8 +720,8 @@ void renderScene() {
 		drawModels();
 
 		if (saveFramebufferOnce | saveFramebufferUntilStop) {
-			sprintf(fname1, "D:/whp17/Google Drive/FocusPlaneGenerationData/RGBD_data/trial_%02d_depth.png", imgCounter);
-			sprintf(fname2, "D:/whp17/Google Drive/FocusPlaneGenerationData/RGBD_data/trial_%02d_rgb.png", imgCounter);
+			sprintf(fname1, "%s/RGBD_data/trial_%02d_depth.png", data_folder_path.c_str(), imgCounter);
+			sprintf(fname2, "%s/RGBD_data/trial_%02d_rgb.png", data_folder_path.c_str(), imgCounter);
 			saveColorImage(prog1.fbo_rgbd, fname2);
 			saveDepthImage(prog1.fbo_rgbd, fname1);
 			imgCounter++;
@@ -1360,7 +1362,7 @@ int init() {
 	ilInit();
 
 	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
-		model[modelIter].basepath = file_path_and_name[modelIter][0];
+		model[modelIter].basepath = data_folder_path + "/" +  file_path_and_name[modelIter][0];
 		model[modelIter].modelname = file_path_and_name[modelIter][1];
 		if (!model[modelIter].Import3DFromFile())
 			return(0);
