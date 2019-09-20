@@ -540,7 +540,7 @@ void drawModels() {
 void savePosition() {
 	// save position information for each model
 	std::ofstream Position;
-	Position.open("G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/model_positions/Position.txt",std::ios::trunc);
+	Position.open("D:/whp17/Google Drive/FocusPlaneGenerationData/model_positions/Position.txt",std::ios::trunc);
 	Position << "N " << NUM_MODELS << std::endl;
 	
 	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
@@ -563,7 +563,7 @@ void usePosition() {
 	int c1, c2;
 	int mn;
 
-	fp = fopen("G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/model_positions/Position.txt", "rb");
+	fp = fopen("D:/whp17/Google Drive/FocusPlaneGenerationData/model_positions/Position.txt", "rb");
 
 	if (fp == NULL) {
 		printf("Error loading Position \n");
@@ -718,8 +718,8 @@ void renderScene() {
 		drawModels();
 
 		if (saveFramebufferOnce | saveFramebufferUntilStop) {
-			sprintf(fname1, "G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/RGBD_data/trial_%02d_depth.png", imgCounter);
-			sprintf(fname2, "G:/My Drive/Research/Projects/gd_NELF/FocusPlaneGenerationData/RGBD_data/trial_%02d_rgb.png", imgCounter);
+			sprintf(fname1, "D:/whp17/Google Drive/FocusPlaneGenerationData/RGBD_data/trial_%02d_depth.png", imgCounter);
+			sprintf(fname2, "D:/whp17/Google Drive/FocusPlaneGenerationData/RGBD_data/trial_%02d_rgb.png", imgCounter);
 			saveColorImage(prog1.fbo_rgbd, fname2);
 			saveDepthImage(prog1.fbo_rgbd, fname1);
 			imgCounter++;
