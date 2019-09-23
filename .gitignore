@@ -35,7 +35,8 @@ Focus\ plane\ generation/**/**/*.png
 
 
 
-
+# ignore Matlab Runtime dependency
+rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/dependencies/MatlabRuntime/
 
 
 

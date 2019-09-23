@@ -82,7 +82,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>.\dependencies\python37\x64_release\include;.\dependencies\GL\x64_release\include;.\dependencies\FreeImage\x64_release\include;.\dependencies\DevIL\x64_release\include;.\dependencies\assimp\x64_release\include;$(IncludePath)</IncludePath>
+    <IncludePath>.\dependencies\python37\x64_release\include;.\dependencies\GL\x64_release\include;.\dependencies\FreeImage\x64_release\include;.\dependencies\DevIL\x64_release\include;.\dependencies\assimp\x64_release\include;.\dependencies\MatlabRuntime\include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -150,8 +150,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>.\dependencies\python37\x64_release\libs\;.\dependencies\FreeImage\x64_release\libs\;.\dependencies\DevIL\x64_release\libs\;.\dependencies\assimp\x64_release\libs\;.\dependencies\GL\x64_release\libs\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>python37.lib;FreeImage.lib;DevIL.lib;ILU.lib;ILUT.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\dependencies\python37\x64_release\libs\;.\dependencies\FreeImage\x64_release\libs\;.\dependencies\DevIL\x64_release\libs\;.\dependencies\assimp\x64_release\libs\;.\dependencies\GL\x64_release\libs\;.\dependencies\MatlabRuntime\libs\win64\microsoft\;C:\Program Files\MATLAB\MATLAB Runtime\v92\bin\win64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>python37.lib;FreeImage.lib;DevIL.lib;ILU.lib;ILUT.lib;libmx.lib;libmex.lib;libmat.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

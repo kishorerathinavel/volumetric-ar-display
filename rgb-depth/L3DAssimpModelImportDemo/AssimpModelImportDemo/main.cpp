@@ -47,6 +47,9 @@
 #include "program6.h"
 #include "program7.h"
 #include "filepaths.h"
+#include "mat.h"
+#include "matrix.h"
+
 
 bool display_on_device = !true;
 int display_1[] ={ 2560, 1600 };
@@ -61,7 +64,7 @@ float modelMatrix[16];
 std::vector<float *> matrixStack;
 
 //float zNear = 0.01, zFar = 21.1;
-float zNear = 0.01, zFar = 16.9;
+float zNear = 0.20, zFar = 4.00;
 
 // Camera Position
 float camX = 0, camY = 0, camZ = 1.2;
@@ -500,7 +503,8 @@ void saveDepthImage(GLuint fbo, const char* outFilename) {
 	int width = dmd_size[0], height = dmd_size[1];
 	int oldFramebuffer;
 
-	FIBITMAP *depth_img = FreeImage_Allocate(width, height, 32);
+	float* depth_img = new float[width*height];
+	//FIBITMAP *depth_img = FreeImage_Allocate(width, height, 32);
 	if (depth_img == NULL) {
 		printf("couldn't allocate depth_img for saving!\n");
 		return;
@@ -511,16 +515,72 @@ void saveDepthImage(GLuint fbo, const char* outFilename) {
 
 	//bind desired FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_INT, FreeImage_GetBits(depth_img));
+	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depth_img);
 
 	//restore existing FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, oldFramebuffer);
 
+
+    
+
+
 	//write depth_img
-	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename), depth_img, outFilename);
+	//FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename), depth_img, outFilename);
+
+
+	//save and export depth map as MAT
+	MATFile *pmat;
+	mxArray *depthMat;
+
+	pmat = matOpen(outFilename, "w");
+	if (pmat == NULL) {
+		printf("Error creating file %s\n", outFilename);
+		return;
+	}
+
+	depthMat = mxCreateNumericMatrix(height, width, mxSINGLE_CLASS,mxREAL);
+	if (depthMat == NULL) {
+		printf("Unable to create mxArray.\n");
+		return;
+	}
+
+
+	// linearize the depth_img and rearrange it
+	// glReadPixels output depth from low left corner
+
+	float* pointer;
+	pointer = mxGetSingles(depthMat);
+	float tem;
+	float k1 = 2 * zFar * zNear / (zFar - zNear);
+	float k2 = (zFar + zNear) / (zFar - zNear);
+	
+	
+	for (int i=0; i < height; i++)
+		for (int j = 0; j < width; j++)
+		{
+			tem = depth_img[(height - 1 - i)*width + j];
+			tem = tem * 2 - 1;
+			pointer[j*height + i] = -k1 / (tem - k2);
+		}
+
+	int status = matPutVariable(pmat,"DepthMap",depthMat);
+	if (status != 0) {
+		printf("Error saving mat\n");
+		return;
+	}
+	 
+	mxDestroyArray(depthMat);
+
+	if (matClose(pmat) != 0) {
+		printf("Error closing file %s\n", outFilename);
+		return;
+	}
+
+	//printf("value: %f\n", depth_img[300]);
 
 	//deallocate
-	FreeImage_Unload(depth_img);
+	//FreeImage_Unload(depth_img);
+	delete depth_img;
 	printf("Done saving depth image\n");
 }
 
@@ -720,8 +780,10 @@ void renderScene() {
 		drawModels();
 
 		if (saveFramebufferOnce | saveFramebufferUntilStop) {
-			sprintf(fname1, "%s/RGBD_data/trial_%02d_depth.png", data_folder_path.c_str(), imgCounter);
+			//sprintf(fname, "%s/RGBD_data/trial_%02d_DepthMap.mat", data_folder_path.c_str(), imgCounter);
+			sprintf(fname1, "%s/RGBD_data/trial_%02d_DepthMap.mat", data_folder_path.c_str(), imgCounter);
 			sprintf(fname2, "%s/RGBD_data/trial_%02d_rgb.png", data_folder_path.c_str(), imgCounter);
+			
 			saveColorImage(prog1.fbo_rgbd, fname2);
 			saveDepthImage(prog1.fbo_rgbd, fname1);
 			imgCounter++;
