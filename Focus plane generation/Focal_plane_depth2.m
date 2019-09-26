@@ -204,3 +204,11 @@ data_folder_path = get_data_folder_path();
 output_dir = sprintf('%s/FocusDepth', data_folder_path);
 filename = sprintf('%s/FocusDepth.mat', output_dir);
 save(filename, 'd', 'd_sort', 'order', 'un_order','fov_sort');
+
+% Description of variables:
+% d - distance to depth plane in meters ordered in sequence of when each depth plane is displayed.
+% d_sort - sorted distanced to depth planes
+% order - index for each entry in d_sort in d
+% un_order - 1:num
+% fov_sort - FoV for each depth plane following same order of d_sort
+
