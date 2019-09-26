@@ -1,13 +1,34 @@
 clear all;
 close all;
 
+%% 
+data_folder_path = get_data_folder_path();
+input_dir = sprintf('RGB_Depth', data_folder_path);
+output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
+
+%% Creating a backup of the files that are used to generate each set of results
 copyfile adaptive_color_decomposition.m adaptive_color_decomposition_images/adaptive_color_decomposition.m
 copyfile custom_imagesc_save.m adaptive_color_decomposition_images/custom_imagesc_save.m
-RGBImg=im2double(imread('trial_01_rgb.png'));
 
-load('trial_01_DepthMap.mat');
+%% Input RGB, depth map, and depth planes
 
-NumofBP=280;
+filename = sprintf('%s/trial_01_rgb.png',input_dir);
+RGBImg=im2double(imread(filename));
+
+filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
+load(filename);
+
+% Description of variables:
+% d - distance to depth plane in meters ordered in sequence of when each depth plane is displayed.
+% d_sort - sorted distanced to depth planes
+% order - index for each entry in d_sort in d
+% un_order - 1:num
+% fov_sort - FoV for each depth plane following same order of d_sort
+
+filename = sprintf('%s/trial_01_DepthMap.mat',input_dir);
+load(filename);
+
+NumofBP=50;
 colorbit=24;
 
 max_D=max(max(DepthMap));
@@ -22,6 +43,7 @@ DepthSeparater=DepthList;
 
 windowLength = 4;
 residue_rollover = zeros(size(RGBImg));
+actual_reconstruction = zeros(size(RGBImg));
 imcount = 0;
 
 maxLED = 1;
@@ -37,15 +59,15 @@ penalties_all = [];
 channel_energies_all = [];
 
 s = size(RGBImg);
-residual_history = zeros(s(1), s(2), s(3), 280);
+residual_history = zeros(s(1), s(2), s(3), NumofBP);
 
 %% save or load bw_Img_all
-savedata = false;
+savedata = true;
 if(savedata)
     s = size(RGBImg);
-    bw_Img_all = zeros(s(1), s(2), s(3), 280);
+    bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
 
-    parfor subvolume_append = 1:280-1 %280-windowLength
+    parfor subvolume_append = 1:NumofBP-1 %NumofBP-windowLength
         trial = DepthMap_norm;
         trial(trial < DepthSeparater(subvolume_append)) = 0;
         trial(trial > DepthSeparater(subvolume_append+1)) = 0;
@@ -68,10 +90,10 @@ end
 weights_img_all = zeros(size(bw_Img_all));
 repmat_overall_residue = zeros(size(bw_Img_all));
  
-Energy = zeros(280,1);
-LED_ALL = zeros(280,3);
+Energy = zeros(NumofBP,1);
+LED_ALL = zeros(NumofBP,3);
 
-for subvolume_append = 1:280-1 %280-windowLength
+for subvolume_append = 1:NumofBP-1 %NumofBP-windowLength
     subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
     
     ORIG_IMG = ORIG_IMG + subvolume;
@@ -154,7 +176,7 @@ for subvolume_append = 1:280-1 %280-windowLength
     
     bin_colorized = zeros(size(RGBImg));
     bin_colorized(:,:,channel) = bin_img;
-    if(mod(subvolume_append, 10) == 0)
+    if(mod(subvolume_append, 1) == 0)
         filename = sprintf('adaptive_color_decomposition_images/bin_colorized_%02d.png', subvolume_append);
         custom_imagesc_save(bin_colorized, filename);
     end
@@ -163,7 +185,7 @@ for subvolume_append = 1:280-1 %280-windowLength
     LED_ALL(subvolume_append,:) = LEDs;
     
     IMG = IMG + img;
-    if(mod(subvolume_append, 10) == 0)
+    if(mod(subvolume_append, 1) == 0)
         filename = sprintf('adaptive_color_decomposition_images/IMG_%02d.png', subvolume_append);
         custom_imagesc_save(IMG, filename);
     end
@@ -175,18 +197,18 @@ for subvolume_append = 1:280-1 %280-windowLength
     residual_factor = 2;
     residue_rollover = zeros(size(RGBImg));
     overall_residue = ORIG_IMG - IMG;
-    if(mod(subvolume_append, 10) == 0)
+    if(mod(subvolume_append, 1) == 0)
         filename = sprintf('adaptive_color_decomposition_images/overall_residue_%02d.png', subvolume_append);
         custom_imagesc_save(abs(overall_residue), filename);
     end
     
-    % repmat_overall_residue = repmat(overall_residue, [1 1 1 280]);
-    for iter =1:280
+    % repmat_overall_residue = repmat(overall_residue, [1 1 1 NumofBP]);
+    for iter =1:NumofBP
         repmat_overall_residue(:,:,:,iter) = overall_residue;
     end
     
     residual_history = bw_Img_all.*repmat_overall_residue;
-    % weights = 280:1:1;
+    % weights = NumofBP:1:1;
     % weights = weights - subvolume_append*ones(size(weights));
     % weights(weights < 0) = 0;
     % weights = weights*residual_factor;
@@ -206,12 +228,17 @@ for subvolume_append = 1:280-1 %280-windowLength
         % residual_history(:,:,:,iter) = bw_Img.*(overall_residue);
         residue_rollover = residue_rollover + residual_factor*(subvolume_append - iter + 1)*residual_history(:,:,:,iter);
     end
-    if(mod(subvolume_append, 10) == 0)
+    if(mod(subvolume_append, 1) == 0)
         filename = sprintf('adaptive_color_decomposition_images/residue_rollover_%02d.png', subvolume_append);
         custom_imagesc_save(residue_rollover, filename);
     end
 
-    
+    % actual_reconstruction = actual_reconstruction + img;
+    % if(mod(subvolume_append, 1) == 0)
+    %     filename = sprintf('adaptive_color_decomposition_images/reconstructed_%02d.png', subvolume_append);
+    %     custom_imagesc_save(actual_reconstruction, filename);
+    % end
+ 
     channel = channel + 1;
     if(channel > 3)
         channel = 1;
