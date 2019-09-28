@@ -35,7 +35,7 @@ filename = sprintf('%s/trial_00_DepthMap.mat',input_dir);
 load(filename);
 
 %% Display Settings
-NumofBP=100;
+NumofBP=50;
 colorbit=24;
 
 %% What is this?
@@ -94,8 +94,8 @@ for subvolume_iter = 1:NumofBP-1%50 %280-windowLength
     % filename = sprintf('adaptive_color_decomposition_images/toOptimize_%02d.png', subvolume_iter);
     % custom_imagesc_save(toOptimize, filename);
    
-    LEDs = returnEigenGuess(toOptimize);
-    % LEDs = returnNonZeroMeanOfChannels(toOptimize); % Document
+    % LEDs = returnEigenGuess(toOptimize);
+    LEDs = returnNonZeroMeanOfChannels(toOptimize); % Document
     LEDs(isnan(LEDs)) = 0;
     % LEDs = clampLEDValues(LEDs);   % Document
     bin_img=zeros(size(gray_toOptimize));

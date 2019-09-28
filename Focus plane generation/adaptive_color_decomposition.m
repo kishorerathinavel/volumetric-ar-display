@@ -28,12 +28,15 @@ load(filename);
 filename = sprintf('%s/trial_01_DepthMap.mat',input_dir);
 load(filename);
 
-NumofBP=50;
+NumofBP=280;
 colorbit=24;
 
 max_D=max(max(DepthMap));
 
 DepthMap_norm=DepthMapNormalization(DepthMap);
+unique_DM_values = unique(sort(reshape(DepthMap_norm, 1, [])));
+DepthMap_norm(DepthMap_norm == 0) = unique_DM_values(1,2);
+
 NumofCP=NumofBP-colorbit+1;
 % DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
 DepthList=linspace(0,1,NumofBP);
@@ -112,7 +115,8 @@ for subvolume_append = 1:NumofBP-1 %NumofBP-windowLength
 
     LEDs = [0,0,0];
     LEDs(channel) = mean(channel_toOptimize(:));
-    LEDs = clampLEDValues(LEDs);
+    LEDs(LEDs < 0) = 0;
+    % LEDs = clampLEDValues(LEDs);
    
     bin_img = im2double(im2bw(channel_toOptimize, LEDs(channel)));
     % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_append, imcount);
@@ -157,7 +161,8 @@ for subvolume_append = 1:NumofBP-1 %NumofBP-windowLength
         delta = sum(numerator(:))./sum(denominator(:));
         
         LEDs(channel) = LEDs(channel) + lambda*delta;
-        LEDs = clampLEDValues(LEDs);
+        LEDs(LEDs < 0) = 0;
+        % LEDs = clampLEDValues(LEDs);
         
         img = displayedImage(LEDs, bin_img);
         % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_append, imcount);
