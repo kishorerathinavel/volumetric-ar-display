@@ -89,7 +89,6 @@ for subvolume_iter = 1:NumofBP-1%50 %280-windowLength
     % figure;
     % imshow(subvolume);
     toOptimize = toOptimize + relaxP*residue_rollover;  % Document
-    gray_toOptimize = mean(toOptimize,3);  % Document
     
     % filename = sprintf('adaptive_color_decomposition_images/toOptimize_%02d.png', subvolume_iter);
     % custom_imagesc_save(toOptimize, filename);
@@ -98,7 +97,7 @@ for subvolume_iter = 1:NumofBP-1%50 %280-windowLength
     LEDs = returnNonZeroMeanOfChannels(toOptimize); % Document
     LEDs(isnan(LEDs)) = 0;
     % LEDs = clampLEDValues(LEDs);   % Document
-    bin_img=zeros(size(gray_toOptimize));
+    bin_img=zeros(size(toOptimize));
 
     delta_bin_img = toOptimize(:,:,1)/LEDs(1) + toOptimize(:,:,2)/LEDs(2) + ...
         toOptimize(:,:,3)/LEDs(3);
@@ -111,11 +110,6 @@ for subvolume_iter = 1:NumofBP-1%50 %280-windowLength
     % figure;
     % imshow(bin_img);
     
-    
-    % bin_img = im2double(im2bw(gray_toOptimize, mean(LEDs)));
-    % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_iter, imcount);
-    % custom_imagesc_save(bin_img, filename);
-
     img = displayedImage(LEDs, bin_img);
     % figure;
     % imshow(img);
