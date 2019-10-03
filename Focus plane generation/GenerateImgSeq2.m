@@ -4,7 +4,6 @@ function [Image_sequence,Image_CutVol]=GenerateImgSeq2(varargin)
 
 
 [RGBImg_re,DepthMap_re]=ResizeImg(RGBImg,DepthMap,Isize);
-
 RGB_BR=Color2Binary(RGBImg_re,colorbit);
 DepthMap_norm=DepthMapNormlization(DepthMap_re);
 NumofCP=NumofBP-colorbit+1;

@@ -8,11 +8,11 @@ output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
 
 %%
 
-filename = sprintf('%s/trial_00_rgb.png',input_dir);
+filename = sprintf('%s/trial_01_rgb.png',input_dir);
 RGBImg=imread(filename);
 filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
 load(filename);
-filename = sprintf('%s/trial_00_DepthMap.mat',input_dir);
+filename = sprintf('%s/trial_01_DepthMap.mat',input_dir);
 load(filename);
 
 figure;
@@ -108,11 +108,18 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 
 %%
 
-for i=1:NumofBP
-    filename = sprintf('%s/Scene_%03d.png', output_dir, i);
-    imwrite(ImageSeq_order(:,:,i),filename);  
+use_temporal_order = false;
+if(use_temporal_order == true)
+    for i=1:NumofBP
+        filename = sprintf('%s/Scene_%03d.png', output_dir, i);
+        imwrite(ImageSeq_order(:,:,i),filename);  
+    end
+else
+    for i=1:NumofBP
+        filename = sprintf('%s/binary_%03d.png', output_dir, i);
+        imwrite(Image_sequence(:,:,i),filename);  
+    end
 end
-
 
 %%
 ImageSeq_Binary=uint8(ImageSeq_Binary);
