@@ -132,6 +132,20 @@ else
         filename = sprintf('%s/binary_%03d.png', output_dir, i);
         imwrite(Image_sequence(:,:,i),filename);  
     end
+
+    filename = sprintf('%s/ColorDC_edit3_binary_images.mat', output_dir);
+    save(filename, 'Image_sequence', '-v7.3');
+    
+    DDS_values = [128, 64, 32, 16, 8, 4, 2, 1];
+    LEDs_24_planes = zeros(3, 24);
+    LEDs_24_planes(1,1:8) = DDS_values;
+    LEDs_24_planes(2,9:9+7) = DDS_values;
+    LEDs_24_planes(3,9+7+1:9+7+1+7) = DDS_values;
+    LEDs_ALL = repmat(LEDs_24_planes, [1, ceil(280/24)]);
+    LEDs_ALL(:,281:end) = [];
+    
+    filename = sprintf('%s/ColorDC_edit3_dac_codes.mat', output_dir);
+    save(filename, 'LEDs_ALL', '-v7.3');
 end
 
 %%

@@ -4,12 +4,20 @@ function [Image_sequence,Image_CutVol]=GenerateImgSeq2(varargin)
 
 
 [RGBImg_re,DepthMap_re]=ResizeImg(RGBImg,DepthMap,Isize);
-RGB_BR=Color2Binary(RGBImg_re,colorbit);
+
+RGB_BR=Color2Binary(RGBImg_re,colorbit); 
+% output: RGB_BR - a (768x1024) x colorbit matrix
+% Each column is a bit plane of a color
+
 DepthMap_norm=DepthMapNormlization(DepthMap_re);
 NumofCP=NumofBP-colorbit+1;
 
-DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
-[Image_sequence,Image_CutVol]=GenImgSeq(RGBImg_re,DepthMap_norm,DepthList,NumofBP,NumofCP,colorbit,RGB_BR,Isize,DepthBG);
+DepthList=GenDepthList(NumofBP,NumofCP,colorbit); 
+% Kishore: What is this?
+
+[Image_sequence,Image_CutVol]=GenImgSeq(RGBImg_re,DepthMap_norm,DepthList,NumofBP, ...
+                                        NumofCP,colorbit,RGB_BR,Isize,DepthBG); 
+% Kishore: What is this?
 
 %--------------------------------------------------------------------------
 function [RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG]=parseInputs(varargin)
@@ -86,6 +94,12 @@ GB=fliplr(double(de2bi(RGBImg(:,:,2),8)));
 BB=fliplr(double(de2bi(RGBImg(:,:,3),8)));
 m=colorbit/3;
 RGB_BR=[RB(:,1:m),GB(:,1:m),BB(:,1:m)];
+% The way the bitplanes are ordered is as follows:
+% Colors are ordered: Red | Green | Blue
+% In each color, the bitplanes are ordered as:
+% MSB | .... | LSB
+
+
 
 %--------------------------------------------------------------------------
 function DepthMap_norm=DepthMapNormlization(DepthMap)

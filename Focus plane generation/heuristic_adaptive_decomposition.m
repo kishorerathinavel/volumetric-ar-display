@@ -5,19 +5,17 @@ tic
 
 %% 
 data_folder_path = get_data_folder_path();
-input_dir = sprintf('RGB_Depth', data_folder_path);
+input_dir = sprintf('%s/RGBD_data', data_folder_path);
 output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
 
 %% Creating a backup of the files that are used to generate each set of results
-copyfile heuristic_adaptive_decomposition.m adaptive_color_decomposition_images/heuristic_adaptive_decomposition.m
-copyfile custom_imagesc_save.m adaptive_color_decomposition_images/custom_imagesc_save.m
 
 %% Input RGB, depth map, and depth planes
 
-filename = sprintf('%s/reference.png',input_dir);
+filename = sprintf('%s/trial_01_rgb.png',input_dir);
 RGBImg=im2double(imread(filename));
 
-filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
+filename = sprintf('%s/%s/FocusDepth.mat', data_folder_path, 'FocusDepth');
 load(filename);
 
 % Description of variables:
@@ -43,7 +41,7 @@ DepthList=linspace(0,1,NumofBP);
 DepthSeparater=DepthList;
 
 %% save or load bw_Img_all
-savedata = false;
+savedata = true;
 if(savedata)
     s = size(RGBImg);
     bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
@@ -61,10 +59,10 @@ if(savedata)
         bw_Img_all(:,:,:,subvolume_append) = bw_Img;
     end
 
-    filename = sprintf('bw_Img_all_%d.mat',NumofBP)
+    filename = sprintf('bw_Img_all_%d.mat',NumofBP);
     save(filename, 'bw_Img_all', '-v7.3');
 else 
-    filename = sprintf('bw_Img_all_%d.mat',NumofBP)
+    filename = sprintf('bw_Img_all_%d.mat',NumofBP);
     load(filename);
 end
 
@@ -261,7 +259,7 @@ if(allow_mixed_primaries == true)
         residue = residue_all(:,:,:,indices(1));
         
         %% Outputing final choice
-        bin_img_ALL(:,:,subvolume_append) = bin_img;
+        bin_image_ALL(:,:,subvolume_append) = bin_img;
         
         bin_colorized = zeros(size(RGBImg));
         if(LEDs(1) > 0)
@@ -276,7 +274,7 @@ if(allow_mixed_primaries == true)
             bin_colorized(:,:,3) = bin_img;
         end
         if(mod(subvolume_append, 1) == 0)
-            filename = sprintf('adaptive_color_decomposition_images/bin_colorized_%02d.png', subvolume_append);
+            filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
             imwrite(bin_colorized, filename);
         end
         
@@ -284,14 +282,13 @@ if(allow_mixed_primaries == true)
         
         actual_reconstruction = actual_reconstruction + img;
         if(mod(subvolume_append, 1) == 0)
-            filename = sprintf('adaptive_color_decomposition_images/actual_reconstruction_%02d.png', ...
-                               subvolume_append);
+            filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
             imwrite(actual_reconstruction, filename);
         end
         
         overall_residue = expected_reconstruction - actual_reconstruction;
         if(mod(subvolume_append, 1) == 0)
-            filename = sprintf('adaptive_color_decomposition_images/overall_residue_%02d.png', subvolume_append);
+            filename = sprintf('%s/overall_residue_%03d.png', output_dir, subvolume_append);
             imwrite(abs(overall_residue), filename);
         end
         
@@ -330,7 +327,7 @@ else
         bin_colorized = zeros(size(RGBImg));
         bin_colorized(:,:,channel) = bin_img;
         if(mod(subvolume_append, 1) == 0)
-            filename = sprintf('adaptive_color_decomposition_images/bin_colorized_%02d.png', subvolume_append);
+            filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
             imwrite(bin_colorized, filename);
         end
         
@@ -338,20 +335,23 @@ else
         
         actual_reconstruction = actual_reconstruction + img;
         if(mod(subvolume_append, 1) == 0)
-            filename = sprintf('adaptive_color_decomposition_images/actual_reconstruction_%02d.png', ...
-                               subvolume_append);
+            filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
             imwrite(actual_reconstruction, filename);
         end
         
         overall_residue = expected_reconstruction - actual_reconstruction;
         if(mod(subvolume_append, 1) == 0)
-            filename = sprintf('adaptive_color_decomposition_images/overall_residue_%02d.png', subvolume_append);
+            filename = sprintf('%s/overall_residue_%03d.png', output_dir, subvolume_append);
             imwrite(abs(overall_residue), filename);
         end
         
     end
 end
 
-save 'adaptive_color_decomposition_images/dac_codes.mat' LED_ALL -v7.3
+    filename = sprintf('%s/heuristic_adaptive_decomposition_binary_images.mat', output_dir);
+    save(filename, 'bin_image_ALL', '-v7.3');
+    
+    filename = sprintf('%s/heuristic_adaptive_decomposition_dac_codes.mat', output_dir);
+    save(filename, 'LED_ALL', '-v7.3');
 
 toc
