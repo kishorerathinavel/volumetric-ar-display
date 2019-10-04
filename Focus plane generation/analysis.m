@@ -8,119 +8,100 @@ output_dir = sprintf('%s/analysis', data_folder_path);
 
 %% Inputting data
 
-experiment_names = {'ColorDC_edit3', 'heuristic_adaptive_decomposition'};
+experiment_names = {'ColorDC_edit3', 'adaptive_color_decomposition', ...
+                    'heuristic_adaptive_decomposition_0.7', 'heuristic_adaptive_decomposition_1.1'};
 
+exp_binary_images = zeros(768, 1024, 280, numel(experiment_names));
+exp_dac_codes = zeros(280, 3, numel(experiment_names));
 
-filename = sprintf('%s/%s/%s_binary_images.mat', input_dir, string(experiment_names(1)), ...
-                   string(experiment_names(1)));
-load(filename);
+for iter = 1:numel(experiment_names)
+    filename = sprintf('%s/%s/%s_binary_images.mat', input_dir, string(experiment_names(iter)), ...
+                       string(experiment_names(iter)));
+    load(filename);
 
-filename = sprintf('%s/%s/%s_dac_codes.mat', input_dir, string(experiment_names(1)), ...
-                   string(experiment_names(1)));
-load(filename);
+    filename = sprintf('%s/%s/%s_dac_codes.mat', input_dir, string(experiment_names(iter)), ...
+                       string(experiment_names(iter)));
+    load(filename);
+    
+    exp_binary_images(:,:,:,iter) = binary_images;
+    exp_dac_codes(:,:,iter) = dac_codes/256;
+end
 
-exp1_binary_images = binary_images;
-exp1_dac_codes = dac_codes/256;
+filename = sprintf('%s/RGBD_data/trial_01_rgb.png',data_folder_path);
+RGBImg=im2double(imread(filename));
 
-filename = sprintf('%s/%s/%s_binary_images.mat', input_dir, string(experiment_names(2)), ...
-                   string(experiment_names(2)));
-load(filename);
+%% Number of binary voxels used to represent color voxels
 
-filename = sprintf('%s/%s/%s_dac_codes.mat', input_dir, string(experiment_names(2)), ...
-                   string(experiment_names(2)));
-load(filename);
+% for iter = 1:numel(experiment_names)
+%     nnpx_exp_binary_images = exp_binary_images(:,:,:,iter);
+%     nnpx_exp_binary_images(nnpx_exp_binary_images > 0) = 1;
+%     nnpx_count_exp = sum(nnpx_exp_binary_images, 3);
 
-exp2_binary_images = binary_images;
-exp2_dac_codes = dac_codes;
+%     figure; imagesc(nnpx_count_exp);
+% end
 
-%% Difference in the number of binary voxels used to represent color voxels
-
-nnpx_exp1_binary_images = exp1_binary_images;
-nnpx_exp1_binary_images(nnpx_exp1_binary_images > 0) = 1;
-nnpx_count_exp1 = sum(nnpx_exp1_binary_images, 3);
-% min(nnpx_count_exp1(:))
-% max(nnpx_count_exp1(:))
-% mean(nnpx_count_exp1(:))
-
-nnpx_exp2_binary_images = exp2_binary_images;
-nnpx_exp2_binary_images(nnpx_exp2_binary_images > 0) = 1;
-nnpx_count_exp2 = sum(nnpx_exp2_binary_images, 3);
-% min(nnpx_count_exp2(:))
-% max(nnpx_count_exp2(:))
-% mean(nnpx_count_exp2(:))
-
-nnpx_diff = nnpx_count_exp1 - nnpx_count_exp2;
-figure; imagesc(nnpx_diff);
 
 %% Difference in weighed mean 
-exp1_r_dac_z_column = reshape(exp1_dac_codes(:,1), [1,1,280]);
-exp1_r_dac_code_volume = repmat(exp1_r_dac_z_column, [768, 1024]);
-
-exp1_g_dac_z_column = reshape(exp1_dac_codes(:,2), [1,1,280]);
-exp1_g_dac_code_volume = repmat(exp1_g_dac_z_column, [768, 1024]);
-
-exp1_b_dac_z_column = reshape(exp1_dac_codes(:,3), [1,1,280]);
-exp1_b_dac_code_volume = repmat(exp1_b_dac_z_column, [768, 1024]);
-
-exp1_r_perceived_volume = exp1_r_dac_code_volume.*exp1_binary_images;
-exp1_g_perceived_volume = exp1_g_dac_code_volume.*exp1_binary_images;
-exp1_b_perceived_volume = exp1_b_dac_code_volume.*exp1_binary_images;
-
-exp1_perceived_image = zeros(768, 1024, 3);
-exp1_perceived_image(:,:,1) = sum(exp1_r_perceived_volume, 3);
-exp1_perceived_image(:,:,2) = sum(exp1_g_perceived_volume, 3);
-exp1_perceived_image(:,:,3) = sum(exp1_b_perceived_volume, 3);
-
-% figure;
-% imshow(exp1_perceived_image, []);
-
-exp1_r_variance = var(exp1_r_perceived_volume, 0, 3);
-exp1_g_variance = var(exp1_g_perceived_volume, 0, 3);
-exp1_b_variance = var(exp1_b_perceived_volume, 0, 3);
-
-exp1_w_variance = zeros(768, 1024, 3);
-exp1_w_variance(:,:,1) = exp1_r_variance;
-exp1_w_variance(:,:,2) = exp1_g_variance;
-exp1_w_variance(:,:,3) = exp1_b_variance;
-
-exp1_added_volume = exp1_r_perceived_volume + exp1_g_perceived_volume + exp1_b_perceived_volume;
-exp1_variance = var(exp1_added_volume, 0, 3);
 
 
-exp2_r_dac_z_column = reshape(exp2_dac_codes(:,1), [1,1,280]);
-exp2_r_dac_code_volume = repmat(exp2_r_dac_z_column, [768, 1024]);
+depth_planes = 1:280;
+depth_planes = reshape(depth_planes, [1,1,280]);
+depth_planes_volume = repmat(depth_planes, [768, 1024]);
 
-exp2_g_dac_z_column = reshape(exp2_dac_codes(:,2), [1,1,280]);
-exp2_g_dac_code_volume = repmat(exp2_g_dac_z_column, [768, 1024]);
+for iter = 1:numel(experiment_names)
+    nnpx_exp_binary_images = exp_binary_images(:,:,:,iter);
+    nnpx_exp_binary_images(nnpx_exp_binary_images > 0) = 1;
+    nnpx_count_exp = sum(nnpx_exp_binary_images, 3);
+    figure; 
+    imagesc(nnpx_count_exp);
+    title_str = sprintf('%s - # non-zero binary voxels', string(experiment_names(iter)));
+    title(title_str, 'Interpreter', 'None');
 
-exp2_b_dac_z_column = reshape(exp2_dac_codes(:,3), [1,1,280]);
-exp2_b_dac_code_volume = repmat(exp2_b_dac_z_column, [768, 1024]);
+    dac_codes = exp_dac_codes(:,:,iter);
+    binary_images = exp_binary_images(:,:,:,iter);
+    
+    r_dac_z_column = reshape(dac_codes(:,1), [1,1,280]);
+    r_dac_code_volume = repmat(r_dac_z_column, [768, 1024]);
+    
+    g_dac_z_column = reshape(dac_codes(:,2), [1,1,280]);
+    g_dac_code_volume = repmat(g_dac_z_column, [768, 1024]);
 
-exp2_r_perceived_volume = exp2_r_dac_code_volume.*exp2_binary_images;
-exp2_g_perceived_volume = exp2_g_dac_code_volume.*exp2_binary_images;
-exp2_b_perceived_volume = exp2_b_dac_code_volume.*exp2_binary_images;
+    b_dac_z_column = reshape(dac_codes(:,3), [1,1,280]);
+    b_dac_code_volume = repmat(b_dac_z_column, [768, 1024]);
 
-exp2_perceived_image = zeros(768, 1024, 3);
-exp2_perceived_image(:,:,1) = sum(exp2_r_perceived_volume, 3);
-exp2_perceived_image(:,:,2) = sum(exp2_g_perceived_volume, 3);
-exp2_perceived_image(:,:,3) = sum(exp2_b_perceived_volume, 3);
+    r_perceived_volume = r_dac_code_volume.*binary_images;
+    g_perceived_volume = g_dac_code_volume.*binary_images;
+    b_perceived_volume = b_dac_code_volume.*binary_images;
 
-% figure;
-% imshow(exp2_perceived_image, []);
+    perceived_image = zeros(768, 1024, 3);
+    perceived_image(:,:,1) = sum(r_perceived_volume, 3);
+    perceived_image(:,:,2) = sum(g_perceived_volume, 3);
+    perceived_image(:,:,3) = sum(b_perceived_volume, 3);
 
-exp2_r_variance = var(exp2_r_perceived_volume, 0, 3);
-exp2_g_variance = var(exp2_g_perceived_volume, 0, 3);
-exp2_b_variance = var(exp2_b_perceived_volume, 0, 3);
+    figure; 
+    imagesc(RGBImg./max(RGBImg(:)) - perceived_image./max(perceived_image(:))); 
+    title_str = sprintf('%s - perceived image difference', string(experiment_names(iter)));
+    title(title_str, 'Interpreter', 'None');
+    
 
-exp2_w_variance = zeros(768, 1024, 3);
-exp2_w_variance(:,:,1) = exp2_r_variance;
-exp2_w_variance(:,:,2) = exp2_g_variance;
-exp2_w_variance(:,:,3) = exp2_b_variance;
+    r_variance = var(r_perceived_volume.*depth_planes_volume, 0, 3);
+    g_variance = var(g_perceived_volume.*depth_planes_volume, 0, 3);
+    b_variance = var(b_perceived_volume.*depth_planes_volume, 0, 3);
 
-exp2_added_volume = exp2_r_perceived_volume + exp2_g_perceived_volume + exp2_b_perceived_volume;
-exp2_variance = var(exp2_added_volume, 0, 3);
+    w_variance = zeros(768, 1024, 3);
+    w_variance(:,:,1) = r_variance;
+    w_variance(:,:,2) = g_variance;
+    w_variance(:,:,3) = b_variance;
 
-figure; imagesc(exp1_r_variance - exp2_r_variance);
-figure; imagesc(exp1_g_variance - exp2_g_variance);
-figure; imagesc(exp1_b_variance - exp2_b_variance);
-figure; imagesc(exp1_variance - exp2_variance);
+    added_volume = r_perceived_volume + g_perceived_volume + b_perceived_volume;
+    variance = var(added_volume, 0, 3);
+
+    
+    % figure; imagesc(r_variance - exp2_r_variance);
+    % figure; imagesc(g_variance - exp2_g_variance);
+    % figure; imagesc(b_variance - exp2_b_variance);
+    figure; 
+    imagesc(variance); 
+    title_str = sprintf('%s - variance', string(experiment_names(iter)));
+    title(title_str, 'Interpreter', 'None');
+end

@@ -3,12 +3,12 @@ close all;
 
 %% 
 data_folder_path = get_data_folder_path();
-input_dir = sprintf('RGB_Depth', data_folder_path);
+input_dir = sprintf('%s/RGBD_data', data_folder_path);
 output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
 
 %% Creating a backup of the files that are used to generate each set of results
-copyfile adaptive_color_decomposition.m adaptive_color_decomposition_images/adaptive_color_decomposition.m
-copyfile custom_imagesc_save.m adaptive_color_decomposition_images/custom_imagesc_save.m
+% copyfile adaptive_color_decomposition.m adaptive_color_decomposition_images/adaptive_color_decomposition.m
+% copyfile custom_imagesc_save.m adaptive_color_decomposition_images/custom_imagesc_save.m
 
 %% Input RGB, depth map, and depth planes
 
@@ -28,41 +28,18 @@ load(filename);
 filename = sprintf('%s/trial_01_DepthMap.mat',input_dir);
 load(filename);
 
+%% Display parameters
+
 NumofBP=280;
-colorbit=24;
 
-max_D=max(max(DepthMap));
-
+%% Normalizing and Removing zeros from depth map
 DepthMap_norm=DepthMapNormalization(DepthMap);
 unique_DM_values = unique(sort(reshape(DepthMap_norm, 1, [])));
 DepthMap_norm(DepthMap_norm == 0) = unique_DM_values(1,2);
 
-NumofCP=NumofBP-colorbit+1;
-% DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
+%% Assuming that depth map is linearized
 DepthList=linspace(0,1,NumofBP);
-
-% DepthSeparater=[0,(DepthList(1:end-1)+DepthList(2:end))/2,1];
 DepthSeparater=DepthList;
-
-windowLength = 4;
-residue_rollover = zeros(size(RGBImg));
-actual_reconstruction = zeros(size(RGBImg));
-imcount = 0;
-
-maxLED = 1;
-Energy = [];
-Energy_all = [];
-LED_ALL = [];
-IMG = zeros(size(RGBImg));
-ORIG_IMG = zeros(size(RGBImg));
-channel = 1;
-
-penalties = [1,1,1];
-penalties_all = [];
-channel_energies_all = [];
-
-s = size(RGBImg);
-residual_history = zeros(s(1), s(2), s(3), NumofBP);
 
 %% save or load bw_Img_all
 savedata = true;
@@ -70,7 +47,7 @@ if(savedata)
     s = size(RGBImg);
     bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
 
-    parfor subvolume_append = 1:NumofBP-1 %NumofBP-windowLength
+    parfor subvolume_append = 1:NumofBP-1 
         trial = DepthMap_norm;
         trial(trial < DepthSeparater(subvolume_append)) = 0;
         trial(trial > DepthSeparater(subvolume_append+1)) = 0;
@@ -88,197 +65,99 @@ else
     load('bw_Img_all.mat');
 end
 
-%%
+%% Loop variables
 
-weights_img_all = zeros(size(bw_Img_all));
-repmat_overall_residue = zeros(size(bw_Img_all));
- 
-Energy = zeros(NumofBP,1);
+residue = zeros(size(RGBImg));
+actual_reconstruction = zeros(size(RGBImg));
+expected_reconstruction = zeros(size(RGBImg));
+Energy_all = [];
 LED_ALL = zeros(NumofBP,3);
+bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
 
-for subvolume_append = 1:NumofBP-1 %NumofBP-windowLength
+for subvolume_append = 1:NumofBP-1 
+    channel = mod(subvolume_append, 3);
+    if(channel == 0)
+        channel = 3;
+    end
+    
+    Energy_plane = [];
     subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
-    
-    ORIG_IMG = ORIG_IMG + subvolume;
-    % filename = sprintf('adaptive_color_decomposition_images/subvolume_%02d.png', subvolume_append);
-    % custom_imagesc_save(subvolume, filename);
-    
+    expected_reconstruction = expected_reconstruction + subvolume;
 
     %% Initialization
 
     toOptimize = subvolume;
-    toOptimize = toOptimize + residue_rollover;
+    toOptimize = toOptimize + residue;
     channel_toOptimize = toOptimize(:,:,channel);
     
-    % filename = sprintf('adaptive_color_decomposition_images/toOptimize_%02d.png', subvolume_append);
-    % custom_imagesc_save(toOptimize, filename);
-
     LEDs = [0,0,0];
     LEDs(channel) = mean(channel_toOptimize(:));
     LEDs(LEDs < 0) = 0;
-    % LEDs = clampLEDValues(LEDs);
    
     bin_img = im2double(im2bw(channel_toOptimize, LEDs(channel)));
-    % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_append, imcount);
-    % custom_imagesc_save(bin_img, filename);
-
     img = displayedImage(LEDs, bin_img);
-    % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_append, imcount);
-    % custom_imagesc_save(img, filename);
 
     residue = toOptimize - img;
-    % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_append, imcount);
-    % custom_imagesc_save(residue, filename);
-    imcount = imcount + 1;
 
     currEnergy = residue.*residue;
     currEnergy = sum(currEnergy(:));
-    Energy_all = [Energy_all currEnergy];
+    Energy_plane = [Energy_plane currEnergy];
 
     for iter = 1:2
-        bin_img = bin_img + residue(:,:,channel)/LEDs(channel);
-        % bin_img = bin_img + residue(:,:,1)/LEDs(1);
-        bin_img = im2double(im2bw(bin_img,0));
-        % filename = sprintf('adaptive_color_decomposition_images/bin_img_%03d_%02d.png', subvolume_append, imcount);
-        % custom_imagesc_save(bin_img, filename);
-
-        
-        img = displayedImage(LEDs, bin_img);
-        % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_append, imcount);
-        % custom_imagesc_save(img, filename);
-        
-        residue = toOptimize - img;
-        % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_append, imcount);
-        % custom_imagesc_save(residue, filename);
-        currEnergy = residue.*residue;
-        currEnergy = sum(currEnergy(:));
-        Energy_all = [Energy_all currEnergy];
-        imcount = imcount + 1;
-
-        lambda = 0.01;
+        lambda = 1.00; % Kishore: Do we need this factor?
         denominator = (bin_img.*bin_img + 1e-8);
         numerator = (residue(:,:,channel).*bin_img);
         delta = sum(numerator(:))./sum(denominator(:));
         
         LEDs(channel) = LEDs(channel) + lambda*delta;
         LEDs(LEDs < 0) = 0;
-        % LEDs = clampLEDValues(LEDs);
         
         img = displayedImage(LEDs, bin_img);
-        % filename = sprintf('adaptive_color_decomposition_images/img_%03d_%02d.png', subvolume_append, imcount);
-        % custom_imagesc_save(img, filename);
         residue = toOptimize - img;
-        % filename = sprintf('adaptive_color_decomposition_images/residue_%03d_%02d.png', subvolume_append, imcount);
-        % custom_imagesc_save(residue, filename);
         currEnergy = residue.*residue;
         currEnergy = sum(currEnergy(:));
-        Energy_all = [Energy_all currEnergy];
-        imcount = imcount + 1;
+        Energy_plane = [Energy_plane currEnergy];
+        
+        bin_img = bin_img + residue(:,:,channel)/LEDs(channel);
+        bin_img = im2double(im2bw(bin_img,1)); % Kishore: Shouldn't the threshold be 0.5?
+        
+        img = displayedImage(LEDs, bin_img);
+        residue = toOptimize - img;
+        currEnergy = residue.*residue;
+        currEnergy = sum(currEnergy(:));
+        Energy_plane = [Energy_plane currEnergy];
     end
     
-    filename = sprintf('adaptive_color_decomposition_images/bin_img_%02d.png', subvolume_append);
-    custom_imagesc_save(bin_img, filename);
-    
+    bin_image_ALL(:,:,subvolume_append) = bin_img;
     bin_colorized = zeros(size(RGBImg));
     bin_colorized(:,:,channel) = bin_img;
+    
+    LED_ALL(subvolume_append,:) = LEDs;
+    actual_reconstruction = actual_reconstruction + img;
+    residue = expected_reconstruction - actual_reconstruction;
+    Energy_all = [Energy_all; Energy_plane];
+    
     if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('adaptive_color_decomposition_images/bin_colorized_%02d.png', subvolume_append);
+        filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
         custom_imagesc_save(bin_colorized, filename);
     end
     
-    Energy(subvolume_append) = currEnergy;
-    LED_ALL(subvolume_append,:) = LEDs;
-    
-    IMG = IMG + img;
     if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('adaptive_color_decomposition_images/IMG_%02d.png', subvolume_append);
-        custom_imagesc_save(IMG, filename);
+        filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
+        custom_imagesc_save(actual_reconstruction, filename);
     end
     
-
-   
-    
-    % residual_history(:,:,:,subvolume_append) = residue;
-    residual_factor = 2;
-    residue_rollover = zeros(size(RGBImg));
-    overall_residue = ORIG_IMG - IMG;
     if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('adaptive_color_decomposition_images/overall_residue_%02d.png', subvolume_append);
-        custom_imagesc_save(abs(overall_residue), filename);
+        filename = sprintf('%s/residue_%03d.png', output_dir, subvolume_append);
+        custom_imagesc_save(abs(residue), filename);
     end
-    
-    % repmat_overall_residue = repmat(overall_residue, [1 1 1 NumofBP]);
-    for iter =1:NumofBP
-        repmat_overall_residue(:,:,:,iter) = overall_residue;
-    end
-    
-    residual_history = bw_Img_all.*repmat_overall_residue;
-    % weights = NumofBP:1:1;
-    % weights = weights - subvolume_append*ones(size(weights));
-    % weights(weights < 0) = 0;
-    % weights = weights*residual_factor;
-    % residue_rollover = 
-    
-    for iter = 1:subvolume_append
-        % trial = DepthMap_norm;
-        % trial(trial < DepthSeparater(iter)) = 0;
-        % trial(trial > DepthSeparater(iter+1)) = 0;
-        % bw = im2double(im2bw(trial,0));
-        
-        % bw_Img = zeros(size(RGBImg));
-        % bw_Img(:,:,1) = bw;
-        % bw_Img(:,:,2) = bw;
-        % bw_Img(:,:,3) = bw;
-
-        % residual_history(:,:,:,iter) = bw_Img.*(overall_residue);
-        residue_rollover = residue_rollover + residual_factor*(subvolume_append - iter + 1)*residual_history(:,:,:,iter);
-    end
-    if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('adaptive_color_decomposition_images/residue_rollover_%02d.png', subvolume_append);
-        custom_imagesc_save(residue_rollover, filename);
-    end
-
-    % actual_reconstruction = actual_reconstruction + img;
-    % if(mod(subvolume_append, 1) == 0)
-    %     filename = sprintf('adaptive_color_decomposition_images/reconstructed_%02d.png', subvolume_append);
-    %     custom_imagesc_save(actual_reconstruction, filename);
-    % end
- 
-    channel = channel + 1;
-    if(channel > 3)
-        channel = 1;
-    end
-
-    % % penalties(channel) = penalties(channel)/2;
-    % r_residue = residue(:,:,1);
-    % r_energy = r_residue.*r_residue;
-    % r_energy = sum(r_energy(:));
-    
-    % g_residue = residue(:,:,2);
-    % g_energy = g_residue.*g_residue;
-    % g_energy = sum(g_energy(:));
-    
-    % b_residue = residue(:,:,3);
-    % b_energy = b_residue.*b_residue;
-    % b_energy = sum(b_energy(:));
-  
-    % pentalFactor = 1;
-    % channel_energies = [r_energy, g_energy, b_energy];
-    % % channel_energies = channel_energies.*penalties;
-    % channel_energies_all = [channel_energies_all; channel_energies];
-    
-    % % old_channel = channel;
-    % [vals, idx] = sort(channel_energies, 'descend');
-    % channel = idx(1);
-    % % penalties(idx(1)) = penalties(idx(1))/2;
-    % % penalties(idx(2)) = min(penalties(idx(2))*2,4);
-    % % penalties(idx(3)) = min(penalties(idx(3))*2,4);
-    
-    % % penalties_all = [penalties_all; penalties];
-    % % if(channel == old_channel)
-    % %     channel = idx(2);
-    % % end
     
 end
 
-save 'adaptive_color_decomposition_images/dac_codes.mat' LED_ALL -v7.3
+binary_images = bin_image_ALL;
+filename = sprintf('%s/adaptive_color_decomposition_binary_images.mat', output_dir);
+save(filename, 'binary_images', '-v7.3');
+
+dac_codes = LED_ALL;
+filename = sprintf('%s/adaptive_color_decomposition_dac_codes.mat', output_dir);
+save(filename, 'dac_codes', '-v7.3');

@@ -28,6 +28,8 @@ else
 end
 
 LEDs = [r_mean, g_mean, b_mean];
+LEDs(isnan(LEDs)) = 0;
+LEDs(LEDs < 0) = 0;
 
 
 
