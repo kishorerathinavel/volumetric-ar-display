@@ -76,6 +76,8 @@ bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
 
 allow_mixed_primaries = true;
 if(allow_mixed_primaries == true)
+    optimization_factor = 1.33;
+    
     for subvolume_append = 1:NumofBP-1 
         subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
         expected_reconstruction = expected_reconstruction + subvolume;
@@ -104,7 +106,7 @@ if(allow_mixed_primaries == true)
         LEDs(LEDs < 0) = 0;
         
         bin_img = zeros(size(channel_toOptimize));
-        bin_img(channel_toOptimize > LEDs(channel_order(1))) = 1;
+        bin_img(channel_toOptimize > LEDs(channel_order(1))/optimization_factor) = 1;
         
         img = displayedImage(LEDs, bin_img);
         residue = toOptimize - img;
@@ -130,10 +132,10 @@ if(allow_mixed_primaries == true)
         LEDs(LEDs < 0) = 0;
         
         bin_img1 = zeros(size(channel_toOptimize));
-        bin_img1(channel1_toOptimize > LEDs(channel_order(1))) = 1;
+        bin_img1(channel1_toOptimize > LEDs(channel_order(1))/optimization_factor) = 1;
         
         bin_img2 = zeros(size(channel_toOptimize));
-        bin_img2(channel2_toOptimize > LEDs(channel_order(2))) = 1;
+        bin_img2(channel2_toOptimize > LEDs(channel_order(2))/optimization_factor) = 1;
         
         bin_img = bin_img1.*bin_img2;
         toOptimize2 = zeros(size(toOptimize));
@@ -172,10 +174,10 @@ if(allow_mixed_primaries == true)
         LEDs(LEDs < 0) = 0;
         
         bin_img1 = zeros(size(channel_toOptimize));
-        bin_img1(channel1_toOptimize > LEDs(channel_order(1))) = 1;
+        bin_img1(channel1_toOptimize > LEDs(channel_order(1))/optimization_factor) = 1;
         
         bin_img3 = zeros(size(channel_toOptimize));
-        bin_img3(channel3_toOptimize > LEDs(channel_order(3))) = 1;
+        bin_img3(channel3_toOptimize > LEDs(channel_order(3))/optimization_factor) = 1;
         
         bin_img = bin_img1.*bin_img3;
         
@@ -217,13 +219,13 @@ if(allow_mixed_primaries == true)
         LEDs(LEDs < 0) = 0;
         
         bin_img1 = zeros(size(channel_toOptimize));
-        bin_img1(channel1_toOptimize > LEDs(channel_order(1))) = 1;
+        bin_img1(channel1_toOptimize > LEDs(channel_order(1))/optimization_factor) = 1;
         
         bin_img2 = zeros(size(channel_toOptimize));
-        bin_img2(channel2_toOptimize > LEDs(channel_order(2))) = 1;
+        bin_img2(channel2_toOptimize > LEDs(channel_order(2))/optimization_factor) = 1;
         
         bin_img3 = zeros(size(channel_toOptimize));
-        bin_img3(channel3_toOptimize > LEDs(channel_order(3))) = 1;
+        bin_img3(channel3_toOptimize > LEDs(channel_order(3))/optimization_factor) = 1;
         
         bin_img = bin_img1.*bin_img2.*bin_img3;
         toOptimize4 = zeros(size(toOptimize));
@@ -348,10 +350,12 @@ else
     end
 end
 
-    filename = sprintf('%s/heuristic_adaptive_decomposition_binary_images.mat', output_dir);
-    save(filename, 'bin_image_ALL', '-v7.3');
-    
-    filename = sprintf('%s/heuristic_adaptive_decomposition_dac_codes.mat', output_dir);
-    save(filename, 'LED_ALL', '-v7.3');
+binary_images = bin_image_ALL;
+filename = sprintf('%s/heuristic_adaptive_decomposition_binary_images.mat', output_dir);
+save(filename, 'binary_images', '-v7.3');
+
+dac_codes = LED_ALL;
+filename = sprintf('%s/heuristic_adaptive_decomposition_dac_codes.mat', output_dir);
+save(filename, 'dac_codes', '-v7.3');
 
 toc
