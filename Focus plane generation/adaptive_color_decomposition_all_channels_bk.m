@@ -2,6 +2,8 @@ clear all;
 close all;
 
 %% 
+tic
+
 data_folder_path = get_data_folder_path();
 input_dir = sprintf('%s/RGBD_data', data_folder_path);
 output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
@@ -78,6 +80,7 @@ expected_reconstruction = zeros(size(RGBImg));
 Energy_all = [];
 LED_ALL = zeros(NumofBP,3);
 bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
+binarization_threshold = 1.4;
 
 for subvolume_append = 1:NumofBP-1%50 %280-windowLength
     % if(subvolume_append == 92)
@@ -101,8 +104,8 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
         toOptimize(:,:,3)/LEDs(3);
     delta_bin_img(isnan(delta_bin_img)) = 0;
     bin_img = bin_img + delta_bin_img;
-    bin_img(bin_img < 1) = 0.0;
-    bin_img(bin_img >= 1) = 1.0;
+    bin_img(bin_img < binarization_threshold) = 0.0;
+    bin_img(bin_img >= binarization_threshold) = 1.0;
     % bin_img(bin_img < nnz(LEDs)) = 0.0;
     % bin_img(bin_img >= nnz(LEDs)) = 1.0;
     
@@ -114,7 +117,7 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
     Energy_plane = [Energy_plane currEnergy];
 
     %% Optimization
-    for iter = 1:3
+    for iter = 1:2
 
         lambda = 1.00; % Kishore: Do we need this factor?
         denominator = (bin_img.*bin_img + 1e-8);
@@ -140,19 +143,19 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
         % delta = sum(fraction(:));
         LEDs(3) = LEDs(3) + lambda*delta;
         
-        LEDs(LEDs < 0.01) = 0;
+        LEDs(LEDs < 0.1) = 0;
         
         img = displayedImage(LEDs, bin_img);
         residue = toOptimize - img;
         currEnergy = residue.*residue;
         currEnergy = sum(currEnergy(:));
-        if(currEnergy > old_energy)
-            LEDs = old_LEDs;
-            img = displayedImage(LEDs, bin_img);
-            residue = toOptimize - img;
-            currEnergy = residue.*residue;
-            currEnergy = sum(currEnergy(:));
-        end
+        % if(currEnergy > old_energy)
+        %     LEDs = old_LEDs;
+        %     img = displayedImage(LEDs, bin_img);
+        %     residue = toOptimize - img;
+        %     currEnergy = residue.*residue;
+        %     currEnergy = sum(currEnergy(:));
+        % end
         Energy_plane = [Energy_plane currEnergy];
         
         % delta_bin_img = residue(:,:,1)/LEDs(1) + residue(:,:,2)/LEDs(2) + residue(:,:,3)/LEDs(3);
@@ -178,21 +181,21 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
         delta_bin_img = r_delta_bin_img + g_delta_bin_img + b_delta_bin_img;
         delta_bin_img(isnan(delta_bin_img)) = 0;
         bin_img = bin_img + delta_bin_img;
-        bin_img(bin_img < 1) = 0.0;
-        bin_img(bin_img >= 1) = 1.0;
+        bin_img(delta_bin_img < 0.0) = 0.0;
+        % bin_img(bin_img >= 1.0) = 1.0;
 
         img = displayedImage(LEDs, bin_img);
         residue = toOptimize - img;
         currEnergy = residue.*residue;
         currEnergy = sum(currEnergy(:));
         
-        if(currEnergy > old_energy)
-            bin_img = old_bin_img;
-            img = displayedImage(LEDs, bin_img);
-            residue = toOptimize - img;
-            currEnergy = residue.*residue;
-            currEnergy = sum(currEnergy(:));
-        end
+        % if(currEnergy > old_energy)
+        %     bin_img = old_bin_img;
+        %     img = displayedImage(LEDs, bin_img);
+        %     residue = toOptimize - img;
+        %     currEnergy = residue.*residue;
+        %     currEnergy = sum(currEnergy(:));
+        % end
         
         Energy_plane = [Energy_plane currEnergy];
     end
@@ -233,10 +236,16 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
 end
 
 binary_images = bin_image_ALL;
-filename = sprintf('%s/adaptive_color_decomposition_binary_images.mat', output_dir);
+filename = sprintf('%s/adaptive_color_decomposition_all_channels_binary_images.mat', output_dir);
 save(filename, 'binary_images', '-v7.3');
 
 dac_codes = LED_ALL;
-filename = sprintf('%s/adaptive_color_decomposition_dac_codes.mat', output_dir);
+filename = sprintf('%s/adaptive_color_decomposition_all_channels_dac_codes.mat', output_dir);
 save(filename, 'dac_codes', '-v7.3');
 
+filename = sprintf('%s/adaptive_color_decomposition_all_channels_energies.mat', output_dir);
+save(filename, 'Energy_all', '-v7.3');
+
+
+
+toc

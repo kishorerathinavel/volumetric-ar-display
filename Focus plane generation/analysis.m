@@ -8,8 +8,15 @@ output_dir = sprintf('%s/analysis', data_folder_path);
 
 %% Inputting data
 
-experiment_names = {'ColorDC_edit3', 'adaptive_color_decomposition', ...
-                    'heuristic_adaptive_decomposition_0.7', 'heuristic_adaptive_decomposition_1.1'};
+experiment_names = {'adaptive_color_decomposition', ...
+                    'adaptive_color_decomposition_all_channels', 'heuristic_adaptive_decomposition_1.4'};
+
+
+
+% experiment_names = {'ColorDC_edit3', 'adaptive_color_decomposition', ...
+%                     'adaptive_color_decomposition_all_channels', ...
+%                     'heuristic_adaptive_decomposition_0.7', 'heuristic_adaptive_decomposition_1.1'};
+
 
 exp_binary_images = zeros(768, 1024, 280, numel(experiment_names));
 exp_dac_codes = zeros(280, 3, numel(experiment_names));
@@ -49,11 +56,13 @@ depth_planes = reshape(depth_planes, [1,1,280]);
 depth_planes_volume = repmat(depth_planes, [768, 1024]);
 
 for iter = 1:numel(experiment_names)
+    string(experiment_names(iter))
     nnpx_exp_binary_images = exp_binary_images(:,:,:,iter);
     nnpx_exp_binary_images(nnpx_exp_binary_images > 0) = 1;
     nnpx_count_exp = sum(nnpx_exp_binary_images, 3);
     figure; 
     imagesc(nnpx_count_exp);
+    numberofbinaryvoxels = sum(nnpx_count_exp(:))
     title_str = sprintf('%s - # non-zero binary voxels', string(experiment_names(iter)));
     title(title_str, 'Interpreter', 'None');
 
@@ -79,7 +88,10 @@ for iter = 1:numel(experiment_names)
     perceived_image(:,:,3) = sum(b_perceived_volume, 3);
 
     figure; 
-    imagesc(RGBImg./max(RGBImg(:)) - perceived_image./max(perceived_image(:))); 
+    diffImg = RGBImg - perceived_image*255;
+    imagesc(diffImg);
+    energyImg = diffImg.*diffImg;
+    currEnergy = sum(energyImg(:))
     title_str = sprintf('%s - perceived image difference', string(experiment_names(iter)));
     title(title_str, 'Interpreter', 'None');
     
@@ -99,9 +111,10 @@ for iter = 1:numel(experiment_names)
     
     % figure; imagesc(r_variance - exp2_r_variance);
     % figure; imagesc(g_variance - exp2_g_variance);
-    % figure; imagesc(b_variance - exp2_b_variance);
+    % figure; imagesc(b_variance - exp2_b_variance);cl
     figure; 
     imagesc(variance); 
+    totalvariance = sum(variance(:))
     title_str = sprintf('%s - variance', string(experiment_names(iter)));
     title(title_str, 'Interpreter', 'None');
 end

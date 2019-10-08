@@ -73,9 +73,10 @@ actual_reconstruction = zeros(size(RGBImg));
 expected_reconstruction = zeros(size(RGBImg));
 LED_ALL = zeros(NumofBP,3);
 bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
+Energy_all = [];
 
-optimization_factor = 0.6;
-%optimization_factor = 1.33;
+binarization_threshold = 1.4;
+%binarization_threshold = 1.33;
 
 for subvolume_append = 1:NumofBP-1 
     subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
@@ -105,7 +106,7 @@ for subvolume_append = 1:NumofBP-1
     LEDs(LEDs < 0) = 0;
     
     bin_img = zeros(size(channel_toOptimize));
-    bin_img(channel_toOptimize > LEDs(channel_order(1))/optimization_factor) = 1;
+    bin_img(channel_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
     
     img = displayedImage(LEDs, bin_img);
     residue = toOptimize - img;
@@ -131,10 +132,10 @@ for subvolume_append = 1:NumofBP-1
     LEDs(LEDs < 0) = 0;
     
     bin_img1 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize > LEDs(channel_order(1))/optimization_factor) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
     
     bin_img2 = zeros(size(channel_toOptimize));
-    bin_img2(channel2_toOptimize > LEDs(channel_order(2))/optimization_factor) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(2)) > binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img2;
     toOptimize2 = zeros(size(toOptimize));
@@ -173,10 +174,10 @@ for subvolume_append = 1:NumofBP-1
     LEDs(LEDs < 0) = 0;
     
     bin_img1 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize > LEDs(channel_order(1))/optimization_factor) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
     
     bin_img3 = zeros(size(channel_toOptimize));
-    bin_img3(channel3_toOptimize > LEDs(channel_order(3))/optimization_factor) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(3)) > binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img3;
     
@@ -218,13 +219,13 @@ for subvolume_append = 1:NumofBP-1
     LEDs(LEDs < 0) = 0;
     
     bin_img1 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize > LEDs(channel_order(1))/optimization_factor) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
     
     bin_img2 = zeros(size(channel_toOptimize));
-    bin_img2(channel2_toOptimize > LEDs(channel_order(2))/optimization_factor) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(2)) > binarization_threshold) = 1;
     
     bin_img3 = zeros(size(channel_toOptimize));
-    bin_img3(channel3_toOptimize > LEDs(channel_order(3))/optimization_factor) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(3)) > binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img2.*bin_img3;
     toOptimize4 = zeros(size(toOptimize));
@@ -261,6 +262,7 @@ for subvolume_append = 1:NumofBP-1
     
     %% Outputing final choice
     bin_image_ALL(:,:,subvolume_append) = bin_img;
+    Energy_all = [Energy_all; curr_energy];
     
     bin_colorized = zeros(size(RGBImg));
     if(LEDs(1) > 0)
