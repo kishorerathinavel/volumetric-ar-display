@@ -8,8 +8,7 @@ output_dir = sprintf('%s/analysis', data_folder_path);
 
 %% Inputting data
 
-experiment_names = {'adaptive_color_decomposition', ...
-                    'adaptive_color_decomposition_all_channels', 'heuristic_adaptive_decomposition_1.4'};
+experiment_names = {'adaptive_color_decomposition', 'adaptive_color_decomposition_2', 'adaptive_color_decomposition_3'};
 
 
 

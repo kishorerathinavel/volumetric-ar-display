@@ -1,7 +1,6 @@
 clear all;
 close all;
 
-tic
 
 %% 
 data_folder_path = get_data_folder_path();
@@ -30,6 +29,7 @@ load(filename);
 
 %% Display parameters
 NumofBP=280;
+binarization_threshold = 1.4;
 
 %% Normalizing and Removing zeros from depth map
 DepthMap_norm=DepthMapNormalization(DepthMap);
@@ -41,7 +41,7 @@ DepthList=linspace(0,1,NumofBP);
 DepthSeparater=DepthList;
 
 %% save or load bw_Img_all
-savedata = true;
+savedata = false;
 if(savedata)
     s = size(RGBImg);
     bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
@@ -66,6 +66,9 @@ else
     load(filename);
 end
 
+tic
+
+
 %% Loop variables
 
 residue = zeros(size(RGBImg));
@@ -75,7 +78,6 @@ LED_ALL = zeros(NumofBP,3);
 bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
 Energy_all = [];
 
-binarization_threshold = 1.4;
 %binarization_threshold = 1.33;
 
 for subvolume_append = 1:NumofBP-1 
@@ -264,39 +266,41 @@ for subvolume_append = 1:NumofBP-1
     bin_image_ALL(:,:,subvolume_append) = bin_img;
     Energy_all = [Energy_all; curr_energy];
     
-    bin_colorized = zeros(size(RGBImg));
-    if(LEDs(1) > 0)
-        bin_colorized(:,:,1) = bin_img;
-    end
+    % bin_colorized = zeros(size(RGBImg));
+    % if(LEDs(1) > 0)
+    %     bin_colorized(:,:,1) = bin_img;
+    % end
     
-    if(LEDs(2) > 0)
-        bin_colorized(:,:,2) = bin_img;
-    end
+    % if(LEDs(2) > 0)
+    %     bin_colorized(:,:,2) = bin_img;
+    % end
     
-    if(LEDs(3) > 0)
-        bin_colorized(:,:,3) = bin_img;
-    end
+    % if(LEDs(3) > 0)
+    %     bin_colorized(:,:,3) = bin_img;
+    % end
     
     LED_ALL(subvolume_append,:) = LEDs;
     actual_reconstruction = actual_reconstruction + img;
     overall_residue = expected_reconstruction - actual_reconstruction;
     
-    if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
-        imwrite(bin_colorized, filename);
-    end
+    % if(mod(subvolume_append, 1) == 0)
+    %     filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
+    %     imwrite(bin_colorized, filename);
+    % end
     
-    if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
-        imwrite(actual_reconstruction, filename);
-    end
+    % if(mod(subvolume_append, 1) == 0)
+    %     filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
+    %     imwrite(actual_reconstruction, filename);
+    % end
     
-    if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('%s/overall_residue_%03d.png', output_dir, subvolume_append);
-        imwrite(abs(overall_residue), filename);
-    end
+    % if(mod(subvolume_append, 1) == 0)
+    %     filename = sprintf('%s/overall_residue_%03d.png', output_dir, subvolume_append);
+    %     imwrite(abs(overall_residue), filename);
+    % end
     
 end
+
+toc
 
 binary_images = bin_image_ALL;
 filename = sprintf('%s/heuristic_adaptive_decomposition_binary_images.mat', output_dir);
@@ -306,4 +310,3 @@ dac_codes = LED_ALL;
 filename = sprintf('%s/heuristic_adaptive_decomposition_dac_codes.mat', output_dir);
 save(filename, 'dac_codes', '-v7.3');
 
-toc
