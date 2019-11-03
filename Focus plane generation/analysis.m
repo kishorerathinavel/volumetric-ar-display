@@ -1,6 +1,15 @@
 clear all;
 close all;
 
+%% 
+% binary_images = exp_binary_images;
+% filename = sprintf('%s/scene_decomposition_output/ColorDC_edit3/ColorDC_edit3_binary_images.mat', data_folder_path);
+% save(filename, 'binary_images', '-v7.3');
+
+% dac_codes = exp_dac_codes;
+% filename = sprintf('%s/scene_decomposition_output/ColorDC_edit3/ColorDC_edit3_dac_codes.mat', data_folder_path);
+% save(filename, 'dac_codes', '-v7.3');
+
 %% Setting folder paths
 data_folder_path = get_data_folder_path();
 input_dir = sprintf('%s/scene_decomposition_output', data_folder_path);
@@ -8,7 +17,7 @@ output_dir = sprintf('%s/analysis', data_folder_path);
 
 %% Inputting data
 
-experiment_names = {'adaptive_color_decomposition', 'adaptive_color_decomposition_2', 'adaptive_color_decomposition_3'};
+experiment_names = {'ColorDC_edit3', 'adaptive_color_decomposition', 'highest_energy_channel_decomposition'};
 
 
 
@@ -30,7 +39,7 @@ for iter = 1:numel(experiment_names)
     load(filename);
     
     exp_binary_images(:,:,:,iter) = binary_images;
-    exp_dac_codes(:,:,iter) = dac_codes/256;
+    exp_dac_codes(:,:,iter) = dac_codes;
 end
 
 filename = sprintf('%s/RGBD_data/trial_01_rgb.png',data_folder_path);
@@ -61,7 +70,6 @@ for iter = 1:numel(experiment_names)
     nnpx_count_exp = sum(nnpx_exp_binary_images, 3);
     figure; 
     imagesc(nnpx_count_exp);
-    numberofbinaryvoxels = sum(nnpx_count_exp(:))
     title_str = sprintf('%s - # non-zero binary voxels', string(experiment_names(iter)));
     title(title_str, 'Interpreter', 'None');
 
@@ -90,7 +98,6 @@ for iter = 1:numel(experiment_names)
     diffImg = RGBImg - perceived_image*255;
     imagesc(diffImg);
     energyImg = diffImg.*diffImg;
-    currEnergy = sum(energyImg(:))
     title_str = sprintf('%s - perceived image difference', string(experiment_names(iter)));
     title(title_str, 'Interpreter', 'None');
     
@@ -113,7 +120,14 @@ for iter = 1:numel(experiment_names)
     % figure; imagesc(b_variance - exp2_b_variance);cl
     figure; 
     imagesc(variance); 
-    totalvariance = sum(variance(:))
     title_str = sprintf('%s - variance', string(experiment_names(iter)));
     title(title_str, 'Interpreter', 'None');
+    
+   
+    numberofbinaryvoxels = sum(nnpx_count_exp(:));
+    currEnergy = sum(energyImg(:));
+    totalvariance = sum(variance(:));
+    str = sprintf('numberofbinaryvoxels = %d \n currEnergy = %f \n totalvariance = %f \n', ...
+                  numberofbinaryvoxels, currEnergy, totalvariance)
+    
 end
