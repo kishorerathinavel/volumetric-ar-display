@@ -17,7 +17,8 @@ output_dir = sprintf('%s/analysis', data_folder_path);
 
 %% Inputting data
 
-experiment_names = {'ColorDC_edit3', 'adaptive_color_decomposition', 'highest_energy_channel_decomposition'};
+experiment_names = {'ColorDC_edit3', 'adaptive_color_decomposition', ...
+                    'highest_energy_channel_decomposition_1.0', 'highest_energy_channel_decomposition_1.4'};
 
 
 
@@ -95,7 +96,7 @@ for iter = 1:numel(experiment_names)
     perceived_image(:,:,3) = sum(b_perceived_volume, 3);
 
     figure; 
-    diffImg = RGBImg - perceived_image*255;
+    diffImg = RGBImg - perceived_image;
     imagesc(diffImg);
     energyImg = diffImg.*diffImg;
     title_str = sprintf('%s - perceived image difference', string(experiment_names(iter)));
@@ -123,11 +124,13 @@ for iter = 1:numel(experiment_names)
     title_str = sprintf('%s - variance', string(experiment_names(iter)));
     title(title_str, 'Interpreter', 'None');
     
-   
-    numberofbinaryvoxels = sum(nnpx_count_exp(:));
+ 
+    % nz_nnpx_count_exp = (nonzero)_(number of pixels)_(count)_(experiment)
+    nz_nnpx_count_exp = nnpx_count_exp(nnpx_count_exp > 0);
+    mean_nn_binaryvoxels = mean(nz_nnpx_count_exp);
     currEnergy = sum(energyImg(:));
     totalvariance = sum(variance(:));
-    str = sprintf('numberofbinaryvoxels = %d \n currEnergy = %f \n totalvariance = %f \n', ...
-                  numberofbinaryvoxels, currEnergy, totalvariance)
+    str = sprintf('meannumberofbinaryvoxels = %d \n currEnergy = %f \n totalvariance = %f \n', ...
+                  mean_nn_binaryvoxels, currEnergy, totalvariance)
     
 end

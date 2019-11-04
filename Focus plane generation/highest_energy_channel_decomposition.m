@@ -30,7 +30,7 @@ load(filename);
 
 %% Display parameters
 NumofBP=280;
-binarization_threshold = 1.4;
+binarization_threshold = 1.0;
 
 %% Normalizing and Removing zeros from depth map
 DepthMap_norm=DepthMapNormalization(DepthMap);
