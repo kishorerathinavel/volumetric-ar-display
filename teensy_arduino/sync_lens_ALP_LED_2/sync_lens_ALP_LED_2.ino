@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "codes.h"
+#include "circlePattern_codes5.h"
 
 const int LensPin = 6;
 const int ALPpin =  35;
@@ -106,7 +106,7 @@ float lens_frame_time = 16665.0;
 float binary_frame_time = lens_frame_time/281.0;
 int imgCount = 0;
 int numImg = 280;
-float factor = 0.8;
+float factor = 3.5;
 void loop() {
   if(disp_img) {
     noInterrupts();
@@ -129,7 +129,7 @@ void loop() {
       // Serial.println(gcode);
       // Serial.println(bcode);
 //      sendDacCodes(i*10, i*10, i*10);
-      sendDacCodes(factor*codes[imgCount][0], factor*codes[imgCount][1], factor*codes[imgCount][2]);
+      sendDacCodes(factor*codes[imgCount][0], codes[imgCount][1], factor*codes[imgCount][2]);
 //      sendDacCodes(codes[i][0], codes[i][1], codes[i][2]);
       digitalWrite(ALPpin, HIGH);
       __asm__ volatile ("nop");

@@ -4,15 +4,15 @@ warning off;
 %%
 data_folder_path = get_data_folder_path();
 input_dir = sprintf('%s/RGBD_data', data_folder_path);
-output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
+output_dir = sprintf('%s/scene_decomposition_output/', data_folder_path);
 
 %%
 
-filename = sprintf('%s/trial_01_rgb.png',input_dir);
+filename = sprintf('%s/trial_00_rgb.png',input_dir);
 RGBImg=imread(filename);
 filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
 load(filename);
-filename = sprintf('%s/trial_01_DepthMap.mat',input_dir);
+filename = sprintf('%s/trial_00_DepthMap.mat',input_dir);
 load(filename);
 
 figure;
@@ -108,15 +108,15 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 
 %%
 
-use_temporal_order = false;
+use_temporal_order = true;
 if(use_temporal_order == true)
     for i=1:NumofBP
-        filename = sprintf('%s/Scene_%03d.png', output_dir, i);
+        filename = sprintf('%s/current/Scene_%03d.png', output_dir, i);
         imwrite(ImageSeq_order(:,:,i),filename);  
     end
 else
     for i=1:NumofBP
-        filename = sprintf('%s/binary_%03d.png', output_dir, i);
+        filename = sprintf('%s/current/binary_%03d.png', output_dir, i);
         imwrite(Image_sequence(:,:,i),filename);  
     end
 end
@@ -124,9 +124,13 @@ end
 %%
 ImageSeq_Binary=uint8(ImageSeq_Binary);
 
-filename = sprintf('%s/ImageSeq_Binary.mat', output_dir);
+filename = sprintf('%s/ColorDC_edit4/ImageSeq_Binary.mat', output_dir);
 save(filename, 'ImageSeq_Binary');
 
-
+%%
+    for i=1:NumofBP
+        filename = sprintf('D:/whp17/Google Drive/FocusPlaneGenerationData/Calibration/TestPattern2/set0/Scene_%03d.png', i);
+        imwrite(ImageSeq_order(:,:,i),filename);  
+    end
 
 

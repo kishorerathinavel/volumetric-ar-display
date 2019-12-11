@@ -16,14 +16,14 @@ de=0.07; % measure
 
 %% Found from measurement and brute search
 % d1+o1=0.09 % measure
-o1=0.07; % Guess
-f1=0.068; % From Email
+o1=0.06; % Guess
+f1=0.0585; % From Email
 d1=0.03; % Guess
 
 
-f3=0.056; % Measured to be 0.053
-d2=0.12; % measure
-de=0.07; % measure
+f3=0.0455; % Measured to be 0.053
+d2=0.11; % measure
+de=0.055; % measure
 %% Parameters from graph.m
 o1=0.03; % Exhaustive search
 f1=0.0296; % From Email
@@ -31,17 +31,28 @@ f1=0.0296; % From Email
            % f1=0.0296; % From Email
 d1=0.03; % Exhaustive search
 
-f3=0.06; % Measured to be 0.053
-d2=0.12; % measure
-de=0.03; % measure
+f3=0.0456; % Measured to be 0.053
+d2=0.11; % measure
+de=0.06; % measure
+%%
+OpticsParams.o1 = o1;
+OpticsParams.f1 = f1;
+OpticsParams.d1 = d1;
+OpticsParams.d2 = d2;
+OpticsParams.f3 = f3;
+OpticsParams.de = de;
+
+data_folder_path = get_data_folder_path();
+filename = sprintf('%s/Params/OpticsParams.mat', data_folder_path);
+save(filename,'OpticsParams');
 %%
 
 num=280; % num of sample depths along z direction(depth direction)
-MinOpPower=12; % min optical power of focus tunable lens(in diopters)
+MinOpPower=8.5; % min optical power of focus tunable lens(in diopters)
 % current 87.5
 %MaxOpPower=15; % max optical power of focus tunable lens(in diopters)
 
-MaxOpPower=16; % max optical power of focus tunable lens(in diopters)
+MaxOpPower=15; % max optical power of focus tunable lens(in diopters)
                % from graph.m
 % current 137.5
 t=1:num;
@@ -115,7 +126,7 @@ M2 = -i2./o2;
 M3 = -i3./o3;
 I_e = M1 .* M2 .* M3 .* O_1;
 theta = 2*rad2deg(atan(I_e./ie/2));
-figure; plot(theta);
+%figure; plot(theta);
 
 figure;
 subplot(2,2,1)
@@ -143,10 +154,9 @@ title('Field of view');
 xlabel('time/us');
 ylabel('Field of view');
 
-
 %% phase correction
 
-phaseNum=107;
+phaseNum=100;
 
 t_phase=t(phaseNum:phaseNum+num-1);
 f_t_inverse_phase=f_t_inverse(phaseNum:phaseNum+num-1);
@@ -198,11 +208,18 @@ title('FOV Changes');
 xlabel('distance/m');
 ylabel('FOV/degree');
 
+
+figure;
+plot(1:length(fov_sort), fov_sort,'r*');
+title('FOV Changes');
+xlabel('Binary plane number(from near to far)');
+ylabel('FOV/degree');
+
 %[f_sort,forder]=sort(f_t_inverse(1:280));
 %%
 data_folder_path = get_data_folder_path();
-output_dir = sprintf('%s/FocusDepth', data_folder_path);
-filename = sprintf('%s/FocusDepth.mat', output_dir);
+output_dir = sprintf('%s/Params', data_folder_path);
+filename = sprintf('%s/FocusDepth_sin.mat', output_dir);
 save(filename, 'd', 'd_sort', 'order', 'un_order','fov_sort');
 
 % Description of variables:

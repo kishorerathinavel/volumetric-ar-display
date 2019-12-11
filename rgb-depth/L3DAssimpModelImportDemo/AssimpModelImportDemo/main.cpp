@@ -55,7 +55,8 @@ bool display_on_device = !true;
 int display_1[] ={ 2560, 1600 };
 int display_2[] ={ 2560, 1600 };
 int window_position[] ={0, 0 };
-int window_size[] ={ 1920, 1080 };
+//int window_size[] ={ 1920, 1080 };
+int window_size[] = { 1024, 768 };
 
 // Model Matrix (part of the OpenGL Model View Matrix)
 float modelMatrix[16];
