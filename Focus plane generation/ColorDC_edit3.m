@@ -145,7 +145,7 @@ else
     LEDs_ALL = repmat(LEDs_24_planes, [ceil(280/24), 1]);
     LEDs_ALL(281:end, :) = [];
     
-    dac_codes = LEDs_ALL;
+    dac_codes = LEDs_ALL/256;
     
     filename = sprintf('%s/ColorDC_edit3_dac_codes.mat', output_dir);
     save(filename, 'dac_codes', '-v7.3');

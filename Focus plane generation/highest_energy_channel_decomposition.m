@@ -65,6 +65,7 @@ else
     load('bw_Img_all.mat');
 end
 
+
 %% Loop variables
 
 residue = zeros(size(RGBImg));
@@ -75,30 +76,28 @@ LED_ALL = zeros(NumofBP,3);
 bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
 
 for subvolume_append = 1:NumofBP-1 
-    channel = mod(subvolume_append, 3);
-    if(channel == 0)
-        channel = 3;
-    end
-    
-    Energy_plane = [];
     subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
     expected_reconstruction = expected_reconstruction + subvolume;
-
-    %% Initialization
-
     toOptimize = subvolume;
     toOptimize = toOptimize + residue;
+
+    per_channel_energy = squeeze(sum(sum(toOptimize, 1), 2));
+    [value, channel_order] = sort(per_channel_energy, 'descend');
+    
+    channel = channel_order(1);
+    Energy_plane = [];
+    %% Initialization
+
     channel_toOptimize = toOptimize(:,:,channel);
     
     LEDs = [0,0,0];
-    LEDs(channel) = mean(channel_toOptimize(:));
-    LEDs(LEDs < 0) = 0;
+    nLEDs = returnNonZeroMeanOfChannels(toOptimize);
+    nLEDs(nLEDs < 0) = 0;
+    LEDs(channel) = nLEDs(channel);
     
     bin_img = zeros(size(channel_toOptimize));
     bin_img(channel_toOptimize/LEDs(channel) > binarization_threshold) = 1;
-    
-    % bin_img = im2double(im2bw(channel_toOptimize, LEDs(channel)));
-    
+ 
     img = displayedImage(LEDs, bin_img);
 
     residue = toOptimize - img;
@@ -107,31 +106,6 @@ for subvolume_append = 1:NumofBP-1
     currEnergy = sum(currEnergy(:));
     Energy_plane = [Energy_plane currEnergy];
 
-    for iter = 1:2
-        lambda = 1.00; % Kishore: Do we need this factor?
-        denominator = (bin_img.*bin_img + 1e-8);
-        numerator = (residue(:,:,channel).*bin_img);
-        delta = sum(numerator(:))./sum(denominator(:));
-        
-        LEDs(channel) = LEDs(channel) + lambda*delta;
-        LEDs(LEDs < 0) = 0;
-        
-        img = displayedImage(LEDs, bin_img);
-        residue = toOptimize - img;
-        currEnergy = residue.*residue;
-        currEnergy = sum(currEnergy(:));
-        Energy_plane = [Energy_plane currEnergy];
-        
-        bin_img = bin_img + residue(:,:,channel)/LEDs(channel);
-        bin_img = im2double(im2bw(bin_img,1)); % Kishore: Shouldn't the threshold be 0.5?
-        
-        img = displayedImage(LEDs, bin_img);
-        residue = toOptimize - img;
-        currEnergy = residue.*residue;
-        currEnergy = sum(currEnergy(:));
-        Energy_plane = [Energy_plane currEnergy];
-    end
-    
     bin_image_ALL(:,:,subvolume_append) = bin_img;
     bin_colorized = zeros(size(RGBImg));
     bin_colorized(:,:,channel) = bin_img;
@@ -159,9 +133,9 @@ for subvolume_append = 1:NumofBP-1
 end
 
 binary_images = bin_image_ALL;
-filename = sprintf('%s/adaptive_color_decomposition_binary_images.mat', output_dir);
+filename = sprintf('%s/highest_energy_channel_decomposition_binary_images.mat', output_dir);
 save(filename, 'binary_images', '-v7.3');
 
 dac_codes = LED_ALL;
-filename = sprintf('%s/adaptive_color_decomposition_dac_codes.mat', output_dir);
+filename = sprintf('%s/highest_energy_channel_decomposition_dac_codes.mat', output_dir);
 save(filename, 'dac_codes', '-v7.3');

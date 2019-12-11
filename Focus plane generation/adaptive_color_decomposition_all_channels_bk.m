@@ -122,6 +122,7 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
         lambda = 1.00; % Kishore: Do we need this factor?
         denominator = (bin_img.*bin_img + 1e-8);
 
+        old_img = img;
         old_LEDs = LEDs;
         old_energy = currEnergy;
         
@@ -149,6 +150,9 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
         residue = toOptimize - img;
         currEnergy = residue.*residue;
         currEnergy = sum(currEnergy(:));
+        if(currEnergy > old_energy)
+            k = waitforbuttonpress;
+        end
         % if(currEnergy > old_energy)
         %     LEDs = old_LEDs;
         %     img = displayedImage(LEDs, bin_img);
@@ -176,18 +180,25 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
         %     b_delta_bin_img(b_delta_bin_img > 0) = 0;
         % end
 
+        old_img = img;
         old_bin_img = bin_img;
         old_energy = currEnergy;
+        
         delta_bin_img = r_delta_bin_img + g_delta_bin_img + b_delta_bin_img;
         delta_bin_img(isnan(delta_bin_img)) = 0;
-        bin_img = bin_img + delta_bin_img;
-        bin_img(delta_bin_img < 0.0) = 0.0;
+        % bin_img = bin_img + delta_bin_img;
+        bin_img(delta_bin_img < -1.0) = 0.0;
         % bin_img(bin_img >= 1.0) = 1.0;
 
         img = displayedImage(LEDs, bin_img);
         residue = toOptimize - img;
         currEnergy = residue.*residue;
         currEnergy = sum(currEnergy(:));
+        
+        if(currEnergy > old_energy)
+            k = waitforbuttonpress;
+        end
+        
         
         % if(currEnergy > old_energy)
         %     bin_img = old_bin_img;
