@@ -2,13 +2,14 @@
 clear all;
 
 %%
+addpath('library');
 data_folder_path = get_data_folder_path();
 
 %%
 filename = sprintf('%s/Calibration/Fov_Capture/FOV9.png',data_folder_path);
 fovImage = imread(filename);
 
-filename = sprintf('%s/Calibration/ckboard/verysmall_ap_near/cameraParams.mat',data_folder_path);
+filename = sprintf('%s/Params/cameraParams.mat',data_folder_path);
 load(filename);
 
 filename = sprintf('%s/fov_simulation/Factor.mat',data_folder_path);
