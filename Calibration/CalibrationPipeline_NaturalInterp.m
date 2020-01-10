@@ -42,14 +42,16 @@ imshow(images_processed{1},[]);
 ROI = getrect;
 rectangle('Position',ROI,'EdgeColor','r');
 
-
+for i = 1:5
+ROI_Cell{i} = ROI;
+end
 
 % % detecting points
 % for i=1:5
 % points{i} = detectSURFFeatures(images_processed{i},'ROI',ROI,'NumOctaves',1,'MetricThreshold',900,'NumScaleLevels',4);
 % end
 % 
-points = featureDetect(images_processed,'ROI',ROI);
+points = featureDetect(images_processed,'ROI',ROI_Cell);
 
 for i=1:5
 subplot(3,2,i),
@@ -168,6 +170,7 @@ dataTem = xy_data{i};
 XYZTem(:,1) = reshape(dataTem(:,:,1),8*10,1);
 XYZTem(:,2) = reshape(dataTem(:,:,2),8*10,1);
 XYZTem(:,3) = d_sort(Location(i)); % using the the calculated z value
+XYZTem(:,4) = Location(i);
 index = find(XYZTem(:,1)== -1); % rule out undetected points in display space
 XYZTem(index,:) = [];
 XYZ_sample = [XYZ_sample;XYZTem];
@@ -243,7 +246,8 @@ Interp2d = false;
 
 for j=1:5
     
-z_query = ones(size(y_query))*d_sort(Location(j));
+% z_query = ones(size(y_query))*d_sort(Location(j));
+z_query = ones(size(y_query))*double(Location(j));
 
 if (Interp2d)
 % doing image pairwise 2D interpolation
@@ -259,8 +263,8 @@ Y_Display = FY(x_query,y_query);
 s = s+points{j}.Count;
 else
 % doing 3D volume interpolation 
-FX = scatteredInterpolant(XYZ_sample(:,1),XYZ_sample(:,2),XYZ_sample(:,3),double(XDYDZD_sample(:,1)),'natural');
-FY = scatteredInterpolant(XYZ_sample(:,1),XYZ_sample(:,2),XYZ_sample(:,3),double(XDYDZD_sample(:,2)),'natural');
+FX = scatteredInterpolant(XYZ_sample(:,1),XYZ_sample(:,2),XYZ_sample(:,4),double(XDYDZD_sample(:,1)),'natural');
+FY = scatteredInterpolant(XYZ_sample(:,1),XYZ_sample(:,2),XYZ_sample(:,4),double(XDYDZD_sample(:,2)),'natural');
 
 X_Display = FX(x_query,y_query,z_query);
 Y_Display = FY(x_query,y_query,z_query);

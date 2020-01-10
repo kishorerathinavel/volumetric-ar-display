@@ -1,7 +1,7 @@
 #pragma once
 #include "common_var_func.h"
 
-#define NUM_MODELS 3
+#define NUM_MODELS 1
 
 // Information to render each assimp node
 struct MyMesh {

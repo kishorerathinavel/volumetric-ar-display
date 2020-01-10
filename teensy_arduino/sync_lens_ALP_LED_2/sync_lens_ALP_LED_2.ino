@@ -1,7 +1,7 @@
 #include <SPI.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
-#include "circlePattern1/circlePattern_codes1.h"
+#include "circlePattern_10/circlePattern_codes0.h"
 
 const int LensPin = 6;
 const int ALPpin =  35;
@@ -106,7 +106,7 @@ float lens_frame_time = 16665.0;
 float binary_frame_time = lens_frame_time/281.0;
 int imgCount = 0;
 int numImg = 280;
-float factor = 1.8;
+float factor = 1.6;
 void loop() {
   if(disp_img) {
     noInterrupts();

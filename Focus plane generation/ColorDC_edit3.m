@@ -8,10 +8,10 @@ input_dir = sprintf('%s/RGBD_data', data_folder_path);
 output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
 
 %% Inputting data
-filename = sprintf('%s/trial_01_rgb.png',input_dir);
+filename = sprintf('%s/trial_09_rgb.png',input_dir);
 RGBImg=imread(filename);
 
-filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
+filename = sprintf('%s/Params/FocusDepth_sin.mat',data_folder_path);
 load(filename);
 % Description of variables:
 % d - distance to depth plane in meters ordered in sequence of when each depth plane is
@@ -21,7 +21,7 @@ load(filename);
 % un_order - index for each entry of d in d_sort
 % fov_sort - FoV for each depth plane following same order of d_sort
 
-filename = sprintf('%s/trial_01_DepthMap.mat',input_dir);
+filename = sprintf('%s/trial_09_DepthMap.mat',input_dir);
 load(filename);
 % Inputs the depth map of the scene. We avoid inputing a png image as the depth map
 % because we want a single channel image with distance in meters instead of a 4-channel
@@ -121,10 +121,10 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 
 % Kishore: Why are we not saving the LED values also here? Where are we saving the LED values?
 
-use_temporal_order = false;
+use_temporal_order = true;
 if(use_temporal_order == true)
     for i=1:NumofBP
-        filename = sprintf('%s/Scene_%03d.png', output_dir, i);
+        filename = sprintf('%s/Calibration/Results/Bridge2/Scene_%03d.png', data_folder_path, i);
         imwrite(ImageSeq_order(:,:,i),filename);  
     end
 else

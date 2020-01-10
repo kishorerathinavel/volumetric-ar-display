@@ -26,11 +26,12 @@ I = insertShape(I, 'Line',[x+w/2,y,x+w/2,y+h],'Color','White','Linewidth',5);
 I = I*255;
 imshow(I,[]);
 %%
-Location = [80, 200, 240];
+num = 4;
+Location = int64(linspace(1,280,4));
 
 Test = zeros([768 1024 280]);
 
-Test(:,:,Location) = I;
+Test(:,:,Location) = repmat(I(:,:,1),1,1,num);
 %%
 Test_undistort = FovResize(Location,1./v_factors, Test);
 

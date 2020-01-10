@@ -12,18 +12,25 @@ function points = featureDetect(varargin)
 %       points: a cell vector  each element contains the number of detected
 %               centers and their locations
 
+
+if nargin < 2
+    error('not enough arguments');
+end
+
 [images,ROI]=parseInputs(varargin{:});
 
 num = length(images);
 
 
+
 for i = 1:num
+    ROI_T = ROI{i};
     im = images{i};
-    images_crop = imcrop(im,ROI);
+    images_crop = imcrop(im,ROI_T);
     images_BW = imbinarize(images_crop,'global');
     stats = regionprops(images_BW,'centroid');
     centroids = cat(1,stats.Centroid);
-    centroids  = centroids + repmat([ROI(1)-1,ROI(2)-1], length(centroids),1);
+    centroids  = centroids + repmat([ROI_T(1)-1,ROI_T(2)-1], length(centroids),1);
     points{i}.Location = centroids;
     points{i}.Count = length(centroids);
     
@@ -37,7 +44,7 @@ function [images,ROI]=parseInputs(varargin)
 
 parser = inputParser;
 parser.addRequired('Images',@CheckImg);
-parser.addParameter('ROI',[800,700,3800,2400]);
+parser.addParameter('ROI',[1,1,1,1]);
 
 
 parser.parse(varargin{:});

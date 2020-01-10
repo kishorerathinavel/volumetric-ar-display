@@ -2,14 +2,14 @@ clear all;
 
 %%
 data_folder_path = get_data_folder_path();
-input_dir = sprintf('%s/FocusDepth', data_folder_path);
+input_dir = sprintf('%s/Params', data_folder_path);
 %%
 % MSBFirst
 MaxIntensityHex='5055';
 colorbit=24;
 NumofBP=280;
 
-filename = sprintf('%s/FocusDepth.mat',input_dir);
+filename = sprintf('%s/FocusDepth_sin.mat',input_dir);
 load(filename);
 
 m=colorbit/3;

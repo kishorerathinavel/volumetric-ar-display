@@ -10,7 +10,7 @@ output_dir = sprintf('%s/scene_decomposition_output/', data_folder_path);
 
 filename = sprintf('%s/trial_00_rgb.png',input_dir);
 RGBImg=imread(filename);
-filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
+filename = sprintf('%s/Params/FocusDepth_sin.mat',data_folder_path);
 load(filename);
 filename = sprintf('%s/trial_00_DepthMap.mat',input_dir);
 load(filename);
@@ -111,7 +111,7 @@ ImageSeq_order=flipud(Image_sequence(:,:,un_order));
 use_temporal_order = true;
 if(use_temporal_order == true)
     for i=1:NumofBP
-        filename = sprintf('%s/current/Scene_%03d.png', output_dir, i);
+        filename = sprintf('%s/Calibration/Results/Bridge/Scene_%03d.png', data_folder_path, i);
         imwrite(ImageSeq_order(:,:,i),filename);  
     end
 else
