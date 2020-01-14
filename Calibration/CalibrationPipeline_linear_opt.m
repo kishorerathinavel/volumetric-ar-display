@@ -71,11 +71,19 @@ plot(points{i}.Location(:,1),points{i}.Location(:,2),'color','g','marker','o','m
 plot(points{i}.Location(:,1),points{i}.Location(:,2),'color','g','marker','+','markersize',18,'linestyle','none');
 end
 %%
+filename = sprintf('%s/Params/FocusDepth_sin.mat',data_folder_path);
 save points_10 points
 %% load corresponding (xd,yd) data
-load('DepthLocation_10_14.mat');
-load('XdYd_10_14.mat');
+filename = sprintf('%s/DataFiles/DepthLocation_10_14.mat',data_folder_path);
+load(filename);
+
+filename = sprintf('%s/DataFiles/XdYd_10_14.mat',data_folder_path);
+load(filename);
+
 filename = sprintf('%s/Params/FocusDepth_sin.mat',data_folder_path);
+load(filename);
+
+filename = sprintf('%s/DataFiles/points_10.mat',data_folder_path);
 load(filename);
 
 % flip the y coordinate of yd
@@ -94,7 +102,8 @@ xdyd_data = ReshapeFeatures(xdyd_points,[10,14],'OriginalShape',0);
 % z' = z;
 % y' = f1(x,y,z)
 % x' = f2(x,y,z)
-% where f1 and f2 are quadratic to x and y, and cubic to z
+% f1 and f2 can be regarded as tricubic interpolation
+% f = (x3 + x2 + x +1)(y3 + y2 + y +1)(z3 + z2 + z + 1);
 
 
 % chose only five planes for direct SVD solution
@@ -107,7 +116,13 @@ Z_coord = [];
 XD_coord = [];
 YD_coord = [];
 
-for i=1:2:9
+% chose only a subset of planes for direct SVD solution
+% leave others for optimization
+
+
+for i=1:length(Location)
+    
+    
     x_tem = xy_data{i}.Location(:,:,1);
     y_tem = xy_data{i}.Location(:,:,2);
     
@@ -123,17 +138,106 @@ ZD_coord = Z_coord;
 
 m = length(X_coord);
 % backward transform
-A1 = [X_coord.^2, X_coord, ones([m,1])];
-A2 = [Y_coord.^2, Y_coord, ones([m,1])];
+
+% control the degree of the fitting function
+PolyDegree = 3;
+
+
+switch PolyDegree
+    case 3
+    % cubic
+    A1 = [X_coord.^3, X_coord.^2, X_coord, ones([m,1])];
+    A2 = [Y_coord.^3, Y_coord.^2, Y_coord, ones([m,1])];
+
+    case 2
+    %quadratic
+    A1 = [X_coord.^2, X_coord, ones([m,1])];
+    A2 = [Y_coord.^2, Y_coord, ones([m,1])];
+
+    case 1
+    %linear
+    A1 = [X_coord, ones([m,1])];
+    A2 = [Y_coord, ones([m,1])];
+    
+    otherwise
+    %linear
+    A1 = [X_coord, ones([m,1])];
+    A2 = [Y_coord, ones([m,1])];
+        
+end
+
+
 A3 = double([Z_coord.^3, Z_coord.^2, Z_coord, ones([m,1])]);
 
-A4 = [A1(:,1).*A2, A1(:,2).*A2, A1(:,3).*A2];
-A5 = [A3(:,1).*A4, A3(:,2).*A4, A3(:,3).*A4, A3(:,4).*A4];
+A4 = [];
+A = [];
 
-AX = [A5,-XD_coord];
-AY = [A5,-YD_coord];
+for i=1:size(A1,2)  
+    %A4 = A1*A2
+    A4 = [A4, A1(:,i).*A2];
+end
 
-[UX,SX,VX] = svd(AX);
-[UY,SY,VY] = svd(AX);
+for i=1:size(A3,2)
+    %A = A3*A4;
+    A = [A, A3(:,i).*A4];
+end
 
+% standard normalization to A(otherwise, A is ill-conditioned)
+% A_new = (A-M)*T
+% where M = [m1 m2 ... mn        T = [t1 0 ... 0
+%            m1 m2 ... mn             0 t2 ... 0
+%            .                        .
+%            .                        .
+%            .                        .
+%            m1 m2 ... mn]            0 0 ... tn]
+% mi is the mean value of Ai, ti is the reciprocal of the standard devition
+% of Ai, note that the last column is constant 1 which shouldn't be
+% normalized(mn = 0, tn = 1)
+
+M = repmat([mean(A(:,1:end-1)),0],m,1);
+D = [std(A(:,1:end-1)),1];
+T = diag(1./D);
+
+A_new = (A-M)*T;
+
+% solving Ax=b using lsqr function
+% The result satisfies mim || AX - b||2
+
+%%
+% planesIndex = 1:1:10;
+% maxiter = 300;
+% tol = [];
+% [Coeff_x,flag_x,relres_x]= lsqr(A_new, XD_coord,tol, maxiter);
+% [Coeff_y,flag_y,relres_y]= lsqr(A_new, YD_coord,tol, maxiter);
+
+planesIndex = 1:1:10;
+
+c = zeros([140,length(planesIndex)]);
+for i=1:length(planesIndex)
+    s = (planesIndex(i)-1)*140+1;
+    e =  planesIndex(i)*140;
+    c(:,i) = s:e;
+end
+pointsIndex = c(:);
+
+Coeff_x = A_new(pointsIndex,:)\XD_coord(pointsIndex,:);
+Coeff_y = A_new(pointsIndex,:)\YD_coord(pointsIndex,:);
+
+%% levenberg-Marquardt algorithm
+fun_x = @(x)(A_new*x-XD_coord);
+fun_y = @(x)(A_new*x-YD_coord);
+
+% options = optimoptions(@lsqnonlin,'Algorithm','trust-region-reflective');
+options = optimoptions(@lsqnonlin,'Algorithm','levenberg-marquardt');
+options.FunctionTolerance = 1e-9;
+options.StepTolerance = 1e-9;
+x0 = zeros([64 1]);
+
+[Coeff_x_refine,resnorm_x,residual_x,exitflag_x,output_x] = lsqnonlin(fun_x,Coeff_x,[],[],options);
+[Coeff_y_refine,resnorm_y,residual_y,exitflag_y,output_y] = lsqnonlin(fun_y,Coeff_y,[],[],options);
+
+% [Coeff_x_refine,resnorm_x,residual_x,exitflag_x,output_x] = lsqnonlin(fun_x,x0,[],[],options);
+% [Coeff_y_refine,resnorm_y,residual_y,exitflag_y,output_y] = lsqnonlin(fun_y,x0,[],[],options);
+%% 
+[U,S,V] = svd(A_new);
 
