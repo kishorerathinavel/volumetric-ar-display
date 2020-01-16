@@ -2,6 +2,13 @@
 % Generate a lookup table for the display calibration
 % Using linear-volume interpolation method
 clear all;
+
+
+%% Part 1
+% preparing data needed for parameter estimation in calibration model
+% This part involves loading images, detecting, organizing and saving 
+% reference points
+
 %% get the path where all data are stored
 addpath('library');
 data_folder_path =  get_data_folder_path();
@@ -73,7 +80,18 @@ end
 %%
 filename = sprintf('%s/Params/FocusDepth_sin.mat',data_folder_path);
 save points_10 points
+
+%% Part2
+% Model parameters estimation 
+% This part involves loading reference points, establishing model and
+% estimating model parameters
+
 %% load corresponding (xd,yd) data
+
+% get the path where all data are stored
+addpath('library');
+data_folder_path =  get_data_folder_path();
+
 filename = sprintf('%s/DataFiles/DepthLocation_10_14.mat',data_folder_path);
 load(filename);
 
@@ -91,33 +109,25 @@ load(filename);
 Xdyd_flip = Xdyd;
 Xdyd_flip(:,2) = 768 - Xdyd_flip(:,2) + 1;
 
-%% reshape the captured points
+
+%% Orgnize data points with correspondence.
+
+% reshape the captured points
 xy_data = ReshapeFeatures(points,[10,14],'OriginalShape',0);
 % reshape the inported (xd,yd) data
 xdyd_points{1}.Location = Xdyd_flip;
 xdyd_points{1}.Count = 10*14;
 xdyd_data = ReshapeFeatures(xdyd_points,[10,14],'OriginalShape',0);
 
-%% fitting an function 
-% z' = z;
-% y' = f1(x,y,z)
-% x' = f2(x,y,z)
-% f1 and f2 can be regarded as tricubic interpolation
-% f = (x3 + x2 + x +1)(y3 + y2 + y +1)(z3 + z2 + z + 1);
 
 
-% chose only five planes for direct SVD solution
-% leave others for optimization
-
+%
 X_coord = [];
 Y_coord = [];
 Z_coord = [];
 
 XD_coord = [];
 YD_coord = [];
-
-% chose only a subset of planes for direct SVD solution
-% leave others for optimization
 
 
 for i=1:length(Location)
@@ -135,6 +145,16 @@ for i=1:length(Location)
     YD_coord = [YD_coord; reshape(xdyd_data{1}.Location(:,:,2),10*14,1)];
 end
 ZD_coord = Z_coord;
+
+
+
+%% establishing models
+% z' = z;
+% y' = f1(x,y,z)
+% x' = f2(x,y,z)
+% f1 and f2 are established as polynomial functions with respect to x,y,z
+% f = sum(x.^i * y.^j * z.*k)  i,j,k belongs in N
+
 
 m = length(X_coord);
 % backward transform
