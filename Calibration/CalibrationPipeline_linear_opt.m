@@ -163,6 +163,11 @@ m = length(X_coord);
 PolyDegree = 3;
 
 
+% variable controlling whether to add cubic term when PolyDegree = 2
+% this comes from the fact that there is cubic terms in radial lens
+% distortion correction formula
+AddCubicTerm = true;
+
 switch PolyDegree
     case 3
     % cubic
@@ -202,6 +207,11 @@ for i=1:size(A3,2)
     A = [A, A3(:,i).*A4];
 end
 
+
+if(AddCubicTerm)&&(PolyDegree == 2)
+    A = [X_coord.^3, Y_coord.^3,A];
+end
+
 % standard normalization to A(otherwise, A is ill-conditioned)
 % A_new = (A-M)*T
 % where M = [m1 m2 ... mn        T = [t1 0 ... 0
@@ -220,10 +230,7 @@ T = diag(1./D);
 
 A_new = (A-M)*T;
 
-% solving Ax=b using lsqr function
-% The result satisfies mim || AX - b||2
-
-%%
+%% seperate data points to train set and test set
 % planesIndex = 1:1:10;
 % maxiter = 300;
 % tol = [];
@@ -239,6 +246,9 @@ for i=1:length(planesIndex)
     c(:,i) = s:e;
 end
 pointsIndex = c(:);
+
+
+%% Matlab built-in solver 
 
 Coeff_x = A_new(pointsIndex,:)\XD_coord(pointsIndex,:);
 Coeff_y = A_new(pointsIndex,:)\YD_coord(pointsIndex,:);
