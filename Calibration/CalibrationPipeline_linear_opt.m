@@ -247,27 +247,53 @@ for i=1:length(planesIndex)
 end
 pointsIndex = c(:);
 
+%% Part3
+% Using different solver to solve the linear least-square problem
+% When the degree in model is large, the matrix turns out to be
+% ill-conditioned.
+% Compare results from different method.
 
 %% Matlab built-in solver 
+% QR method
+Coeff_x_qr = A_new\XD_coord;
+Coeff_y_qr = A_new\YD_coord;
 
-Coeff_x = A_new(pointsIndex,:)\XD_coord(pointsIndex,:);
-Coeff_y = A_new(pointsIndex,:)\YD_coord(pointsIndex,:);
+%% SVD method
+
+[U,S,V] = svd(A_new, 0);
+
+Coeff_x_svd = V*((U'*XD_coord)./diag(S));
+Coeff_y_svd = V*((U'*YD_coord)./diag(S));
+
+
+%truncated SVD method for large condition number
+
+TruncatedIndex = find(diag(S)<1e-5);
+InvertS = 1./diag(S);
+InvertS(TruncatedIndex) = 0;
+
+Coeff_x_svd_t = V*((U'*XD_coord).*InvertS);
+Coeff_y_svd_t = V*((U'*XD_coord).*InvertS);
+
+
 
 %% levenberg-Marquardt algorithm
-fun_x = @(x)(A_new*x-XD_coord);
-fun_y = @(x)(A_new*x-YD_coord);
+lamda = 0.03;
+fun_x = @(x)([A_new*x-XD_coord;lamda*x]);
+fun_y = @(x)([A_new*x-YD_coord;lamda*x]);
 
-% options = optimoptions(@lsqnonlin,'Algorithm','trust-region-reflective');
-options = optimoptions(@lsqnonlin,'Algorithm','levenberg-marquardt');
-options.FunctionTolerance = 1e-9;
-options.StepTolerance = 1e-9;
-x0 = zeros([64 1]);
+options = optimoptions(@lsqnonlin,'Algorithm','trust-region-reflective');
+% options = optimoptions(@lsqnonlin,'Algorithm','levenberg-marquardt');
+options.FunctionTolerance = 1e-8;
+options.StepTolerance = 1e-8;
 
-[Coeff_x_refine,resnorm_x,residual_x,exitflag_x,output_x] = lsqnonlin(fun_x,Coeff_x,[],[],options);
-[Coeff_y_refine,resnorm_y,residual_y,exitflag_y,output_y] = lsqnonlin(fun_y,Coeff_y,[],[],options);
+x0 = zeros([size(A_new,2) 1]);
 
-% [Coeff_x_refine,resnorm_x,residual_x,exitflag_x,output_x] = lsqnonlin(fun_x,x0,[],[],options);
-% [Coeff_y_refine,resnorm_y,residual_y,exitflag_y,output_y] = lsqnonlin(fun_y,x0,[],[],options);
-%% 
-[U,S,V] = svd(A_new);
+[Coeff_x_refine,resnorm_x,residual_x,exitflag_x,output_x] = lsqnonlin(fun_x,Coeff_x_svd,[],[],options);
+[Coeff_y_refine,resnorm_y,residual_y,exitflag_y,output_y] = lsqnonlin(fun_y,Coeff_y_svd,[],[],options);
+%%
+% different initialization
+[Coeff_x_refine,resnorm_x,residual_x,exitflag_x,output_x] = lsqnonlin(fun_x,x0,[],[],options);
+[Coeff_y_refine,resnorm_y,residual_y,exitflag_y,output_y] = lsqnonlin(fun_y,x0,[],[],options);
+
 
