@@ -2,7 +2,6 @@ clear all;
 close all;
 
 %% 
-tic
 
 data_folder_path = get_data_folder_path();
 input_dir = sprintf('%s/RGBD_data', data_folder_path);
@@ -49,7 +48,7 @@ DepthList=linspace(0,1,NumofBP);
 DepthSeparater=DepthList;
 
 %% save or load bw_Img_all
-savedata = false;
+savedata = true;
 if(savedata)
     s = size(RGBImg);
     bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
@@ -67,9 +66,11 @@ if(savedata)
         bw_Img_all(:,:,:,subvolume_append) = bw_Img;
     end
 
-    save bw_Img_all.mat bw_Img_all -v7.3
+    filename = sprintf('bw_Img_all_%d.mat',NumofBP);
+    save(filename, 'bw_Img_all', '-v7.3');
 else 
-    load('bw_Img_all.mat');
+    filename = sprintf('bw_Img_all_%d.mat',NumofBP);
+    load(filename);
 end
 
 %% Loop variables
@@ -80,13 +81,18 @@ expected_reconstruction = zeros(size(RGBImg));
 Energy_all = [];
 LED_ALL = zeros(NumofBP,3);
 bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
-binarization_threshold = 1.4;
+binarization_threshold = 1.0;
+
+combinations = [[1,0,0]; [0,1,0]; [0,0,1]; [1,1,0]; [0,1,1]; [1,0,1]; [1,1,1]];
+
+tic
+previousEnergy = 0;
 
 for subvolume_append = 1:NumofBP-1%50 %280-windowLength
-    % if(subvolume_append == 92)
-    %     waitforbuttonpress;
+    % if(subvolume_append == 124)
+    %     waitforbuttonpress
     % end
-    
+
     Energy_plane = [];
     subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
     expected_reconstruction = expected_reconstruction + subvolume;
@@ -96,28 +102,78 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
     toOptimize = subvolume;
     toOptimize = toOptimize + residue;
     
+    % imshow(toOptimize);
+    
     % LEDs = returnEigenGuess(toOptimize);
     LEDs = returnNonZeroMeanOfChannels(toOptimize); % Document
-    bin_img=zeros(size(toOptimize,1), size(toOptimize,2));
+    LEDs(isnan(LEDs)) = 0;
+    options = zeros(size(toOptimize,1), size(toOptimize,2),7);
+    options = zeros(size(toOptimize,1), size(toOptimize,2),7);
 
-    delta_bin_img = toOptimize(:,:,1)/LEDs(1) + toOptimize(:,:,2)/LEDs(2) + ...
-        toOptimize(:,:,3)/LEDs(3);
-    delta_bin_img(isnan(delta_bin_img)) = 0;
-    bin_img = bin_img + delta_bin_img;
-    bin_img(bin_img < binarization_threshold) = 0.0;
-    bin_img(bin_img >= binarization_threshold) = 1.0;
-    % bin_img(bin_img < nnz(LEDs)) = 0.0;
-    % bin_img(bin_img >= nnz(LEDs)) = 1.0;
+    bin_img1 = toOptimize(:,:,1)/LEDs(1);
+    bin_img2 = toOptimize(:,:,2)/LEDs(2);
+    bin_img3 = toOptimize(:,:,3)/LEDs(3);
+    bin_img1(isnan(bin_img1)) = 0;
+    bin_img2(isnan(bin_img2)) = 0;
+    bin_img3(isnan(bin_img3)) = 0;
+    bin_img1(bin_img1 < binarization_threshold) = 0.0;
+    bin_img2(bin_img2 < binarization_threshold) = 0.0;
+    bin_img3(bin_img3 < binarization_threshold) = 0.0;
+
+    for iter = 1:7
+        curr_bin_img = ones(size(bin_img1,1), size(bin_img1,2));
+        if(combinations(iter,1) ~= 0)
+            curr_bin_img = curr_bin_img .* bin_img1;
+        end
+        if(combinations(iter,2) ~= 0)
+            curr_bin_img = curr_bin_img .* bin_img2;
+        end
+        if(combinations(iter,3) ~= 0)
+            curr_bin_img = curr_bin_img .* bin_img3;
+        end
+        options(:,:,iter) = curr_bin_img;
+    end
+    
+    sum_options = zeros(7,1);
+    for iter = 1:7
+        curr_option = options(:,:,iter);
+        sum_options(iter) = sum(combinations(iter,:))*sum(curr_option(:));
+    end
+   
+    
+    [sorted_sum_options, sort_indices] = sort(sum_options, 'descend');
+   
+    ind = 1;
+    if(subvolume_append > 2)
+        if(Energy_all(end-1,end) == Energy_all(end,end))
+            ind = sort_indices(2);
+        else
+            ind = sort_indices(1);
+        end
+    else
+        ind = sort_indices(1);
+    end
+    
+    bin_img = options(:,:,ind);
+    LEDs = LEDs.*combinations(ind,:);
+    LEDs(isnan(LEDs)) = 0;
     
     img = displayedImage(LEDs, bin_img);
+    if(~isempty(find(isnan(img))))
+        waitforbuttonpress
+    
+    end
     residue = toOptimize - img;
 
     currEnergy = residue.*residue;
+    residue(:,:,1) = residue(:,:,1)*combinations(ind,1);
+    residue(:,:,2) = residue(:,:,2)*combinations(ind,2);
+    residue(:,:,3) = residue(:,:,3)*combinations(ind,3);
     currEnergy = sum(currEnergy(:));
     Energy_plane = [Energy_plane currEnergy];
 
     %% Optimization
-    for iter = 1:2
+    for iter = 1:1
 
         lambda = 1.00; % Kishore: Do we need this factor?
         denominator = (bin_img.*bin_img + 1e-8);
@@ -144,15 +200,22 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
         % delta = sum(fraction(:));
         LEDs(3) = LEDs(3) + lambda*delta;
         
-        LEDs(LEDs < 0.1) = 0;
+        LEDs = LEDs.*combinations(ind,:);
+        LEDs(isnan(LEDs)) = 0;
         
         img = displayedImage(LEDs, bin_img);
+        if(~isempty(find(isnan(img))))
+            waitforbuttonpress
+        end
         residue = toOptimize - img;
+        residue(:,:,1) = residue(:,:,1)*combinations(ind,1);
+        residue(:,:,2) = residue(:,:,2)*combinations(ind,2);
+        residue(:,:,3) = residue(:,:,3)*combinations(ind,3);
         currEnergy = residue.*residue;
         currEnergy = sum(currEnergy(:));
-        if(currEnergy > old_energy)
-            k = waitforbuttonpress;
-        end
+        % if(currEnergy > old_energy)
+        %     k = waitforbuttonpress;
+        % end
         % if(currEnergy > old_energy)
         %     LEDs = old_LEDs;
         %     img = displayedImage(LEDs, bin_img);
@@ -163,56 +226,66 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
         Energy_plane = [Energy_plane currEnergy];
         
         % delta_bin_img = residue(:,:,1)/LEDs(1) + residue(:,:,2)/LEDs(2) + residue(:,:,3)/LEDs(3);
-        r_delta_bin_img = residue(:,:,1)/LEDs(1);
-        g_delta_bin_img = residue(:,:,2)/LEDs(2);
-        b_delta_bin_img = residue(:,:,3)/LEDs(3);
+        % r_delta_bin_img = residue(:,:,1)/LEDs(1);
+        % g_delta_bin_img = residue(:,:,2)/LEDs(2);
+        % b_delta_bin_img = residue(:,:,3)/LEDs(3);
+        % r_delta_bin_img(isnan(r_delta_bin_img)) = 0;
+        % g_delta_bin_img(isnan(g_delta_bin_img)) = 0;
+        % b_delta_bin_img(isnan(b_delta_bin_img)) = 0;
         
-        r_delta_bin_img(r_delta_bin_img > 0) = 0;
-        g_delta_bin_img(g_delta_bin_img > 0) = 0;
-        b_delta_bin_img(b_delta_bin_img > 0) = 0;
-        % if(LEDs(1) == 0)
-        %     r_delta_bin_img(r_delta_bin_img > 0) = 0;
-        % end
-        % if(LEDs(2) == 0)
-        %     g_delta_bin_img(g_delta_bin_img > 0) = 0;
-        % end
-        % if(LEDs(3) == 0)
-        %     b_delta_bin_img(b_delta_bin_img > 0) = 0;
-        % end
+        % r_delta_bin_img(r_delta_bin_img > 0) = 0;
+        % g_delta_bin_img(g_delta_bin_img > 0) = 0;
+        % b_delta_bin_img(b_delta_bin_img > 0) = 0;
+        % % if(LEDs(1) == 0)
+        % %     r_delta_bin_img(r_delta_bin_img > 0) = 0;
+        % % end
+        % % if(LEDs(2) == 0)
+        % %     g_delta_bin_img(g_delta_bin_img > 0) = 0;
+        % % end
+        % % if(LEDs(3) == 0)
+        % %     b_delta_bin_img(b_delta_bin_img > 0) = 0;
+        % % end
 
-        old_img = img;
-        old_bin_img = bin_img;
-        old_energy = currEnergy;
+        % old_img = img;
+        % old_bin_img = bin_img;
+        % old_energy = currEnergy;
         
-        delta_bin_img = r_delta_bin_img + g_delta_bin_img + b_delta_bin_img;
-        delta_bin_img(isnan(delta_bin_img)) = 0;
-        % bin_img = bin_img + delta_bin_img;
-        bin_img(delta_bin_img < -1.0) = 0.0;
-        % bin_img(bin_img >= 1.0) = 1.0;
+        % delta_bin_img = r_delta_bin_img + g_delta_bin_img + b_delta_bin_img;
+        % delta_bin_img(isnan(delta_bin_img)) = 0;
+        % % bin_img = bin_img + delta_bin_img;
+        % bin_img(delta_bin_img < -1.0) = 0.0;
+        % % bin_img(bin_img >= 1.0) = 1.0;
 
-        img = displayedImage(LEDs, bin_img);
-        residue = toOptimize - img;
-        currEnergy = residue.*residue;
-        currEnergy = sum(currEnergy(:));
-        
-        if(currEnergy > old_energy)
-            k = waitforbuttonpress;
-        end
-        
-        
-        % if(currEnergy > old_energy)
-        %     bin_img = old_bin_img;
-        %     img = displayedImage(LEDs, bin_img);
-        %     residue = toOptimize - img;
-        %     currEnergy = residue.*residue;
-        %     currEnergy = sum(currEnergy(:));
+        % img = displayedImage(LEDs, bin_img);
+        % if(~isempty(find(isnan(img))))
+        %     waitforbuttonpress
         % end
         
-        Energy_plane = [Energy_plane currEnergy];
+        % residue = toOptimize - img;
+        % residue(:,:,1) = residue(:,:,1)*combinations(ind,1);
+        % residue(:,:,2) = residue(:,:,2)*combinations(ind,2);
+        % residue(:,:,3) = residue(:,:,3)*combinations(ind,3);
+        % currEnergy = residue.*residue;
+        % currEnergy = sum(currEnergy(:));
+        
+        % % if(currEnergy > old_energy)
+        % %     k = waitforbuttonpress;
+        % % end
+        
+        
+        % % if(currEnergy > old_energy)
+        % %     bin_img = old_bin_img;
+        % %     img = displayedImage(LEDs, bin_img);
+        % %     residue = toOptimize - img;
+        % %     currEnergy = residue.*residue;
+        % %     currEnergy = sum(currEnergy(:));
+        % % end
+        
+        % Energy_plane = [Energy_plane currEnergy];
     end
     
     bin_image_ALL(:,:,subvolume_append) = bin_img;
-        bin_colorized = zeros(size(RGBImg));
+    bin_colorized = zeros(size(RGBImg));
     if(LEDs(1) > 0)
         bin_colorized(:,:,1) = bin_img;
     end
@@ -231,6 +304,11 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
     Energy_all = [Energy_all; Energy_plane];
     
     if(mod(subvolume_append, 1) == 0)
+        filename = sprintf('%s/target_%03d.png', output_dir, subvolume_append);
+        custom_imagesc_save(toOptimize, filename);
+    end
+    
+    if(mod(subvolume_append, 1) == 0)
         filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
         custom_imagesc_save(bin_colorized, filename);
     end
@@ -246,6 +324,8 @@ for subvolume_append = 1:NumofBP-1%50 %280-windowLength
     end
 end
 
+toc
+
 binary_images = bin_image_ALL;
 filename = sprintf('%s/adaptive_color_decomposition_all_channels_binary_images.mat', output_dir);
 save(filename, 'binary_images', '-v7.3');
@@ -257,6 +337,3 @@ save(filename, 'dac_codes', '-v7.3');
 filename = sprintf('%s/adaptive_color_decomposition_all_channels_energies.mat', output_dir);
 save(filename, 'Energy_all', '-v7.3');
 
-
-
-toc

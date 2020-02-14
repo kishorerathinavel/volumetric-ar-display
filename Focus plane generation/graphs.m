@@ -27,9 +27,9 @@ p=1;
 t=0:0.058:1e3/60;
 delt_t=1e3/60/2;
 
-debugGraphs = false;
-printGraphs = true;
-triangular = true;
+debugGraphs = true;
+printGraphs = false;
+triangular = false;
 sinusoidal = true;
 
 %% Triangular wave
@@ -173,21 +173,22 @@ if(triangular == true)
         % figure; plot(t, m, '+');
         % title ('m vs t');
         
-        % figure; plot(t, ie, '+');
-        % title('ie vs t');
+        figure; plot(t, ie, '+');
+        title('ie vs t');
         
-        % figure; plot(t, theta, '+');
-        % title ('fov vs t');
+        figure; plot(t, theta, '+');
+        title ('fov vs t');
         
         % figure; plot(t, ie_diopters, '+');
         % title('ie diopters vs t');
         
-        figure; plot(t,longitudinal_pixel_blur);
-        title('pixel blur vs t');
+        % figure; plot(t,longitudinal_pixel_blur);
+        % title('pixel blur vs t');
         
-        figure; plot(t,dioptric_logitudinal_pixel_blur);
-        title('pixel blur vs t');
-         % figure; plot(t,lateral_pixel_blur);
+        % figure; plot(t,dioptric_logitudinal_pixel_blur);
+        % title('pixel blur vs t');
+        
+        % figure; plot(t,lateral_pixel_blur);
         % title('pixel blur vs t');
     end
     linewidth = 3; 
@@ -195,20 +196,20 @@ if(triangular == true)
     font_size = 20;
     
     if(printGraphs == true)
-        % filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
-        % custom_plot_save(t, f_t_inverse, filename);
+        filename = sprintf('./graphs/triangular_lens_power_vs_time.svg');
+        custom_plot_save(t, f_t_inverse, filename);
 
-        % filename = sprintf('./graphs/triangular_virtual_image_diopters_vs_time.svg');
-        % custom_plot_save(t, 1./ie, filename);
+        filename = sprintf('./graphs/triangular_virtual_image_diopters_vs_time.svg');
+        custom_plot_save(t, 1./ie, filename);
 
-        % filename = sprintf('./graphs/triangular_virtual_image_distance_vs_time.svg');
-        % custom_plot_save(t, ie, filename);
+        filename = sprintf('./graphs/triangular_virtual_image_distance_vs_time.svg');
+        custom_plot_save(t, ie, filename);
         
-        % filename = sprintf('./graphs/triangular_fov_vs_time.svg');
-        % custom_plot_save(t, theta, filename);
+        filename = sprintf('./graphs/triangular_fov_vs_time.svg');
+        custom_plot_save(t, theta, filename);
 
-        % custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
-        %                         filename, 0, 1.0, 0, 20);
+        custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
+                                filename, 0, 1.0, 0, 20);
         
         %----------------------------------
         % Exporting weighted standard deviation pixel blur image
@@ -410,43 +411,42 @@ if(sinusoidal == true)
         % figure; plot(t, m, '+');
         % title ('m vs t');
 
-        % figure; plot(t, ie, '+');
-        % title('ie vs t');
+        figure; plot(t, ie, '+');
+        title('ie vs t');
         
+        figure; plot(t, theta, '+');
+        title ('fov vs t');
         
-        % figure; plot(t, theta, '+');
-        % title ('fov vs t');
+        % figure; plot(t, ie_diopters, '+');
+        % title('ie diopters vs t');
         
-        figure; plot(t, ie_diopters, '+');
-        title('ie diopters vs t');
-        
-        figure; plot(t,longitudinal_pixel_blur);
-        title('pixel blur vs t');
+        % figure; plot(t,longitudinal_pixel_blur);
+        % title('pixel blur vs t');
 
-        figure; plot(t,lateral_pixel_blur);
-        title('pixel blur vs t');
+        % figure; plot(t,lateral_pixel_blur);
+        % title('pixel blur vs t');
     end
 
     if(printGraphs == true)
-        % filename = sprintf('./graphs/sinusoidal_ens_power_vs_time.svg');
-        % custom_plot_save(t, f_t_inverse, filename);
+        filename = sprintf('./graphs/sinusoidal_ens_power_vs_time.svg');
+        custom_plot_save(t, f_t_inverse, filename);
 
-        % filename = sprintf('./graphs/sinusoidal_virtual_image_diopters_vs_time.svg');
-        % custom_plot_save(t, 1./ie, filename);
+        filename = sprintf('./graphs/sinusoidal_virtual_image_diopters_vs_time.svg');
+        custom_plot_save(t, 1./ie, filename);
 
-        % filename = sprintf('./graphs/sinusoidal_virtual_image_distance_vs_time.svg');
-        % custom_plot_save(t, ie, filename);
+        filename = sprintf('./graphs/sinusoidal_virtual_image_distance_vs_time.svg');
+        custom_plot_save(t, ie, filename);
 
-        % filename = sprintf('./graphs/sinusoidal_fov_vs_time.svg');
-        % custom_plot_save(t, theta, filename);
+        filename = sprintf('./graphs/sinusoidal_fov_vs_time.svg');
+        custom_plot_save(t, theta, filename);
         
-        % filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
-        % custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
-        %                  filename, 0, 1.0, 0, 20);
+        filename = sprintf('./graphs/sinusoidal_longitudinal_blur_vs_time.svg');
+        custom_plot_save(t(1,1:end-ignore_elements), dioptric_logitudinal_pixel_blur(1,1:end-ignore_elements), ...
+                         filename, 0, 1.0, 0, 20);
 
-        % filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
-        % custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
-        %                  filename, 0, 1.5, 0, 20);
+        filename = sprintf('./graphs/sinusoidal_lateral_blur_vs_time.svg');
+        custom_plot_save(t(1,1:end-ignore_elements), lateral_pixel_blur(1,1:end-ignore_elements), ...
+                         filename, 0, 1.5, 0, 20);
         
         %----------------------------------
         % Exporting weighted standard deviation pixel blur image

@@ -41,7 +41,7 @@ DepthList=linspace(0,1,NumofBP);
 DepthSeparater=DepthList;
 
 %% save or load bw_Img_all
-savedata = false;
+savedata = true;
 if(savedata)
     s = size(RGBImg);
     bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
@@ -66,8 +66,6 @@ else
     load(filename);
 end
 
-tic
-
 
 %% Loop variables
 
@@ -79,6 +77,7 @@ bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
 Energy_all = [];
 
 %binarization_threshold = 1.33;
+tic
 
 for subvolume_append = 1:NumofBP-1 
     subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
@@ -137,7 +136,7 @@ for subvolume_append = 1:NumofBP-1
     bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
     
     bin_img2 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize/LEDs(channel_order(2)) > binarization_threshold) = 1;
+    bin_img2(channel2_toOptimize/LEDs(channel_order(2)) > binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img2;
     toOptimize2 = zeros(size(toOptimize));
@@ -179,14 +178,14 @@ for subvolume_append = 1:NumofBP-1
     bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
     
     bin_img3 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize/LEDs(channel_order(3)) > binarization_threshold) = 1;
+    bin_img3(channel3_toOptimize/LEDs(channel_order(3)) > binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img3;
     
     toOptimize3 = zeros(size(toOptimize));
-    toOptimize2(:,:,1) = toOptimize(:,:,1).*bin_img;
-    toOptimize2(:,:,2) = toOptimize(:,:,2).*bin_img;
-    toOptimize2(:,:,3) = toOptimize(:,:,3).*bin_img;
+    toOptimize3(:,:,1) = toOptimize(:,:,1).*bin_img;
+    toOptimize3(:,:,2) = toOptimize(:,:,2).*bin_img;
+    toOptimize3(:,:,3) = toOptimize(:,:,3).*bin_img;
     
     nLEDs = returnNonZeroMinimumOfChannels(toOptimize3); % Document
     nLEDs(isnan(nLEDs)) = 0;
@@ -224,23 +223,23 @@ for subvolume_append = 1:NumofBP-1
     bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
     
     bin_img2 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize/LEDs(channel_order(2)) > binarization_threshold) = 1;
+    bin_img2(channel2_toOptimize/LEDs(channel_order(2)) > binarization_threshold) = 1;
     
     bin_img3 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize/LEDs(channel_order(3)) > binarization_threshold) = 1;
+    bin_img3(channel3_toOptimize/LEDs(channel_order(3)) > binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img2.*bin_img3;
     toOptimize4 = zeros(size(toOptimize));
-    toOptimize2(:,:,1) = toOptimize(:,:,1).*bin_img;
-    toOptimize2(:,:,2) = toOptimize(:,:,2).*bin_img;
-    toOptimize2(:,:,3) = toOptimize(:,:,3).*bin_img;
+    toOptimize4(:,:,1) = toOptimize(:,:,1).*bin_img;
+    toOptimize4(:,:,2) = toOptimize(:,:,2).*bin_img;
+    toOptimize4(:,:,3) = toOptimize(:,:,3).*bin_img;
     
     nLEDs = returnNonZeroMinimumOfChannels(toOptimize4); % Document
     nLEDs(isnan(nLEDs)) = 0;
     
     LEDs = [0,0,0];
     LEDs(channel_order(1)) = nLEDs(channel_order(1));
-    LEDs(channel_order(3)) = nLEDs(channel_order(3));
+    LEDs(channel_order(2)) = nLEDs(channel_order(2));
     LEDs(channel_order(3)) = nLEDs(channel_order(3));
     LEDs(LEDs < 0) = 0;
     
@@ -266,18 +265,18 @@ for subvolume_append = 1:NumofBP-1
     bin_image_ALL(:,:,subvolume_append) = bin_img;
     Energy_all = [Energy_all; curr_energy];
     
-    % bin_colorized = zeros(size(RGBImg));
-    % if(LEDs(1) > 0)
-    %     bin_colorized(:,:,1) = bin_img;
-    % end
+    bin_colorized = zeros(size(RGBImg));
+    if(LEDs(1) > 0)
+        bin_colorized(:,:,1) = bin_img;
+    end
     
-    % if(LEDs(2) > 0)
-    %     bin_colorized(:,:,2) = bin_img;
-    % end
+    if(LEDs(2) > 0)
+        bin_colorized(:,:,2) = bin_img;
+    end
     
-    % if(LEDs(3) > 0)
-    %     bin_colorized(:,:,3) = bin_img;
-    % end
+    if(LEDs(3) > 0)
+        bin_colorized(:,:,3) = bin_img;
+    end
     
     LED_ALL(subvolume_append,:) = LEDs;
     actual_reconstruction = actual_reconstruction + img;

@@ -75,6 +75,8 @@ Energy_all = [];
 LED_ALL = zeros(NumofBP,3);
 bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
 
+tic
+
 for subvolume_append = 1:NumofBP-1 
     subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
     expected_reconstruction = expected_reconstruction + subvolume;
@@ -115,22 +117,24 @@ for subvolume_append = 1:NumofBP-1
     residue = expected_reconstruction - actual_reconstruction;
     Energy_all = [Energy_all; Energy_plane];
     
-    if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
-        custom_imagesc_save(bin_colorized, filename);
-    end
+    % if(mod(subvolume_append, 1) == 0)
+    %     filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
+    %     custom_imagesc_save(bin_colorized, filename);
+    % end
     
-    if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
-        custom_imagesc_save(actual_reconstruction, filename);
-    end
+    % if(mod(subvolume_append, 1) == 0)
+    %     filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
+    %     custom_imagesc_save(actual_reconstruction, filename);
+    % end
     
-    if(mod(subvolume_append, 1) == 0)
-        filename = sprintf('%s/residue_%03d.png', output_dir, subvolume_append);
-        custom_imagesc_save(abs(residue), filename);
-    end
+    % if(mod(subvolume_append, 1) == 0)
+    %     filename = sprintf('%s/residue_%03d.png', output_dir, subvolume_append);
+    %     custom_imagesc_save(abs(residue), filename);
+    % end
     
 end
+
+toc
 
 binary_images = bin_image_ALL;
 filename = sprintf('%s/highest_energy_channel_decomposition_binary_images.mat', output_dir);

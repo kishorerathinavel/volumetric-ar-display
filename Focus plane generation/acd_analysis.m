@@ -13,12 +13,11 @@ close all;
 %% Setting folder paths
 data_folder_path = get_data_folder_path();
 input_dir = sprintf('%s/scene_decomposition_output', data_folder_path);
-output_dir = sprintf('%s/analysis', data_folder_path);
+output_dir = sprintf('%s/analysis2', data_folder_path);
 
 %% Inputting data
 
-experiment_names = {'ColorDC_edit3', 'adaptive_color_decomposition', ...
-                    'highest_energy_channel_decomposition_1.0', 'highest_energy_channel_decomposition_1.4'};
+experiment_names = {'adaptive_color_decomposition_all_channels', 'highest_energy_channel_decomposition'};
 
 
 
@@ -31,12 +30,10 @@ exp_binary_images = zeros(768, 1024, 280, numel(experiment_names));
 exp_dac_codes = zeros(280, 3, numel(experiment_names));
 
 for iter = 1:numel(experiment_names)
-    filename = sprintf('%s/%s/%s_binary_images.mat', input_dir, string(experiment_names(iter)), ...
-                       string(experiment_names(iter)));
+    filename = sprintf('%s/analysis/%s_binary_images.mat', input_dir, string(experiment_names(iter)));
     load(filename);
 
-    filename = sprintf('%s/%s/%s_dac_codes.mat', input_dir, string(experiment_names(iter)), ...
-                       string(experiment_names(iter)));
+    filename = sprintf('%s/analysis/%s_dac_codes.mat', input_dir, string(experiment_names(iter)));
     load(filename);
     
     exp_binary_images(:,:,:,iter) = binary_images;
@@ -59,7 +56,6 @@ RGBImg=im2double(imread(filename));
 
 %% Difference in weighed mean 
 
-
 depth_planes = 1:280;
 depth_planes = reshape(depth_planes, [1,1,280]);
 depth_planes_volume = repmat(depth_planes, [768, 1024]);
@@ -69,8 +65,10 @@ for iter = 1:numel(experiment_names)
     nnpx_exp_binary_images = exp_binary_images(:,:,:,iter);
     nnpx_exp_binary_images(nnpx_exp_binary_images > 0) = 1;
     nnpx_count_exp = sum(nnpx_exp_binary_images, 3);
+
     figure; 
-    imagesc(nnpx_count_exp);
+    clims = [0 15];
+    imagesc(nnpx_count_exp, clims);
     title_str = sprintf('%s - # non-zero binary voxels', string(experiment_names(iter)));
     title(title_str, 'Interpreter', 'None');
 
