@@ -13,7 +13,6 @@ d2=0.12; % measure
 %f3=0.09; % Guess
 de=0.07; % measure
 
-
 %% Found from measurement and brute search
 % d1+o1=0.09 % measure
 o1=0.06; % Guess
@@ -24,7 +23,19 @@ d1=0.03; % Guess
 f3=0.0455; % Measured to be 0.053
 d2=0.11; % measure
 de=0.055; % measure
-%% Parameters from graph.m
+
+%% Parameters from graph.m _ ORIGINAL
+o1=0.03; % Exhaustive search
+f1=0.0296; % From Email
+           % o1=0.03; % Exhaustive search
+           % f1=0.0296; % From Email
+d1=0.03; % Exhaustive search
+
+f3=0.06; % Measured to be 0.053
+d2=0.12; % measure
+de=0.03; % measure
+
+%% Parameters from graph.m _ Hanpeng's
 o1=0.03; % Exhaustive search
 f1=0.0296; % From Email
            % o1=0.03; % Exhaustive search
@@ -34,6 +45,7 @@ d1=0.03; % Exhaustive search
 f3=0.0456; % Measured to be 0.053
 d2=0.11; % measure
 de=0.06; % measure
+
 %%
 OpticsParams.o1 = o1;
 OpticsParams.f1 = f1;
@@ -45,7 +57,21 @@ OpticsParams.de = de;
 data_folder_path = get_data_folder_path();
 filename = sprintf('%s/Params/OpticsParams.mat', data_folder_path);
 save(filename,'OpticsParams');
-%%
+
+%% Hanepng's parameters
+
+num=280; % num of sample depths along z direction(depth direction)
+MinOpPower=12; % min optical power of focus tunable lens(in diopters)
+% current 87.5
+%MaxOpPower=15; % max optical power of focus tunable lens(in diopters)
+
+MaxOpPower=16; % max optical power of focus tunable lens(in diopters)
+               % from graph.m
+% current 137.5
+t=1:num;
+p=2;
+
+%% Hanepng's parameters
 
 num=280; % num of sample depths along z direction(depth direction)
 MinOpPower=8.5; % min optical power of focus tunable lens(in diopters)
@@ -57,17 +83,11 @@ MaxOpPower=13; % max optical power of focus tunable lens(in diopters)
 % current 137.5
 t=1:num;
 p=2;
+
 %% linear driving singal
 f_t_inverse=linspace(MinOpPower,MaxOpPower,num); 
 f2=1./f_t_inverse;
 
-
-%% sinusoidal driving signal
-Magnitude=(MaxOpPower-MinOpPower)/2;
-offset=(MaxOpPower+MinOpPower)/2;
-
-f_t_inverse=Magnitude*sin(t*2*p*pi/num)+offset;
-f2=1./f_t_inverse;
 %% triangular driving signal
 Magnitude=MaxOpPower-MinOpPower;
 offset=MinOpPower;
@@ -96,6 +116,13 @@ for i=1:p
 end
 
 f_t_inverse=repmat(f_t_inverse,1,p);
+f2=1./f_t_inverse;
+
+%% sinusoidal driving signal
+Magnitude=(MaxOpPower-MinOpPower)/2;
+offset=(MaxOpPower+MinOpPower)/2;
+
+f_t_inverse=Magnitude*sin(t*2*p*pi/num)+offset;
 f2=1./f_t_inverse;
 
 %% finding depthlist using sin driving signal
@@ -216,6 +243,7 @@ xlabel('Binary plane number(from near to far)');
 ylabel('FOV/degree');
 
 %[f_sort,forder]=sort(f_t_inverse(1:280));
+
 %%
 data_folder_path = get_data_folder_path();
 output_dir = sprintf('%s/Params', data_folder_path);

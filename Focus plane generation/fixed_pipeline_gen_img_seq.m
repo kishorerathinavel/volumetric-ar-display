@@ -1,7 +1,6 @@
-function [Image_sequence,Image_CutVol]=GenerateImgSeq2(varargin)
+function [Image_sequence,Image_CutVol]=fixed_pipeline_gen_img_seq(varargin)
 
 [RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG,rgb]=parseInputs(varargin{:});
-
 
 [RGBImg_re,DepthMap_re]=ResizeImg(RGBImg,DepthMap,Isize);
 
@@ -19,6 +18,7 @@ DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
 % Kishore: What is this?
 
 %--------------------------------------------------------------------------
+
 function [RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG,rgb]=parseInputs(varargin)
 parser = inputParser;
 parser.addRequired('RGBImg',@CheckRGBImg);

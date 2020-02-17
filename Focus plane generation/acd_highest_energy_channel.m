@@ -2,20 +2,28 @@ clear all;
 close all;
 
 %% 
+print_images = false;
+
+%% 
 data_folder_path = get_data_folder_path();
 input_dir = sprintf('%s/RGBD_data', data_folder_path);
 output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
+output_mat_files_dir = sprintf('%s/scene_decomposition_output/analysis_input', data_folder_path);
 
 %% Creating a backup of the files that are used to generate each set of results
 % copyfile adaptive_color_decomposition.m adaptive_color_decomposition_images/adaptive_color_decomposition.m
 % copyfile custom_imagesc_save.m adaptive_color_decomposition_images/custom_imagesc_save.m
+
+%% Display parameters
+NumofBP=acd_get_num_binary_planes();
+binarization_threshold = 1.0;
 
 %% Input RGB, depth map, and depth planes
 
 filename = sprintf('%s/trial_01_rgb.png',input_dir);
 RGBImg=im2double(imread(filename));
 
-filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
+filename = sprintf('%s/%s/FocusDepth_%03d.mat', data_folder_path, 'Params', NumofBP);
 load(filename);
 
 % Description of variables:
@@ -28,10 +36,6 @@ load(filename);
 filename = sprintf('%s/trial_01_DepthMap.mat',input_dir);
 load(filename);
 
-%% Display parameters
-NumofBP=280;
-binarization_threshold = 1.0;
-
 %% Normalizing and Removing zeros from depth map
 DepthMap_norm=DepthMapNormalization(DepthMap);
 unique_DM_values = unique(sort(reshape(DepthMap_norm, 1, [])));
@@ -42,7 +46,7 @@ DepthList=linspace(0,1,NumofBP);
 DepthSeparater=DepthList;
 
 %% save or load bw_Img_all
-savedata = false;
+savedata = true;
 if(savedata)
     s = size(RGBImg);
     bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
@@ -116,30 +120,35 @@ for subvolume_append = 1:NumofBP-1
     actual_reconstruction = actual_reconstruction + img;
     residue = expected_reconstruction - actual_reconstruction;
     Energy_all = [Energy_all; Energy_plane];
-    
-    % if(mod(subvolume_append, 1) == 0)
-    %     filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
-    %     custom_imagesc_save(bin_colorized, filename);
-    % end
-    
-    % if(mod(subvolume_append, 1) == 0)
-    %     filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
-    %     custom_imagesc_save(actual_reconstruction, filename);
-    % end
-    
-    % if(mod(subvolume_append, 1) == 0)
-    %     filename = sprintf('%s/residue_%03d.png', output_dir, subvolume_append);
-    %     custom_imagesc_save(abs(residue), filename);
-    % end
-    
+
+    if(print_images)
+        if(mod(subvolume_append, 1) == 0)
+            filename = sprintf('%s/bin_colorized_%03d.png', output_dir, subvolume_append);
+            custom_imagesc_save(bin_colorized, filename);
+        end
+        
+        if(mod(subvolume_append, 1) == 0)
+            filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, subvolume_append);
+            custom_imagesc_save(actual_reconstruction, filename);
+        end
+        
+        if(mod(subvolume_append, 1) == 0)
+            filename = sprintf('%s/residue_%03d.png', output_dir, subvolume_append);
+            custom_imagesc_save(abs(residue), filename);
+        end
+    end
 end
 
 toc
 
 binary_images = bin_image_ALL;
-filename = sprintf('%s/highest_energy_channel_decomposition_binary_images.mat', output_dir);
+dac_codes = LED_ALL;
+
+exp_name = 'highest_energy_channel';
+
+filename = sprintf('%s/%s_binary_images.mat', output_mat_files_dir, exp_name);
 save(filename, 'binary_images', '-v7.3');
 
-dac_codes = LED_ALL;
-filename = sprintf('%s/highest_energy_channel_decomposition_dac_codes.mat', output_dir);
+filename = sprintf('%s/%s_dac_codes.mat', output_mat_files_dir, exp_name);
 save(filename, 'dac_codes', '-v7.3');
+
