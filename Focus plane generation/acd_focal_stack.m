@@ -1,15 +1,13 @@
 clear all;
 close all;
 
-%%
+%% Execution parameters
 debug = false;
 calc_CV_FS = true;
 calc_psnr_ssim = true;
 
-
 %% Setting folder paths
 data_folder_path = get_data_folder_path();
-rendering_output_dir = sprintf('%s/RGBD_data', data_folder_path);
 decomposition_output_dir = sprintf('%s/scene_decomposition_output/analysis_input', data_folder_path);
 output_dir = sprintf('%s/scene_decomposition_output/analysis_output', data_folder_path);
 
@@ -19,23 +17,15 @@ NumofBP = acd_get_num_binary_planes();
 focal_plane_depth_all = [round(1:NumofBP/4:NumofBP) NumofBP];
 pupil_radius = 2;
 
-%% Inputting data
-
-filename = sprintf('%s/trial_01_rgb.png', rendering_output_dir);
-RGBImg=im2double(imread(filename));
+%% Get color volume
+color_volume = acd_get_color_volume();
+size_color_volume = size(color_volume);
 
 filename = sprintf('%s/%s/FocusDepth_%03d.mat', data_folder_path, 'Params', NumofBP);
 load(filename);
-% Description of variables:
-% d - distance to depth plane in meters ordered in sequence of when each depth plane is displayed.
-% d_sort - sorted distanced to depth planes
-% order - index for each entry in d_sort in d
-% un_order - 1:num
-% fov_sort - FoV for each depth plane following same order of d_sort
 
-filename = sprintf('%s/trial_01_DepthMap.mat',rendering_output_dir);
-load(filename);
 
+%% Experiment details
 experiment_names = {'fixed_pipeline', 'brute_force', 'highest_energy_channel', 'projected_gradients', 'heuristic'};
 %experiment_names = {'fixed_pipeline', 'highest_energy_channel', 'projected_gradients', 'heuristic'};
 %experiment_names = {'fixed_pipeline'};
@@ -86,39 +76,15 @@ end
 
 %% Generating focal stack for color volume
 if(calc_CV_FS)
-    DepthMap_norm=DepthMapNormalization(DepthMap);
-    unique_DM_values = unique(sort(reshape(DepthMap_norm, 1, [])));
-    DepthMap_norm(DepthMap_norm == 0) = unique_DM_values(1,2);
-
-    DepthList=linspace(0,1,NumofBP);
-    DepthSeparater=DepthList;
-
-
-    s = size(RGBImg);
-    bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
-
-    parfor subvolume_append = 1:NumofBP-1 
-        trial = DepthMap_norm;
-        trial(trial < DepthSeparater(subvolume_append)) = 0;
-        trial(trial > DepthSeparater(subvolume_append+1)) = 0;
-        bw = im2double(im2bw(trial,0));
-        
-        bw_Img = zeros(size(RGBImg));
-        bw_Img(:,:,1) = bw;
-        bw_Img(:,:,2) = bw;
-        bw_Img(:,:,3) = bw;
-        bw_Img_all(:,:,:,subvolume_append) = bw_Img;
-    end
-
-    CV_FS = zeros(size(RGBImg, 1), size(RGBImg, 2), 3, numel(focal_plane_depth_all));
+    CV_FS = zeros([size_color_volume(1:3) numel(focal_plane_depth_all)]);
 
     for focal_plane_iter = 1:size(focal_plane_depth_all,2)
-        reconstructed_focal_image = zeros(size(RGBImg));
+        reconstructed_focal_image = zeros(size_color_volume(1:3));
         for defocus_plane_number = 1:NumofBP
-            subvolume = bw_Img_all(:,:,:,defocus_plane_number).*RGBImg;
+            subvolume = color_volume(:,:,:,defocus_plane_number);
             conv_kernel_px_radius = round(conv_kernel_all(focal_plane_iter, defocus_plane_number));
             
-            perceived_image = zeros(size(RGBImg));
+            perceived_image = zeros(size_color_volume(1:3));
             if(conv_kernel_px_radius == 0)
                 perceived_image = subvolume;
             else
@@ -139,20 +105,20 @@ end
 
 %% Generating focal stack for binary volume
 
-BV_FS = zeros(size(RGBImg,1), size(RGBImg,2), 3, numel(focal_plane_depth_all), numel(experiment_names));
+BV_FS = zeros([size_color_volume(1:3) numel(focal_plane_depth_all) numel(experiment_names)]);
 for exp_iter = 1:numel(experiment_names)
     for focal_plane_iter = 1:size(focal_plane_depth_all,2)
-        reconstructed_focal_image = zeros(size(RGBImg));
+        reconstructed_focal_image = zeros(size_color_volume(1:3));
         for defocus_plane_number = 1:NumofBP
             conv_kernel_px_radius = round(conv_kernel_all(focal_plane_iter, defocus_plane_number));
             
             defocus_binary_slice = exp_binary_images(:,:,defocus_plane_number,exp_iter);
-            color_image = zeros(size(RGBImg));
+            color_image = zeros(size_color_volume(1:3));
             color_image(:,:,1) = defocus_binary_slice*exp_dac_codes(defocus_plane_number,1,exp_iter);
             color_image(:,:,2) = defocus_binary_slice*exp_dac_codes(defocus_plane_number,2,exp_iter);
             color_image(:,:,3) = defocus_binary_slice*exp_dac_codes(defocus_plane_number,3,exp_iter);
             
-            perceived_image = zeros(size(RGBImg));
+            perceived_image = zeros(size_color_volume(1:3));
             if(conv_kernel_px_radius == 0)
                 perceived_image = color_image;
             else

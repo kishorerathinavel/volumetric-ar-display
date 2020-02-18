@@ -1,81 +1,30 @@
 clear all;
 close all;
 
-%% 
+%% Execution parameters
 print_images = false;
+binarization_threshold = 1.0;
 
-%% 
-
+%% Paths
 data_folder_path = get_data_folder_path();
-input_dir = sprintf('%s/RGBD_data', data_folder_path);
 output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
 output_mat_files_dir = sprintf('%s/scene_decomposition_output/analysis_input', data_folder_path);
 
 %% Display Settings
 NumofBP=acd_get_num_binary_planes();
 
-%% Input RGB, depth map, and depth planes
-
-filename = sprintf('%s/trial_01_rgb.png',input_dir);
-RGBImg=im2double(imread(filename));
-
-filename = sprintf('%s/%s/FocusDepth_%03d.mat', data_folder_path, 'Params', NumofBP);
-load(filename);
-
-% Description of variables:
-% d - distance to depth plane in meters ordered in sequence of when each depth plane is displayed.
-% d_sort - sorted distanced to depth planes
-% order - index for each entry in d_sort in d
-% un_order - 1:num
-% fov_sort - FoV for each depth plane following same order of d_sort
-
-filename = sprintf('%s/trial_01_DepthMap.mat',input_dir);
-load(filename);
-
-%% What is this?
-DepthMap_norm=DepthMapNormalization(DepthMap);
-unique_DM_values = unique(sort(reshape(DepthMap_norm, 1, [])));
-DepthMap_norm(DepthMap_norm == 0) = unique_DM_values(1,2);
-
-%% Assuming that depth map is linearized
-DepthList=linspace(0,1,NumofBP);
-DepthSeparater=DepthList;
-
-%% save or load bw_Img_all
-savedata = true;
-if(savedata)
-    s = size(RGBImg);
-    bw_Img_all = zeros(s(1), s(2), s(3), NumofBP);
-
-    parfor subvolume_append = 1:NumofBP-1 
-        trial = DepthMap_norm;
-        trial(trial < DepthSeparater(subvolume_append)) = 0;
-        trial(trial > DepthSeparater(subvolume_append+1)) = 0;
-        bw = im2double(im2bw(trial,0));
-        
-        bw_Img = zeros(size(RGBImg));
-        bw_Img(:,:,1) = bw;
-        bw_Img(:,:,2) = bw;
-        bw_Img(:,:,3) = bw;
-        bw_Img_all(:,:,:,subvolume_append) = bw_Img;
-    end
-
-    filename = sprintf('bw_Img_all_%d.mat',NumofBP);
-    save(filename, 'bw_Img_all', '-v7.3');
-else 
-    filename = sprintf('bw_Img_all_%d.mat',NumofBP);
-    load(filename);
-end
+%% Get color volume
+color_volume = acd_get_color_volume();
+size_color_volume = size(color_volume);
 
 %% Loop variables
 
-residue = zeros(size(RGBImg));
-actual_reconstruction = zeros(size(RGBImg));
-expected_reconstruction = zeros(size(RGBImg));
-Energy_all = [];
+residue = zeros(size_color_volume(1:3));
+actual_reconstruction = zeros(size_color_volume(1:3));
+expected_reconstruction = zeros(size_color_volume(1:3));
 LED_ALL = zeros(NumofBP,3);
-bin_image_ALL = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP);
-binarization_threshold = 1.0;
+bin_image_ALL = zeros([size_color_volume(1:2) NumofBP]);
+Energy_all = [];
 
 combinations = [[1,0,0]; [0,1,0]; [0,0,1]; [1,1,0]; [0,1,1]; [1,0,1]; [1,1,1]];
 
@@ -88,7 +37,7 @@ for subvolume_append = 1:NumofBP-1
     % end
 
     Energy_plane = [];
-    subvolume = bw_Img_all(:,:,:,subvolume_append).*RGBImg;
+    subvolume = color_volume(:,:,:,subvolume_append);
     expected_reconstruction = expected_reconstruction + subvolume;
 
     %% Initialization
@@ -210,7 +159,7 @@ for subvolume_append = 1:NumofBP-1
     bin_image_ALL(:,:,subvolume_append) = bin_img;
 
     if(print_images)
-        bin_colorized = zeros(size(RGBImg));
+        bin_colorized = zeros(size_color_volume(1:3));
         if(LEDs(1) > 0)
             bin_colorized(:,:,1) = bin_img;
         end
