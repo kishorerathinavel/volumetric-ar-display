@@ -3,8 +3,8 @@ close all;
 warning off;
 
 %% 
-print_images = false;
-rgb = false;
+print_images = true;
+rgb = true;
 
 %% Setting folder paths
 data_folder_path = get_data_folder_path();
@@ -51,12 +51,12 @@ if(use_temporal_order == true)
         imwrite(ImageSeq_order(:,:,i),filename);  
     end
 else
-    if(print_images == true)
-        for i=1:NumofBP
-            filename = sprintf('%s/binary_%03d.png', output_dir, i);
-            imwrite(Image_sequence(:,:,i),filename);  
-        end
-    end
+    % if(print_images == true)
+    %     for i=1:NumofBP
+    %         filename = sprintf('%s/binary_%03d.png', output_dir, i);
+    %         imwrite(Image_sequence(:,:,i),filename);  
+    %     end
+    % end
     
     DDS_values = [128, 64, 32, 16, 8, 4, 2, 1];
     LEDs_24_planes = zeros(24, 3);
@@ -72,9 +72,35 @@ else
     
     LEDs_ALL = repmat(LEDs_24_planes, [ceil(NumofBP/24), 1]);
     LEDs_ALL(NumofBP+1:end, :) = [];
-    dac_codes = LEDs_ALL/256;
+    LEDs_ALL = LEDs_ALL/256;
     
+    dac_codes = LEDs_ALL;
     binary_images = Image_sequence;
+    
+    actual_reconstruction = zeros(size(RGBImg));
+    for binary_plane_number  = 1:NumofBP
+        bin_img = binary_images(:,:,binary_plane_number);
+        LEDs = LEDs_ALL(binary_plane_number,:);
+        img = displayedImage(LEDs, bin_img);
+        actual_reconstruction = actual_reconstruction + img;
+        
+        if(print_images)
+            if(mod(binary_plane_number, 1) == 0)
+                filename = sprintf('%s/binary_%03d.png', output_dir, binary_plane_number);
+                custom_imagesc_save(bin_img, filename);
+            end
+            
+            if(mod(binary_plane_number, 1) == 0)
+                filename = sprintf('%s/bin_colorized_%03d.png', output_dir, binary_plane_number);
+                custom_imagesc_save(img, filename);
+            end
+            
+            if(mod(binary_plane_number, 1) == 0)
+                filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, binary_plane_number);
+                custom_imagesc_save(actual_reconstruction, filename);
+            end
+        end
+    end
     
     exp_name = 'fixed_pipeline';
 

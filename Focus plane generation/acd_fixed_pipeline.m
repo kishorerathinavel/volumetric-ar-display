@@ -2,10 +2,10 @@ clear all;
 close all;
 
 %% 
-print_images = true;
-descending = true;
-rgb = true;
-
+print_images = false;
+descending = false;
+rgb = false;
+clip_both_sides = true;
 
 %% 
 data_folder_path = get_data_folder_path();
@@ -19,7 +19,6 @@ output_mat_files_dir = sprintf('%s/scene_decomposition_output/analysis_input', d
 
 %% Display parameters
 NumofBP=acd_get_num_binary_planes();
-binarization_threshold = 1.0;
 bitdepth = 8;
 
 %% Input RGB, depth map, and depth planes
@@ -73,12 +72,36 @@ else
     load('bw_Img_all.mat');
 end
 
-%% Create binary volume
-binary_volume = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP+3*bitdepth-1);
-LED_ALL = zeros(NumofBP+3*bitdepth-1,3);
-channel = 1;
-bitplane = 8;
+%% LEDs
+if(descending)
+    DDS_values = [128, 64, 32, 16, 8, 4, 2, 1];
+else
+    DDS_values = [1, 2, 4, 8, 16, 32, 64, 128];
+end
 
+LEDs_24_planes = zeros(24, 3);
+if(rgb == true)
+    LEDs_24_planes(1:8, 1) = DDS_values';
+    LEDs_24_planes(9:9+7, 2) = DDS_values';
+    LEDs_24_planes(9+7+1:9+7+1+7, 3) = DDS_values';
+else % bgr
+    LEDs_24_planes(1:8, 3) = DDS_values';
+    LEDs_24_planes(9:9+7, 2) = DDS_values';
+    LEDs_24_planes(9+7+1:9+7+1+7, 1) = DDS_values';
+end
+
+LEDs_ALL = repmat(LEDs_24_planes, [ceil((NumofBP+3*bitdepth-1)/24), 1]);
+LEDs_ALL = LEDs_ALL/256;
+
+%% Create binary volume
+
+if(descending == true)
+    de2bi_option = 'left-msb';
+else
+    de2bi_option = 'right-msb';
+end
+
+binary_volume = zeros(size(RGBImg,1), size(RGBImg,2), NumofBP+3*bitdepth-1);
 tic
 for color_plane_number = 1:NumofBP
     subvolume = uint8(255*bw_Img_all(:,:,:,color_plane_number).*RGBImg);
@@ -86,9 +109,10 @@ for color_plane_number = 1:NumofBP
     index = find(gray_subvolume);
     for iter = 1:numel(index)
         [r,c] = ind2sub(size(gray_subvolume), index(iter)); 
-        RB=double(de2bi(subvolume(r,c,1),bitdepth));
-        GB=double(de2bi(subvolume(r,c,2),bitdepth));
-        BB=double(de2bi(subvolume(r,c,3),bitdepth));
+        
+        RB=double(de2bi(subvolume(r,c,1),bitdepth, de2bi_option));
+        GB=double(de2bi(subvolume(r,c,2),bitdepth, de2bi_option));
+        BB=double(de2bi(subvolume(r,c,3),bitdepth, de2bi_option));
         
         if(rgb) % rgb
             pattern = [RB GB BB];
@@ -103,58 +127,24 @@ for color_plane_number = 1:NumofBP
 end
 toc
 
-%% LEDs
-DDS_values = [128, 64, 32, 16, 8, 4, 2, 1];
-LEDs_24_planes = zeros(24, 3);
-if(rgb == true)
-    LEDs_24_planes(1:8, 1) = DDS_values';
-    LEDs_24_planes(9:9+7, 2) = DDS_values';
-    LEDs_24_planes(9+7+1:9+7+1+7, 3) = DDS_values';
-else % bgr
-    LEDs_24_planes(1:8, 3) = DDS_values';
-    LEDs_24_planes(9:9+7, 2) = DDS_values';
-    LEDs_24_planes(9+7+1:9+7+1+7, 1) = DDS_values';
+%% Clipping binary volume
+if(clip_both_sides)
+    binary_volume(:,:,3*bitdepth/2 + NumofBP:end) = [];
+    binary_volume(:,:,1:3*bitdepth/2-1) = [];
+
+    LEDs_ALL(NumofBP+3*bitdepth/2:end,:) = [];
+    LEDs_ALL(1:3*bitdepth/2-1,:) = [];
+else
+    binary_volume(:,:,NumofBP+1:end) = [];
+    LEDs_ALL(NumofBP+1:end,:) = [];
 end
 
-LEDs_ALL = repmat(LEDs_24_planes, [ceil((NumofBP+3*bitdepth-1)/24), 1]);
 
 %% Printing binary volume
-actual_reconstruction = zeros(size(RGBImg));
-
-for binary_plane_number  = 1:NumofBP
-    bin_img = binary_volume(:,:,binary_plane_number);
-    LEDs = LEDs_ALL(binary_plane_number,:);
-    img = displayedImage(LEDs, bin_img);
-    actual_reconstruction = actual_reconstruction + img;
-    
-    if(print_images)
-        if(mod(binary_plane_number, 1) == 0)
-            filename = sprintf('%s/bin_colorized_%03d.png', output_dir, binary_plane_number);
-            custom_imagesc_save(img, filename);
-        end
-        
-        if(mod(binary_plane_number, 1) == 0)
-            filename = sprintf('%s/actual_reconstruction_%03d.png', output_dir, binary_plane_number);
-            custom_imagesc_save(actual_reconstruction, filename);
-        end
-    end
-end
-
-return;
-waitforbuttonpress
-
-
-% binary_volume(:,:,3*bitdepth/2 + NumofBP:end) = [];
-% binary_volume(:,:,1:3*bitdepth/2-1) = [];
-
-% LEDs_ALL(NumofBP+3*bitdepth/2:end,:) = [];
-% LEDs_ALL(1:3*bitdepth/2-1,:) = [];
-
-
-%% Loop variables
 residue = zeros(size(RGBImg));
 actual_reconstruction = zeros(size(RGBImg));
 expected_reconstruction = zeros(size(RGBImg));
+actual_reconstruction = zeros(size(RGBImg));
 
 for binary_plane_number  = 1:NumofBP
     subvolume = bw_Img_all(:,:,:,binary_plane_number).*RGBImg;
@@ -162,13 +152,17 @@ for binary_plane_number  = 1:NumofBP
     
     bin_img = binary_volume(:,:,binary_plane_number);
     LEDs = LEDs_ALL(binary_plane_number,:);
-    
     img = displayedImage(LEDs, bin_img);
     actual_reconstruction = actual_reconstruction + img;
-
+    
     residue = expected_reconstruction - actual_reconstruction;
     
     if(print_images)
+        if(mod(binary_plane_number, 1) == 0)
+            filename = sprintf('%s/binary_%03d.png', output_dir, binary_plane_number);
+            custom_imagesc_save(bin_img, filename);
+        end
+        
         if(mod(binary_plane_number, 1) == 0)
             filename = sprintf('%s/bin_colorized_%03d.png', output_dir, binary_plane_number);
             custom_imagesc_save(img, filename);
@@ -187,7 +181,7 @@ for binary_plane_number  = 1:NumofBP
 end
 
 binary_images = binary_volume;
-dac_codes = LEDs_ALL/256;
+dac_codes = LEDs_ALL;
 
 exp_name = 'fixed_pipeline';
 

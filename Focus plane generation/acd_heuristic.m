@@ -2,7 +2,7 @@ clear all;
 close all;
 
 %% 
-print_images = true;
+print_images = false;
 
 %% 
 
