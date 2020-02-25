@@ -49,7 +49,7 @@ for subvolume_append = 1:NumofBP-1
     LEDs(channel) = nLEDs(channel);
     
     bin_img = zeros(size(channel_toOptimize));
-    bin_img(channel_toOptimize/LEDs(channel) > binarization_threshold) = 1;
+    bin_img(channel_toOptimize/LEDs(channel) >= binarization_threshold) = 1;
  
     img = displayedImage(LEDs, bin_img);
 

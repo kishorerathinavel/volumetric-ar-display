@@ -56,7 +56,7 @@ for subvolume_append = 1:NumofBP-1
     LEDs(LEDs < 0) = 0;
     
     bin_img = zeros(size(channel_toOptimize));
-    bin_img(channel_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
+    bin_img(channel_toOptimize/LEDs(channel_order(1)) >= binarization_threshold) = 1;
     
     img = displayedImage(LEDs, bin_img);
     residue = toOptimize - img;
@@ -82,10 +82,10 @@ for subvolume_append = 1:NumofBP-1
     LEDs(LEDs < 0) = 0;
     
     bin_img1 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) >= binarization_threshold) = 1;
     
     bin_img2 = zeros(size(channel_toOptimize));
-    bin_img2(channel2_toOptimize/LEDs(channel_order(2)) > binarization_threshold) = 1;
+    bin_img2(channel2_toOptimize/LEDs(channel_order(2)) >= binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img2;
     toOptimize2 = zeros(size(toOptimize));
@@ -124,10 +124,10 @@ for subvolume_append = 1:NumofBP-1
     LEDs(LEDs < 0) = 0;
     
     bin_img1 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) >= binarization_threshold) = 1;
     
     bin_img3 = zeros(size(channel_toOptimize));
-    bin_img3(channel3_toOptimize/LEDs(channel_order(3)) > binarization_threshold) = 1;
+    bin_img3(channel3_toOptimize/LEDs(channel_order(3)) >= binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img3;
     
@@ -169,13 +169,13 @@ for subvolume_append = 1:NumofBP-1
     LEDs(LEDs < 0) = 0;
     
     bin_img1 = zeros(size(channel_toOptimize));
-    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) > binarization_threshold) = 1;
+    bin_img1(channel1_toOptimize/LEDs(channel_order(1)) >= binarization_threshold) = 1;
     
     bin_img2 = zeros(size(channel_toOptimize));
-    bin_img2(channel2_toOptimize/LEDs(channel_order(2)) > binarization_threshold) = 1;
+    bin_img2(channel2_toOptimize/LEDs(channel_order(2)) >= binarization_threshold) = 1;
     
     bin_img3 = zeros(size(channel_toOptimize));
-    bin_img3(channel3_toOptimize/LEDs(channel_order(3)) > binarization_threshold) = 1;
+    bin_img3(channel3_toOptimize/LEDs(channel_order(3)) >= binarization_threshold) = 1;
     
     bin_img = bin_img1.*bin_img2.*bin_img3;
     toOptimize4 = zeros(size(toOptimize));
@@ -254,7 +254,7 @@ toc
 binary_images = bin_image_ALL;
 dac_codes = LED_ALL;
 
-exp_name = 'brute_force';
+exp_name = 'combinatorial';
 
 filename = sprintf('%s/%s_binary_images.mat', output_mat_files_dir, exp_name);
 save(filename, 'binary_images', '-v7.3');

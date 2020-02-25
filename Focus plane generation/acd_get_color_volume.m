@@ -3,7 +3,10 @@ function [color_volume] = acd_get_color_volume()
     data_folder_path = get_data_folder_path();
     input_dir = sprintf('%s/RGBD_data', data_folder_path);
     output_dir = sprintf('%s/scene_decomposition_output/current', data_folder_path);
-    rgbd_names = {'trial_01', 'trial_04' };
+    %rgbd_names = {'trial_01', 'trial_08'};
+    rgbd_names = {'trial_01', 'trial_05'};
+    % rgbd_names = {'trial_08'};
+    %rgbd_names = {'trial_04'};
 
     %% Display parameters
     NumofBP=acd_get_num_binary_planes();
@@ -26,6 +29,8 @@ function [color_volume] = acd_get_color_volume()
 
         filename = sprintf('%s/%s_DepthMap.mat',input_dir, rgbd_names{iter});
         load(filename);
+        % figure;
+        % imshow(DepthMap);
         depthmaps(:,:,iter) = DepthMap;
     end
     
@@ -47,7 +52,12 @@ function [color_volume] = acd_get_color_volume()
         
         DepthMap_norm=DepthMapNormalization(DepthMap);
         unique_DM_values = unique(sort(reshape(DepthMap_norm, 1, [])));
-        indices = find(DepthMap == 1);
+        indices = find(DepthMap_norm == 1);
+        if(iter == 2)
+            DepthMap_norm = DepthMap_norm - 0.04;
+            DepthMap_norm(DepthMap_norm < 0.0) = 0.0;
+            DepthMap_norm(DepthMap_norm > 1.0) = 1.0;
+        end
         for iter = 1:numel(indices)
             [r,c] = ind2sub(size(DepthMap), indices(iter));
             RGBImg(r,c,:) = 0;

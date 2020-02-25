@@ -3,9 +3,8 @@ close all;
 
 %% Execution parameters
 print_images = false;
-descending = true;
-rgb = false;
-clip_both_sides = false;
+[descending, rgb] = acd_get_fixed_pipeline_settings();
+clip_both_sides = true;
 
 %% Paths
 data_folder_path = get_data_folder_path();
@@ -80,11 +79,18 @@ toc
 
 %% Clipping binary volume
 if(clip_both_sides)
-    binary_volume(:,:,3*bitdepth/2 + NumofBP:end) = [];
-    binary_volume(:,:,1:3*bitdepth/2-1) = [];
+    shift = 6;
+    binary_volume = circshift(binary_volume, -shift, 3);
+    binary_volume(:,:,NumofBP+1:end) = [];
+    
+    LEDs_ALL = circshift(LEDs_ALL, -shift, 1);
+    LEDs_ALL(NumofBP+1:end,:) = [];
+    
+    % binary_volume(:,:,3*bitdepth/2 + NumofBP:end) = [];
+    % binary_volume(:,:,1:3*bitdepth/2-1) = [];
 
-    LEDs_ALL(NumofBP+3*bitdepth/2:end,:) = [];
-    LEDs_ALL(1:3*bitdepth/2-1,:) = [];
+    % LEDs_ALL(NumofBP+3*bitdepth/2:end,:) = [];
+    % LEDs_ALL(1:3*bitdepth/2-1,:) = [];
 else
     binary_volume(:,:,NumofBP+1:end) = [];
     LEDs_ALL(NumofBP+1:end,:) = [];

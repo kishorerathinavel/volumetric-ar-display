@@ -1,39 +1,29 @@
 clear all;
 close all;
 
-%%
+%% Execution parameters
 print_images = true;
 show_images = false;
 
 %% Setting folder paths
 data_folder_path = get_data_folder_path();
-rendering_output_dir = sprintf('%s/RGBD_data', data_folder_path);
 decomposition_output_dir = sprintf('%s/scene_decomposition_output/analysis_input', data_folder_path);
 output_dir = sprintf('%s/scene_decomposition_output/analysis_output', data_folder_path);
 
 %% Display Settings
 NumofBP = acd_get_num_binary_planes();
 focal_plane_depth_all = [round(1:NumofBP/4:NumofBP) NumofBP];
-pupil_radius = 2;
 
-%% Inputting data
-
-filename = sprintf('%s/trial_01_rgb.png', rendering_output_dir);
-RGBImg=im2double(imread(filename));
+%% Get color volume
+color_volume = acd_get_color_volume();
+size_color_volume = size(color_volume);
 
 filename = sprintf('%s/%s/FocusDepth_%03d.mat', data_folder_path, 'Params', NumofBP);
 load(filename);
-% Description of variables:
-% d - distance to depth plane in meters ordered in sequence of when each depth plane is displayed.
-% d_sort - sorted distanced to depth planes
-% order - index for each entry in d_sort in d
-% un_order - 1:num
-% fov_sort - FoV for each depth plane following same order of d_sort
 
-filename = sprintf('%s/trial_01_DepthMap.mat',rendering_output_dir);
-load(filename);
-
-experiment_names = {'fixed_pipeline', 'brute_force', 'highest_energy_channel', 'projected_gradients', 'heuristic'};
+%% Experiment details
+experiment_names = {'fixed_pipeline', 'combinatorial', 'highest_energy_channel', 'projected_gradients', 'heuristic'};
+%experiment_names = {'fixed_pipeline', 'heuristic'};
 %experiment_names = {'fixed_pipeline', 'highest_energy_channel', 'projected_gradients', 'heuristic'};
 %experiment_names = {'fixed_pipeline'};
 %experiment_names = {'brute_force', 'highest_energy_channel', 'projected_gradients', 'heuristic'};
@@ -53,14 +43,23 @@ for iter = 1:numel(experiment_names)
     exp_dac_codes(:,:,iter) = dac_codes;
 end
 
+%% Generating focal stack for color volume
+RGBImg = squeeze(sum(color_volume,4));
+filename = sprintf('%s/PI_CV.png', output_dir);
+custom_imagesc_save(RGBImg, filename);
+
+
 %% Difference in weighed mean 
 
 depth_planes = 1:NumofBP;
 depth_planes = reshape(depth_planes, [1,1,NumofBP]);
 depth_planes_volume = repmat(depth_planes, [768, 1024]);
 
+PSNR_all = [];
+SSIM_all = [];
+
 for iter = 1:numel(experiment_names)
-    string(experiment_names(iter))
+    % string(experiment_names(iter))
 
     dac_codes = exp_dac_codes(:,:,iter);
     binary_images = exp_binary_images(:,:,:,iter);
@@ -83,36 +82,51 @@ for iter = 1:numel(experiment_names)
     nnpx_exp_binary_images(:,:,:,1) = r_perceived_volume;
     nnpx_exp_binary_images(:,:,:,2) = g_perceived_volume;
     nnpx_exp_binary_images(:,:,:,3) = b_perceived_volume;
-    nnpx_exp_binary_images(nnpx_exp_binary_images > 0.0039) = 1;
+    nnpx_exp_binary_images(nnpx_exp_binary_images > 2*0.0039) = 1;
     nnpx_count_exp = squeeze(sum(sum(nnpx_exp_binary_images,4),3));
     
     if(print_images)
-        nnpx_count_exp_output = nnpx_count_exp;
-        nnpx_count_exp_output(nnpx_count_exp_output < 0) = 0;
-        nnpx_count_exp_output(nnpx_count_exp_output > 75) = 75;
+        figure('visible', 'off'); 
+        clims = [0 15];
+        imagesc(nnpx_count_exp, clims);
+        axis off;
+
+        ax = gca;
+        outerpos = ax.OuterPosition;
+        left = 0;
+        bottom = 0;
+        ax_width = outerpos(3) - outerpos(1);
+        ax_height = outerpos(4) - outerpos(2);
+        ax.Position = [left bottom ax_width ax_height];
+
         filename = sprintf('%s/NZ_BV_%02d.png', output_dir, iter);
-        imwrite( ind2rgb(im2uint8(mat2gray(nnpx_count_exp_output)), parula(256)), filename)
+        set(gcf, 'PaperPositionMode', 'auto');
+        saveas(gcf, filename, 'png');
     end
 
     if(show_images)
         figure; 
         clims = [0 15];
         imagesc(nnpx_count_exp, clims);
-        title_str = sprintf('%s - # non-zero binary voxels', string(experiment_names(iter)));
-        title(title_str, 'Interpreter', 'None');
     end
-
-
 
     perceived_image = zeros(768, 1024, 3);
     perceived_image(:,:,1) = sum(r_perceived_volume, 3);
     perceived_image(:,:,2) = sum(g_perceived_volume, 3);
     perceived_image(:,:,3) = sum(b_perceived_volume, 3);
+    
+    peaksnr = psnr(perceived_image, RGBImg);
+    ssimval = ssim(perceived_image, RGBImg);
+    PSNR_all = [PSNR_all; peaksnr];
+    SSIM_all = [SSIM_all; ssimval];
 
     diffImg = RGBImg - perceived_image;
     energyImg = diffImg.*diffImg;
     if(print_images)
         filename = sprintf('%s/PI_BV_%02d.png', output_dir, iter);
+        imwrite(perceived_image, filename);
+        
+        filename = sprintf('%s/DI_BV_%02d.png', output_dir, iter);
         imwrite(diffImg, filename);
     end
     
@@ -148,5 +162,17 @@ for iter = 1:numel(experiment_names)
     mean_nn_binaryvoxels = mean(nz_nnpx_count_exp);
     currEnergy = sum(energyImg(:));
     totalvariance = sum(variance(:));
-    str = sprintf('meannumberofbinaryvoxels = %d \n currEnergy = %f \n totalvariance = %f \n', mean_nn_binaryvoxels, currEnergy, totalvariance)
+    % str = sprintf('meannumberofbinaryvoxels = %d \n currEnergy = %f \n totalvariance = %f \n', mean_nn_binaryvoxels, currEnergy, totalvariance)
 end
+
+pinhole_PSNR = PSNR_all;
+filename = sprintf('%s/pinhole_PSNR.mat', output_dir);
+save(filename, 'pinhole_PSNR', '-v7.3');
+
+pinhole_SSIM = SSIM_all;
+filename = sprintf('%s/pinhole_SSIM.mat', output_dir);
+save(filename, 'pinhole_SSIM', '-v7.3');
+
+
+
+
