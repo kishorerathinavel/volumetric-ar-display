@@ -1,19 +1,25 @@
 function [Image_sequence,Image_CutVol]=GenerateImgSeq2(varargin)
 
-[RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG]=parseInputs(varargin{:});
+[RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG,rgb]=parseInputs(varargin{:});
 
 
 [RGBImg_re,DepthMap_re]=ResizeImg(RGBImg,DepthMap,Isize);
 
-RGB_BR=Color2Binary(RGBImg_re,colorbit);
+RGB_BR=Color2Binary(RGBImg_re,colorbit,rgb); 
+% output: RGB_BR - a (768x1024) x colorbit matrix
+% Each column is a bit plane of a color
+
 DepthMap_norm=DepthMapNormlization(DepthMap_re);
 NumofCP=NumofBP-colorbit+1;
 
-DepthList=GenDepthList(NumofBP,NumofCP,colorbit);
-[Image_sequence,Image_CutVol]=GenImgSeq(RGBImg_re,DepthMap_norm,DepthList,NumofBP,NumofCP,colorbit,RGB_BR,Isize,DepthBG);
+DepthList=GenDepthList(NumofBP,NumofCP,colorbit); 
+% Kishore: What is this?
+
+[Image_sequence,Image_CutVol]=GenImgSeq(RGBImg_re,DepthMap_norm,DepthList,NumofBP, NumofCP,colorbit,RGB_BR,Isize,DepthBG); 
+% Kishore: What is this?
 
 %--------------------------------------------------------------------------
-function [RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG]=parseInputs(varargin)
+function [RGBImg,DepthMap,NumofBP,colorbit,Isize,DepthBG,rgb]=parseInputs(varargin)
 parser = inputParser;
 parser.addRequired('RGBImg',@CheckRGBImg);
 parser.addRequired('DepthMap',@CheckDepthMap);
@@ -21,6 +27,7 @@ parser.addParameter('NumofBP',280);
 parser.addParameter('colorbit',24);
 parser.addParameter('Isize',[768,1024],@CheckIsize);
 parser.addParameter('DepthBG','white',@CheckDepthBG);
+parser.addParameter('rgb',true)
 
 
 parser.parse(varargin{:});
@@ -30,6 +37,8 @@ NumofBP=parser.Results.NumofBP;
 colorbit=parser.Results.colorbit;
 Isize=parser.Results.Isize;
 DepthBG=parser.Results.DepthBG;
+rgb = parser.Results.rgb;
+
 %--------------------------------------------------------------------------
 function tf=CheckRGBImg(RGBImg)
 validateattributes(RGBImg,{'numeric'},{'3d'},mfilename,'RGBImg');
@@ -60,7 +69,7 @@ function [RGBImg_out,DepthMap_out]=ResizeImg(RGBImg,DepthMap,Isize)
 [m1,n1,q1]=size(RGBImg);
 [m2,n2]=size(DepthMap);
 
-if (m1~=m2)&&(n1~=n2)
+if (m1~=m2)||(n1~=n2)
     error(message('RGBImg and DepthMap not match'));
 end
 
@@ -81,12 +90,24 @@ else
 end
 
 %--------------------------------------------------------------------------
-function RGB_BR=Color2Binary(RGBImg,colorbit)
+function RGB_BR=Color2Binary(RGBImg,colorbit,rgb)
 RB=fliplr(double(de2bi(RGBImg(:,:,1),8)));
 GB=fliplr(double(de2bi(RGBImg(:,:,2),8)));
 BB=fliplr(double(de2bi(RGBImg(:,:,3),8)));
 m=colorbit/3;
-RGB_BR=[RB(:,1:m),GB(:,1:m),BB(:,1:m)];
+
+if(rgb) % rgb
+    RGB_BR=[RB(:,1:m),GB(:,1:m),BB(:,1:m)];
+else % bgr
+    RGB_BR=[BB(:,1:m),GB(:,1:m),RB(:,1:m)];
+end
+
+% The way the bitplanes are ordered is as follows:
+% Colors are ordered: Red | Green | Blue
+% In each color, the bitplanes are ordered as:
+% MSB | .... | LSB
+
+
 
 %--------------------------------------------------------------------------
 function DepthMap_norm=DepthMapNormlization(DepthMap)

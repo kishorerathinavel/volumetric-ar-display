@@ -45,13 +45,18 @@
 #include "program4.h"
 #include "program5.h"
 #include "program6.h"
+#include "program7.h"
 #include "filepaths.h"
+#include "mat.h"
+#include "matrix.h"
+
 
 bool display_on_device = !true;
 int display_1[] ={ 2560, 1600 };
 int display_2[] ={ 2560, 1600 };
 int window_position[] ={0, 0 };
-int window_size[] ={ 1920, 1080 };
+//int window_size[] ={ 1920, 1080 };
+int window_size[] = { 1024, 768 };
 
 // Model Matrix (part of the OpenGL Model View Matrix)
 float modelMatrix[16];
@@ -60,7 +65,7 @@ float modelMatrix[16];
 std::vector<float *> matrixStack;
 
 //float zNear = 0.01, zFar = 21.1;
-float zNear = 0.01, zFar = 16.9;
+float zNear = 0.20, zFar = 4.00;
 
 // Camera Position
 float camX = 0, camY = 0, camZ = 1.2;
@@ -97,6 +102,7 @@ program3_class prog3;
 program4_class prog4;
 program5_class prog5;
 program6_class prog6;
+program7_class prog7;
 
 
 // For Program 3 ||||||||||||||||||||||||||||||||||||||
@@ -498,7 +504,8 @@ void saveDepthImage(GLuint fbo, const char* outFilename) {
 	int width = dmd_size[0], height = dmd_size[1];
 	int oldFramebuffer;
 
-	FIBITMAP *depth_img = FreeImage_Allocate(width, height, 32);
+	float* depth_img = new float[width*height];
+	//FIBITMAP *depth_img = FreeImage_Allocate(width, height, 32);
 	if (depth_img == NULL) {
 		printf("couldn't allocate depth_img for saving!\n");
 		return;
@@ -509,16 +516,72 @@ void saveDepthImage(GLuint fbo, const char* outFilename) {
 
 	//bind desired FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_INT, FreeImage_GetBits(depth_img));
+	glReadPixels(0, 0, width, height, GL_DEPTH_COMPONENT, GL_FLOAT, depth_img);
 
 	//restore existing FBO
 	glBindFramebuffer(GL_FRAMEBUFFER, oldFramebuffer);
 
+
+    
+
+
 	//write depth_img
-	FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename), depth_img, outFilename);
+	//FreeImage_Save(FreeImage_GetFIFFromFilename(outFilename), depth_img, outFilename);
+
+
+	//save and export depth map as MAT
+	MATFile *pmat;
+	mxArray *depthMat;
+
+	pmat = matOpen(outFilename, "w");
+	if (pmat == NULL) {
+		printf("Error creating file %s\n", outFilename);
+		return;
+	}
+
+	depthMat = mxCreateNumericMatrix(height, width, mxSINGLE_CLASS,mxREAL);
+	if (depthMat == NULL) {
+		printf("Unable to create mxArray.\n");
+		return;
+	}
+
+
+	// linearize the depth_img and rearrange it
+	// glReadPixels output depth from low left corner
+
+	float* pointer;
+	pointer = mxGetSingles(depthMat);
+	float tem;
+	float k1 = 2 * zFar * zNear / (zFar - zNear);
+	float k2 = (zFar + zNear) / (zFar - zNear);
+	
+	
+	for (int i=0; i < height; i++)
+		for (int j = 0; j < width; j++)
+		{
+			tem = depth_img[(height - 1 - i)*width + j];
+			tem = tem * 2 - 1;
+			pointer[j*height + i] = -k1 / (tem - k2);
+		}
+
+	int status = matPutVariable(pmat,"DepthMap",depthMat);
+	if (status != 0) {
+		printf("Error saving mat\n");
+		return;
+	}
+	 
+	mxDestroyArray(depthMat);
+
+	if (matClose(pmat) != 0) {
+		printf("Error closing file %s\n", outFilename);
+		return;
+	}
+
+	//printf("value: %f\n", depth_img[300]);
 
 	//deallocate
-	FreeImage_Unload(depth_img);
+	//FreeImage_Unload(depth_img);
+	delete depth_img;
 	printf("Done saving depth image\n");
 }
 
@@ -538,7 +601,8 @@ void drawModels() {
 void savePosition() {
 	// save position information for each model
 	std::ofstream Position;
-	Position.open("Position.txt",std::ios::trunc);
+	std::string fname = data_folder_path + "/model_positions/Position.txt";
+	Position.open(fname, std::ios::trunc);
 	Position << "N " << NUM_MODELS << std::endl;
 	
 	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
@@ -561,7 +625,8 @@ void usePosition() {
 	int c1, c2;
 	int mn;
 
-	fp = fopen("Position.txt", "rb");
+	std::string fname = data_folder_path + "/model_positions/Position.txt";
+	fp = fopen(fname.c_str(), "rb");
 
 	if (fp == NULL) {
 		printf("Error loading Position \n");
@@ -652,7 +717,7 @@ int nz_count;
 void calculate_average_color() {
 	glEnable(GL_TEXTURE_2D);
 
-	for (int iters = 0; iters < 8; iters++) {
+	for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
 		glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[iters]);
 		glGetTexImage(GL_TEXTURE_2D, 0, GL_RGB, GL_UNSIGNED_BYTE, slice_img);
 
@@ -675,8 +740,8 @@ void calculate_average_color() {
 		}
 	}
 		
-	for (int iters = 0; iters < 8; iters++) {
-		printf("%f %f %f\n", average_colors[iters][0], average_colors[iters][1], average_colors[iters][2]);
+	for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
+		printf("Slice %d: %f %f %f\n", iters, average_colors[iters][0], average_colors[iters][1], average_colors[iters][2]);
 	}
 
 	glDisable(GL_TEXTURE_2D);
@@ -684,13 +749,15 @@ void calculate_average_color() {
 
 int imgCounter = 0;
 char fname[1024], fname1[1024], fname2[1024];
+float main_brightness[3] = { 0.41, 1.0, 0.11 };
 bool useShaders = 1;
 bool exec_program2 = 0; // synthetic.frag
-bool vned = 1;
+bool vned = 0;
 bool exec_program3 = vned; //voxelization.frag
 bool exec_program4 = vned; //rgb2gray_slices.frag
 bool exec_program5 = vned; //dithering.frag
-bool exec_program6 = 0; //encoding.frag
+bool exec_program6 = vned; //encoding.frag
+bool exec_program7 = vned;
 // Rendering Callback Function
 void renderScene() {
 	// Render program 1 (RGB and depth map of scene)
@@ -713,14 +780,16 @@ void renderScene() {
 		//glutWireTeapot(2.0);
 		drawModels();
 
-		//if (saveFramebufferOnce | saveFramebufferUntilStop) {
-		//	sprintf(fname1, "./outputs/trial_%02d_depth.png", imgCounter);
-		//	sprintf(fname2, "./outputs/trial_%02d_rgb.png", imgCounter);
-		//	saveColorImage(fbo_rgbd, fname2);
-		//	saveDepthImage(fbo_rgbd, fname1);
-		//	imgCounter++;
-		//	saveFramebufferOnce = false;
-		//}
+		if (saveFramebufferOnce | saveFramebufferUntilStop) {
+			//sprintf(fname, "%s/RGBD_data/trial_%02d_DepthMap.mat", data_folder_path.c_str(), imgCounter);
+			sprintf(fname1, "%s/RGBD_data/trial_%02d_DepthMap.mat", data_folder_path.c_str(), imgCounter);
+			sprintf(fname2, "%s/RGBD_data/trial_%02d_rgb.png", data_folder_path.c_str(), imgCounter);
+			
+			saveColorImage(prog1.fbo_rgbd, fname2);
+			saveDepthImage(prog1.fbo_rgbd, fname1);
+			imgCounter++;
+			saveFramebufferOnce = false;
+		}
 
 		glPopAttrib();
 	}
@@ -761,12 +830,12 @@ void renderScene() {
 			glActiveTexture(GL_TEXTURE0);
 		}
 
-		if (saveFramebufferOnce | saveFramebufferUntilStop) {
-			sprintf(fname2, "./outputs/synthetic_%02d_rgb.png", imgCounter);
-			saveColorImage(prog2.fbo_rgb, fname2);
-			imgCounter++;
-			saveFramebufferOnce = false;
-		}
+		//if (saveFramebufferOnce | saveFramebufferUntilStop) {
+		//	sprintf(fname2, "./outputs/synthetic_%02d_rgb.png", imgCounter);
+		//	saveColorImage(prog2.fbo_rgb, fname2);
+		//	imgCounter++;
+		//	saveFramebufferOnce = false;
+		//}
 
 		glPopAttrib();
 	}
@@ -810,6 +879,10 @@ void renderScene() {
 			glDisable(GL_TEXTURE_2D);
 		}
 		glPopAttrib();
+
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glUseProgram(0);
+		//calculate_average_color();
 	}
 
 	if (exec_program4)
@@ -830,14 +903,18 @@ void renderScene() {
 		else { // Uses shaders
 			glUseProgram(prog4.program);
 
-			for (int iters = 0; iters < 8; iters++) {
+			glUniform1f(prog4.brightness[0], main_brightness[0]);
+			glUniform1f(prog4.brightness[1], main_brightness[1]);
+			glUniform1f(prog4.brightness[2], main_brightness[2]);
+			for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
 				glUniform1i(prog4.rgb_img[iters], iters);
 			}
 			glEnable(GL_TEXTURE_2D);
-			for (int iters = 0; iters < 8; iters++) {
+			for (int iters = 0; iters < PROG3_NUM_OUTPUT_TEXTURES; iters++) {
 				glActiveTexture(GL_TEXTURE0 + iters);
 				glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[iters]);
 			}
+
 
 			glBindVertexArray(postprocess_VAO);
 			glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
@@ -922,55 +999,110 @@ void renderScene() {
 			glDisable(GL_TEXTURE_2D);
 		}
 
+		//if (saveFramebufferOnce | saveFramebufferUntilStop) {
+		//	sprintf(fname2, "./outputs/encoded_%02d.png", imgCounter);
+		//	saveColorImage(prog6.fbo_encoded, fname2);
+		//	imgCounter++;
+		//	saveFramebufferOnce = false;
+		//}
+
+		glPopAttrib();
+
+	}
+
+
+	// Render to screen or display
+	if (exec_program7) {
+		glBindFramebuffer(GL_FRAMEBUFFER, prog7.fbo);
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+
+		glUseProgram(prog7.program);
+		glEnable(GL_TEXTURE_2D);
+		glUniform1i(prog7.rgb_img, 0);
+		if (exec_program2) {
+			glBindTexture(GL_TEXTURE_2D, prog2.tex_rgb);
+		}
+		else if (exec_program3 && !exec_program4) {
+			if (slice_number > 1) {
+				glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[1]);
+			}
+			else {
+				glBindTexture(GL_TEXTURE_2D, prog3.tex_rgb[slice_number]);
+			}
+		}
+		else if (exec_program4 && !exec_program5) {
+			glBindTexture(GL_TEXTURE_2D, prog4.tex_gray[slice_number]);
+		}
+		else if (exec_program5 && !exec_program6) {
+			glBindTexture(GL_TEXTURE_2D, prog5.tex_binary[slice_number]);
+		}
+		else if (exec_program6) {
+			glBindTexture(GL_TEXTURE_2D, prog6.tex_encoded);
+		}
+		else {
+			glBindTexture(GL_TEXTURE_2D, prog1.tex_depth);
+		}
+
+		glBindVertexArray(postprocess_VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		// Important to set default active texture back to GL_TEXTURE0
+		glActiveTexture(GL_TEXTURE0);
+		glDisable(GL_TEXTURE_2D);
+
 		if (saveFramebufferOnce | saveFramebufferUntilStop) {
-			sprintf(fname2, "./outputs/encoded_%02d.png", imgCounter);
-			saveColorImage(prog6.fbo_encoded, fname2);
+			sprintf(fname2, "./outputs/currentFrameBuffer_%02d.png", imgCounter);
+			saveColorImage(prog7.fbo, fname2);
 			imgCounter++;
 			saveFramebufferOnce = false;
 		}
 
 		glPopAttrib();
 
+	} 
+	
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	if (display_on_device) {
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
+		glUseProgram(0);
+		drawTextureToFramebuffer(tex_background);
+		glPopAttrib();
 	}
-	
-	
-	// Render to screen or display
-	{
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		if (display_on_device) {
-			glPushAttrib(GL_VIEWPORT_BIT);
-			glViewport(0, 0, dmd_size[0], dmd_size[1]);
-			glUseProgram(0);
-			drawTextureToFramebuffer(tex_background);
-			glPopAttrib();
-		}
-		else {
-			glPushAttrib(GL_VIEWPORT_BIT);
-			glUseProgram(0);
-			glViewport(0, 0, dmd_size[0], dmd_size[1]);
+	else {
+		glPushAttrib(GL_VIEWPORT_BIT);
+		glUseProgram(0);
+		glViewport(0, 0, dmd_size[0], dmd_size[1]);
 
-			if (exec_program2) {
-				drawTextureToFramebuffer(prog2.tex_rgb);
-			}
-			else if (exec_program3 && !exec_program4) {
-				//calculate_average_color();
-				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
-			}
-			else if (exec_program4 && !exec_program5) {
-				drawTextureToFramebuffer(prog4.tex_gray[slice_number]);
-			}
-			else if (exec_program5 && !exec_program6) {
-				drawTextureToFramebuffer(prog5.tex_binary[slice_number]);
-			}
-			else if (exec_program6) {
-				drawTextureToFramebuffer(prog6.tex_encoded);
+		if (exec_program2) {
+			drawTextureToFramebuffer(prog2.tex_rgb);
+		}
+		else if (exec_program3 && !exec_program4) {
+			if (slice_number > 1) {
+				drawTextureToFramebuffer(prog3.tex_rgb[1]);
 			}
 			else {
-				drawTextureToFramebuffer(prog1.tex_rgb);
+				drawTextureToFramebuffer(prog3.tex_rgb[slice_number]);
 			}
-			glPopAttrib();
 		}
+		else if (exec_program4 && !exec_program5) {
+			drawTextureToFramebuffer(prog4.tex_gray[slice_number]);
+		}
+		else if (exec_program5 && !exec_program6) {
+			drawTextureToFramebuffer(prog5.tex_binary[slice_number]);
+		}
+		else if (exec_program6) {
+			drawTextureToFramebuffer(prog6.tex_encoded);
+		}
+		else if (exec_program7) {
+			drawTextureToFramebuffer(prog7.tex);
+		}
+		else {
+			drawTextureToFramebuffer(prog1.tex_rgb);
+		}
+		glPopAttrib();
 	}
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	glUseProgram(0);
@@ -1034,7 +1166,7 @@ void updateCamVariables() {
 //
 // Events from the Keyboard
 //
-float stepSize = 0.1;
+float stepSize = 0.025;
 int keymapmode = 2;
 void processKeys(unsigned char key, int xx, int yy) {
 
@@ -1062,8 +1194,8 @@ void processKeys(unsigned char key, int xx, int yy) {
 			case '2': currModel = &model[1]; printf("Current Model is 2 \n"); break;
 			case '3': currModel = &model[2]; printf("Current Model is 2 \n"); break;
 			case '4': currModel = &model[3]; printf("Current Model is 3 \n"); break;
-			case '9': stepSize = stepSize / 3.0; break;
-			case '0': stepSize = stepSize * 3.0; break;
+			case '9': stepSize = stepSize / 3.0; printf("stepSize = %f\n", stepSize);  break;
+			case '0': stepSize = stepSize * 3.0; printf("stepSize = %f\n", stepSize); break;
 			case 's': saveFramebufferOnce = true; printf("Saving framebuffer \n"); break;
 			case 'S': {
 						  saveFramebufferUntilStop = !saveFramebufferUntilStop;
@@ -1104,11 +1236,24 @@ void processKeys(unsigned char key, int xx, int yy) {
 			case 'u': usePosition(); break;
 			case 'k': zFar = modify_valuef(zFar, -0.1, zNear, 200.0); printf("zFar: %f \n", zFar); break;
 			case 'l': zFar = modify_valuef(zFar, 0.1, zNear, 200.0); printf("zFar: %f \n", zFar); break;
+			case 'i': zNear = modify_valuef(zNear, -0.1, 0.1, 200.0); printf("zNear: %f \n", zNear); break;
+			case 'o': zNear = modify_valuef(zNear, 0.1, 0.1, 200.0); printf("zNear: %f \n", zNear); break;
+			}
+			updateCamVariables();
+		}
+		else if (keymapmode == 3) {
+			switch (key) {
+			case 27: { glutLeaveMainLoop(); break; }
+			case 'q': main_brightness[0] = modify_valuef(main_brightness[0], -0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 'w': main_brightness[0] = modify_valuef(main_brightness[0], +0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 'a': main_brightness[1] = modify_valuef(main_brightness[1], -0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 's': main_brightness[1] = modify_valuef(main_brightness[1], +0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 'z': main_brightness[2] = modify_valuef(main_brightness[2], -0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
+			case 'x': main_brightness[2] = modify_valuef(main_brightness[2], +0.01, 0.1, 1.0); printf("brightness: %f %f %f \n", main_brightness[0], main_brightness[1], main_brightness[2]); break;
 			case '5': slice_number = modify_valuei(slice_number, -1, 0, 7); print_valuei(slice_number, "slice_number"); break;
 			case '6': slice_number = modify_valuei(slice_number, +1, 0, 7); print_valuei(slice_number, "slice_number"); break;
 			default: printf("Entered key does nothing \n");
 			}
-			updateCamVariables();
 		}
 	}
 
@@ -1152,8 +1297,8 @@ void processMouseMotion(int xx, int yy) {
 
 	// left mouse button: move camera
 	if (tracking == 1) {
-		model[0].rotation[1] += deltaX*stepSize;
-		model[1].rotation[2] += deltaX*stepSize;
+		model[0].rotation[1] -= deltaX*stepSize;
+		model[1].rotation[2] -= deltaX*stepSize;
 	}
 	//  uncomment this if not using an idle func
 	//	glutPostRedisplay();
@@ -1280,7 +1425,7 @@ int init() {
 	ilInit();
 
 	for (int modelIter = 0; modelIter < NUM_MODELS; modelIter++) {
-		model[modelIter].basepath = file_path_and_name[modelIter][0];
+		model[modelIter].basepath = data_folder_path + "/" +  file_path_and_name[modelIter][0];
 		model[modelIter].modelname = file_path_and_name[modelIter][1];
 		if (!model[modelIter].Import3DFromFile())
 			return(0);
@@ -1325,6 +1470,7 @@ int init() {
 	prog4.delayed_init();
 	prog5.delayed_init();
 	prog6.delayed_init();
+	prog7.delayed_init();
 
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);

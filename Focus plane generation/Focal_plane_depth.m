@@ -17,6 +17,7 @@ t=1:1:num;
 %% optimization process for simulation
 x0=[0.7,0.5,0.1];
 [x,fval,exitflag]=lsqnonlin(@(x) System(x,1/MinOpPower,1/MaxOpPower,0.2,3.6),x0,[0,0,0],[2,2,2]);
+
 %%
 o=x(3); % obejct distance from DMD to focus-tunable lens
 l=x(2); % distance between focus-tunable lens and eyepiece
@@ -85,4 +86,8 @@ un_order(order)=1:280;
 
 
 %%
-save FocusDepth.mat d d_sort order un_order;
+
+data_folder_path = get_data_folder_path();
+output_dir = sprintf('%s/FocusDepth', data_folder_path);
+filename = sprintf('%s/FocusDepth.mat', output_dir);
+save(filename, 'd', 'd_sort', 'order', 'un_order');

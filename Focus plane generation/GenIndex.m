@@ -1,12 +1,24 @@
-% MSBFirst
 clear all;
+
+%%
+data_folder_path = get_data_folder_path();
+input_dir = sprintf('%s/Params', data_folder_path);
+%%
+% MSBFirst
 MaxIntensityHex='5055';
 colorbit=24;
 NumofBP=280;
-load('FocusDepth.mat');
+
+filename = sprintf('%s/FocusDepth_sin.mat',input_dir);
+load(filename);
+
 m=colorbit/3;
 n=floor(NumofBP/colorbit)+1;
-load('ColorCalibration.mat')
+
+filename = sprintf('%s/ColorCalibration.mat',input_dir);
+load(filename);
+
+
 MaxIntensityDec=hex2dec(MaxIntensityHex);
 R_index=zeros([colorbit,1]);
 G_index=zeros([colorbit,1]);
@@ -54,4 +66,4 @@ fprintf(fileID,'{');
 fprintf(fileID,'%s,',IntensityHex_order{1:end-1});
 fprintf(fileID,'%s',IntensityHex_order{end});
 fprintf(fileID,'};');
-
+fclose(fileID);

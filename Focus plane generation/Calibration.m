@@ -3,8 +3,8 @@ Background=zeros([768,1024]);
 
 height_unit=100;
 width_unit=200;
-h_num=3;
-w_num=3;
+h_num=5;
+w_num=5;
 
 height=height_unit*h_num;
 width=width_unit*w_num;
@@ -22,13 +22,19 @@ imshow(CalibrationImg,[]);
 Space=20;
 NumofBP=280;
 Iter=NumofBP/Space;
-load('FocusDepth.mat');
+
+%% 
+data_folder_path = get_data_folder_path();
+filename = sprintf('%s/%s/FocusDepth.mat',data_folder_path, 'FocusDepth');
+load(filename);
 %%
 for i=1:Iter
     str = sprintf('Calibration/Set_%03d',i);
     mkdir(str);
 end
 
+filename = sprintf('%s/Calibration/TestPattern2/checkerboard.png', data_folder_path);
+imwrite(CalibrationImg, filename);
 %%
 s=1;
 for i=1:Iter

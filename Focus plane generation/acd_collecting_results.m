@@ -1,0 +1,9 @@
+acd_focal_plane_depth
+acd_fixed_pipeline
+acd_combinatorial
+acd_highest_energy_channel
+acd_projected_gradients
+acd_heuristic
+acd_focal_stack
+acd_analysis
+

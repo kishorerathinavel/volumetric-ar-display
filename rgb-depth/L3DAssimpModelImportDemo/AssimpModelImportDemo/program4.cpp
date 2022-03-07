@@ -101,14 +101,12 @@ GLuint program4_class::setup_shaders() {
 	this->vertexShader = v;
 	this->fragmentShader = f;
 
+	// Make these lines independent of number of rgb_img
 	this->rgb_img[0] = glGetUniformLocation(this->program, "rgb_img[0]");
 	this->rgb_img[1] = glGetUniformLocation(this->program, "rgb_img[1]");
-	this->rgb_img[2] = glGetUniformLocation(this->program, "rgb_img[2]");
-	this->rgb_img[3] = glGetUniformLocation(this->program, "rgb_img[3]");
-	this->rgb_img[4] = glGetUniformLocation(this->program, "rgb_img[4]");
-	this->rgb_img[5] = glGetUniformLocation(this->program, "rgb_img[5]");
-	this->rgb_img[6] = glGetUniformLocation(this->program, "rgb_img[6]");
-	this->rgb_img[7] = glGetUniformLocation(this->program, "rgb_img[7]");
+	this->brightness[0] = glGetUniformLocation(this->program, "brightness[0]");
+	this->brightness[1] = glGetUniformLocation(this->program, "brightness[1]");
+	this->brightness[2] = glGetUniformLocation(this->program, "brightness[2]");
 
 	return(p);
 }

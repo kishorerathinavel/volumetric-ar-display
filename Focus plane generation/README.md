@@ -1,0 +1,34 @@
+# m files
+
+- **adaptive_color_decomposition.m** - ignore
+- **adaptive_color_decomposition.m.bak** - ignore
+- **adaptive_color_decomposition_all_channels_bk.m** - ignore
+- **adaptive_color_decomposition_functions.m** - ignore
+- **binary_pulse_modulation.m** - generates graphs to demonstrate DDS decomposition
+- **bulkrename.m** - cyclically rearranges the 280 slices such that the 0th slice is renamed to the 40th slice
+- **Calibration.m** - Generate images for multiple calibration processes. (Such as optical distortion calibration, optical path alignment)
+- **clampLEDValues.m** - 
+- **ColorCalibration.m** - inputs image, calculates average intensity per color channel, saves the averages
+- **ColorDC_edit1.m** - early code for decomposition. only used for testing code correctness
+- **ColorDC_edit2.m** - decomposition algorithm.
+- **ColorDC_edit3.m** - decomposition algorithm.  Used for ISMAR 2018 paper. Generate color volume slices.  
+- **ColorDC_edit4.m** - decomposition algorithm. Looks same as ColorDC_edit3. Take linearized depth map and take account of the binary plane depth distributions.  
+- **customTexture.m** - generates a calibration image
+- **custom_imagesc_save.m** - 
+- **custom_plot_save.m** - 
+- **DepthMapNormalization.m** - normalize depth image
+- **displayedImage.m** - multiply LED value and binary pattern to generate displayed image
+- **Focal_plane_depth.m** - calculates depth distribution, fov for the image slices
+- **Focal_plane_depth2.m** - calculates depth distribution, fov for the image slices
+- **GenDepthList.m**
+- **GenerateImgSeq.m** 
+- **GenerateImgSeq2.m**
+- **GenerateImgSeq3.m**
+- **GenIndex.m**
+- **graphs.m** - models the optics of the system. Models the formulas in section 4.2 and used to generate graphs in Fig 4. 
+- **normalize.m**
+- **rendering_pipeline_diagram.m**
+- **returnMeanOfChannels.m**
+- **RGBbitExtract.m**
+- **System.m**
+- **videos.m** - Generates video that simulates decomposition

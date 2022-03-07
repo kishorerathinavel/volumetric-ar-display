@@ -25,6 +25,7 @@ Focus plane generation/Calibration Capture/
 Focus plane generation/graphs/
 Focus plane generation/adaptive_color_decomposition_images*/
 Focus plane generation/binary_pulse_modulation_images/
+Focus plane generation/FocusPlaneGenerationData/
 bk_code/
 example_code/
 MATHWORKS_MTF/data/
@@ -35,9 +36,12 @@ Focus\ plane\ generation/**/**/*.png
 
 
 
+# ignore Matlab Runtime dependency
+rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/dependencies/MatlabRuntime/
+**/Test.jpg
 
 
-
+teensy_arduino/Lens_signal_simulation/
 
 
 *desktop.ini

@@ -24,12 +24,12 @@ imshow(DepthImg,[]);
 RGBImg=imresize(RGBImg,[768 1024]);
 DepthImg=imresize(DepthImg,[768 1024]);
 DepthImgB=double(DepthImg(:,:,1))/255;
-%%
+%% crop to 768*1024
 m_s=floor((m-768)/2);
 n_s=floor((n-1024)/2);
 RGBImg=RGBImg(m_s:m_s+767,n_s:n_s+1023,:);
 DepthImg=DepthImg(m_s:m_s+767,n_s:n_s+1023,:);
-DepthImgB=double(DepthImg(:,:,1))/255;
+DepthImgB=double(DepthImg(:,:,1))/255; % normalize to range [0, 1]
 
 figure;
 imshow(DepthImgB,[]);

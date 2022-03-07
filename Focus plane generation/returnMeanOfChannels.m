@@ -1,9 +1,6 @@
 function LEDs=returnMeanOfChannels(img)
 LEDs = [];
 
-
-
-
 r_img = img(:,:,1); 
 g_img = img(:,:,2);
 b_img = img(:,:,3);
