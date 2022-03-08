@@ -1,64 +1,15 @@
+Debug/
+Release/
+ipch/
+
 *~
 *#
 *pyc
 *.lprof
 *.zip
 *.tif
-160929 Optotune Lens Driver 4 software package/
-rgb-depth/VS-projects/
-**/Debug/
-**/Release/
-**/ipch/
-rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/outputs/
-rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/filepaths.h
-rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/filepaths.h
-Simulation Image/Navie scan conversion/Model Set/
-Simulation Image/Navie scan conversion/Triangle_all/
-Focus plane generation/Model3/
-Focus plane generation/Model4/
-Focus plane generation/Model5/
-Focus plane generation/Model6/
-Focus plane generation/Model7/
-Focus plane generation/Model8/
-Focus plane generation/Model9/
-Focus plane generation/Calibration Capture/
-Focus plane generation/graphs/
-Focus plane generation/adaptive_color_decomposition_images*/
-Focus plane generation/binary_pulse_modulation_images/
-Focus plane generation/FocusPlaneGenerationData/
-bk_code/
-example_code/
-MATHWORKS_MTF/data/
-Focus plane generation/*.avi
-
-*.mat
-Focus\ plane\ generation/**/**/*.png
-
-
-
-# ignore Matlab Runtime dependency
-rgb-depth/L3DAssimpModelImportDemo/AssimpModelImportDemo/dependencies/MatlabRuntime/
-**/Test.jpg
-
-
-teensy_arduino/Lens_signal_simulation/
-
-
-*desktop.ini
-*#
-*.bak
-*.enc
-*.coe
-*.idb
-*.dropbox
 *.opensdf
-*.ilk
 *.ipch
-*.pch
-*~
-*.zip
-*.exe
-*.asv
 *.filters
 *.suo
 *.sdf
@@ -72,10 +23,6 @@ teensy_arduino/Lens_signal_simulation/
 *.lastbuildstate
 *.pdb
 *.unsuccessfulbuild
-*.obj
 *.vsp
 *.psess
 *.vspx
-
-
-
